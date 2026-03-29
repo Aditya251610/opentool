@@ -1,0 +1,16 @@
+{
+  "name": "@opentool/cli",
+  "version": "0.0.1",
+  "bin": {
+    "opentool": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "commander": "^12.0.0",
+    "inquirer": "^9.0.0",
+    "chalk": "^5.0.0"
+  }
+}

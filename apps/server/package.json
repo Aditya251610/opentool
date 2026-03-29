@@ -1,0 +1,21 @@
+{
+  "name": "@opentool/server",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "hono": "^4.0.0",
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@prisma/client": "^5.0.0",
+    "zod": "^3.0.0",
+    "ioredis": "^5.0.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.0.0",
+    "tsx": "^4.0.0",
+    "@types/node": "^20.0.0"
+  }
+}
