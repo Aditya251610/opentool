@@ -1,0 +1,224 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────
+
+enum AuthType {
+  OAUTH2
+  API_KEY
+  NONE
+}
+
+enum ConnectionStatus {
+  CONNECTED
+  DISCONNECTED
+  EXPIRED
+  REVOKED
+  PENDING_AUTH
+}
+
+enum AuditAction {
+  TOOL_EXECUTE
+  TOOL_AUTH_REQUEST
+  TOOL_AUTH_SUCCESS
+  TOOL_AUTH_FAILURE
+  TOKEN_REFRESH
+  TOKEN_REVOKE
+  API_KEY_CREATED
+  API_KEY_REVOKED
+}
+
+enum AuditStatus {
+  SUCCESS
+  FAILURE
+  PENDING
+}
+
+// ─────────────────────────────────────────
+// USER
+// ─────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  apiKeys         ApiKey[]
+  toolConnections ToolConnection[]
+  auditLogs       AuditLog[]
+
+  @@index([email])
+  @@map("users")
+}
+
+// ─────────────────────────────────────────
+// API KEY
+// Stored as SHA-256 hash — raw key shown once at creation only
+// ─────────────────────────────────────────
+
+model ApiKey {
+  id          String    @id @default(cuid())
+  userId      String
+  name        String
+  keyHash     String    @unique
+  keyPrefix   String                          // first 8 chars for display e.g. "ot_live_ab12..."
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([keyHash])
+  @@map("api_keys")
+}
+
+// ─────────────────────────────────────────
+// OAUTH PROVIDER
+// Registered OAuth apps — one row per provider
+// clientSecret stored encrypted
+// ─────────────────────────────────────────
+
+model OAuthProvider {
+  id               String   @id @default(cuid())
+  provider         String   @unique          // "github" | "notion" | "slack" etc.
+  displayName      String
+  authUrl          String
+  tokenUrl         String
+  revokeUrl        String?
+  clientId         String
+  clientSecretEnc  String                    // AES-256-GCM encrypted
+  defaultScopes    String[]
+  authType         AuthType @default(OAUTH2)
+  isEnabled        Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  toolDefinitions  ToolDefinition[]
+  toolConnections  ToolConnection[]
+
+  @@index([provider])
+  @@map("oauth_providers")
+}
+
+// ─────────────────────────────────────────
+// TOOL DEFINITION
+// The registry — one row per tool action
+// e.g. "github.create_issue", "notion.query_database"
+// ─────────────────────────────────────────
+
+model ToolDefinition {
+  id           String   @id @default(cuid())
+  providerId   String
+  toolId       String   @unique             // "github.create_issue"
+  name         String
+  description  String
+  inputSchema  Json                          // JSON Schema of tool inputs
+  outputSchema Json?                         // JSON Schema of tool output
+  authType     AuthType @default(OAUTH2)
+  requiredScopes String[]
+  isEnabled    Boolean  @default(true)
+  version      String   @default("1.0.0")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  provider     OAuthProvider @relation(fields: [providerId], references: [id])
+  auditLogs    AuditLog[]
+
+  @@index([providerId])
+  @@index([toolId])
+  @@map("tool_definitions")
+}
+
+// ─────────────────────────────────────────
+// TOOL CONNECTION
+// Per-user connection to a provider
+// One row per user per provider
+// ─────────────────────────────────────────
+
+model ToolConnection {
+  id           String           @id @default(cuid())
+  userId       String
+  providerId   String
+  status       ConnectionStatus @default(PENDING_AUTH)
+  scopes       String[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider     OAuthProvider @relation(fields: [providerId], references: [id])
+  tokenStore   TokenStore?
+
+  @@unique([userId, providerId])
+  @@index([userId])
+  @@index([providerId])
+  @@map("tool_connections")
+}
+
+// ─────────────────────────────────────────
+// TOKEN STORE
+// Separated from ToolConnection for clean rotation
+// All token values AES-256-GCM encrypted at rest
+// ─────────────────────────────────────────
+
+model TokenStore {
+  id                 String    @id @default(cuid())
+  connectionId       String    @unique
+  accessTokenEnc     String                        // encrypted
+  refreshTokenEnc    String?                       // encrypted, nullable for API key auth
+  accessTokenExpiry  DateTime?
+  scopes             String[]
+  tokenType          String    @default("Bearer")
+  rawMetadata        Json?                         // provider-specific extras
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  connection ToolConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([connectionId])
+  @@map("token_stores")
+}
+
+// ─────────────────────────────────────────
+// AUDIT LOG
+// Immutable record of every tool execution and auth event
+// ─────────────────────────────────────────
+
+model AuditLog {
+  id               String      @id @default(cuid())
+  userId           String
+  toolDefinitionId String?
+  action           AuditAction
+  status           AuditStatus
+  durationMs       Int?
+  inputSnapshot    Json?                           // sanitized input (no secrets)
+  errorMessage     String?
+  ipAddress        String?
+  userAgent        String?
+  createdAt        DateTime    @default(now())
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  toolDefinition ToolDefinition? @relation(fields: [toolDefinitionId], references: [id])
+
+  @@index([userId])
+  @@index([toolDefinitionId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

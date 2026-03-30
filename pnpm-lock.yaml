@@ -35,6 +35,9 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.0.0
         version: 1.28.0(zod@3.25.76)
+      '@opentool/tool-schema':
+        specifier: workspace:*
+        version: link:../../packages/tool-schema
       '@prisma/client':
         specifier: ^5.0.0
         version: 5.22.0(prisma@5.22.0)

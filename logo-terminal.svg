@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="480" viewBox="0 0 800 480" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Clip for terminal rounded corners -->
+    <clipPath id="term-clip">
+      <rect x="40" y="50" width="720" height="380" rx="12"/>
+    </clipPath>
+    <!-- CRT glow filter -->
+    <filter id="glow" x="-15%" y="-15%" width="130%" height="130%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur"/>
+      <feColorMatrix in="blur" type="matrix"
+        values="1 0 0 0 0
+                0 1 0 0 0
+                0 0 1 0 0
+                0 0 0 0.4 0" result="dimBlur"/>
+      <feMerge>
+        <feMergeNode in="dimBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <style>
+      @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0; }
+      }
+      .cursor { animation: blink 1.1s step-end infinite; }
+    </style>
+  </defs>
+
+  <!-- Canvas background -->
+  <rect width="800" height="480" fill="#0F172A"/>
+
+  <!-- Terminal window body -->
+  <rect x="40" y="50" width="720" height="380" rx="12" fill="#0A0A0A"
+        stroke="#1E293B" stroke-width="1"/>
+
+  <!-- Top bar -->
+  <rect x="40" y="50" width="720" height="36" fill="#161616"
+        clip-path="url(#term-clip)"/>
+
+  <!-- Traffic light dots -->
+  <circle cx="62" cy="68" r="6" fill="#FF5F57"/>
+  <circle cx="82" cy="68" r="6" fill="#FFBD2E"/>
+  <circle cx="102" cy="68" r="6" fill="#28CA41"/>
+
+  <!-- Separator -->
+  <line x1="40" y1="86" x2="760" y2="86"
+        stroke="#1E293B" stroke-width="1"/>
+
+  <!-- Main text: "opentool" pixel art with glow -->
+  <g fill="#06B6D4" filter="url(#glow)">
+    <rect x="144" y="166" width="9" height="9"/>
+        <rect x="154" y="166" width="9" height="9"/>
+        <rect x="164" y="166" width="9" height="9"/>
+        <rect x="134" y="176" width="9" height="9"/>
+        <rect x="174" y="176" width="9" height="9"/>
+        <rect x="134" y="186" width="9" height="9"/>
+        <rect x="174" y="186" width="9" height="9"/>
+        <rect x="134" y="196" width="9" height="9"/>
+        <rect x="174" y="196" width="9" height="9"/>
+        <rect x="134" y="206" width="9" height="9"/>
+        <rect x="174" y="206" width="9" height="9"/>
+        <rect x="134" y="216" width="9" height="9"/>
+        <rect x="174" y="216" width="9" height="9"/>
+        <rect x="144" y="226" width="9" height="9"/>
+        <rect x="154" y="226" width="9" height="9"/>
+        <rect x="164" y="226" width="9" height="9"/>
+        <rect x="203" y="166" width="9" height="9"/>
+        <rect x="213" y="166" width="9" height="9"/>
+        <rect x="223" y="166" width="9" height="9"/>
+        <rect x="233" y="166" width="9" height="9"/>
+        <rect x="203" y="176" width="9" height="9"/>
+        <rect x="243" y="176" width="9" height="9"/>
+        <rect x="203" y="186" width="9" height="9"/>
+        <rect x="243" y="186" width="9" height="9"/>
+        <rect x="203" y="196" width="9" height="9"/>
+        <rect x="213" y="196" width="9" height="9"/>
+        <rect x="223" y="196" width="9" height="9"/>
+        <rect x="233" y="196" width="9" height="9"/>
+        <rect x="203" y="206" width="9" height="9"/>
+        <rect x="203" y="216" width="9" height="9"/>
+        <rect x="203" y="226" width="9" height="9"/>
+        <rect x="272" y="166" width="9" height="9"/>
+        <rect x="282" y="166" width="9" height="9"/>
+        <rect x="292" y="166" width="9" height="9"/>
+        <rect x="302" y="166" width="9" height="9"/>
+        <rect x="312" y="166" width="9" height="9"/>
+        <rect x="272" y="176" width="9" height="9"/>
+        <rect x="272" y="186" width="9" height="9"/>
+        <rect x="272" y="196" width="9" height="9"/>
+        <rect x="282" y="196" width="9" height="9"/>
+        <rect x="292" y="196" width="9" height="9"/>
+        <rect x="302" y="196" width="9" height="9"/>
+        <rect x="272" y="206" width="9" height="9"/>
+        <rect x="272" y="216" width="9" height="9"/>
+        <rect x="272" y="226" width="9" height="9"/>
+        <rect x="282" y="226" width="9" height="9"/>
+        <rect x="292" y="226" width="9" height="9"/>
+        <rect x="302" y="226" width="9" height="9"/>
+        <rect x="312" y="226" width="9" height="9"/>
+        <rect x="341" y="166" width="9" height="9"/>
+        <rect x="381" y="166" width="9" height="9"/>
+        <rect x="341" y="176" width="9" height="9"/>
+        <rect x="351" y="176" width="9" height="9"/>
+        <rect x="381" y="176" width="9" height="9"/>
+        <rect x="341" y="186" width="9" height="9"/>
+        <rect x="361" y="186" width="9" height="9"/>
+        <rect x="381" y="186" width="9" height="9"/>
+        <rect x="341" y="196" width="9" height="9"/>
+        <rect x="371" y="196" width="9" height="9"/>
+        <rect x="381" y="196" width="9" height="9"/>
+        <rect x="341" y="206" width="9" height="9"/>
+        <rect x="381" y="206" width="9" height="9"/>
+        <rect x="341" y="216" width="9" height="9"/>
+        <rect x="381" y="216" width="9" height="9"/>
+        <rect x="341" y="226" width="9" height="9"/>
+        <rect x="381" y="226" width="9" height="9"/>
+        <rect x="410" y="166" width="9" height="9"/>
+        <rect x="420" y="166" width="9" height="9"/>
+        <rect x="430" y="166" width="9" height="9"/>
+        <rect x="440" y="166" width="9" height="9"/>
+        <rect x="450" y="166" width="9" height="9"/>
+        <rect x="430" y="176" width="9" height="9"/>
+        <rect x="430" y="186" width="9" height="9"/>
+        <rect x="430" y="196" width="9" height="9"/>
+        <rect x="430" y="206" width="9" height="9"/>
+        <rect x="430" y="216" width="9" height="9"/>
+        <rect x="430" y="226" width="9" height="9"/>
+        <rect x="489" y="166" width="9" height="9"/>
+        <rect x="499" y="166" width="9" height="9"/>
+        <rect x="509" y="166" width="9" height="9"/>
+        <rect x="479" y="176" width="9" height="9"/>
+        <rect x="519" y="176" width="9" height="9"/>
+        <rect x="479" y="186" width="9" height="9"/>
+        <rect x="519" y="186" width="9" height="9"/>
+        <rect x="479" y="196" width="9" height="9"/>
+        <rect x="519" y="196" width="9" height="9"/>
+        <rect x="479" y="206" width="9" height="9"/>
+        <rect x="519" y="206" width="9" height="9"/>
+        <rect x="479" y="216" width="9" height="9"/>
+        <rect x="519" y="216" width="9" height="9"/>
+        <rect x="489" y="226" width="9" height="9"/>
+        <rect x="499" y="226" width="9" height="9"/>
+        <rect x="509" y="226" width="9" height="9"/>
+        <rect x="558" y="166" width="9" height="9"/>
+        <rect x="568" y="166" width="9" height="9"/>
+        <rect x="578" y="166" width="9" height="9"/>
+        <rect x="548" y="176" width="9" height="9"/>
+        <rect x="588" y="176" width="9" height="9"/>
+        <rect x="548" y="186" width="9" height="9"/>
+        <rect x="588" y="186" width="9" height="9"/>
+        <rect x="548" y="196" width="9" height="9"/>
+        <rect x="588" y="196" width="9" height="9"/>
+        <rect x="548" y="206" width="9" height="9"/>
+        <rect x="588" y="206" width="9" height="9"/>
+        <rect x="548" y="216" width="9" height="9"/>
+        <rect x="588" y="216" width="9" height="9"/>
+        <rect x="558" y="226" width="9" height="9"/>
+        <rect x="568" y="226" width="9" height="9"/>
+        <rect x="578" y="226" width="9" height="9"/>
+        <rect x="617" y="166" width="9" height="9"/>
+        <rect x="617" y="176" width="9" height="9"/>
+        <rect x="617" y="186" width="9" height="9"/>
+        <rect x="617" y="196" width="9" height="9"/>
+        <rect x="617" y="206" width="9" height="9"/>
+        <rect x="617" y="216" width="9" height="9"/>
+        <rect x="617" y="226" width="9" height="9"/>
+        <rect x="627" y="226" width="9" height="9"/>
+        <rect x="637" y="226" width="9" height="9"/>
+        <rect x="647" y="226" width="9" height="9"/>
+        <rect x="657" y="226" width="9" height="9"/>
+  </g>
+
+  <!-- Secondary prompt line -->
+  <text x="80" y="271" font-family="'Courier New', 'SF Mono', monospace"
+        font-size="16" fill="#475569" letter-spacing="1">
+    &gt; tools connected<tspan class="cursor">_</tspan>
+  </text>
+</svg>

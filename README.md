@@ -58,7 +58,7 @@ That's it. Your agent now has access to all your connected tools.
 
 **Prerequisites:** Docker + Docker Compose
 ```bash
-git clone https://github.com/yourusername/opentool
+git clone https://github.com/Aditya251610/opentool
 cd opentool
 cp .env.example .env
 # Fill in your OAuth app credentials in .env
@@ -85,7 +85,7 @@ MCP server available at `http://localhost:3001`
 | Postgres | ✅ | Execute query |
 | Resend | ✅ | Send email |
 
-Want a tool added? [Open an issue](https://github.com/yourusername/opentool/issues) or [contribute a tool](#contributing-a-tool).
+Want a tool added? [Open an issue](https://github.com/Aditya251610/opentool/issues) or [contribute a tool](#contributing-a-tool).
 
 ---
 
