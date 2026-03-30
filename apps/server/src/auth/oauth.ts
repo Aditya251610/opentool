@@ -1,0 +1,153 @@
+import { prisma } from '../db/client'
+import { decrypt } from './encryption'
+import { storeToken, getTokenForUser, revokeToken } from './broker'
+
+// ─────────────────────────────────────────
+// TYPES
+// ─────────────────────────────────────────
+
+export interface OAuthState {
+  userId: string
+  provider: string
+  createdAt: number
+}
+
+export interface OAuthTokenResponse {
+  access_token: string
+  refresh_token?: string
+  expires_in?: number
+  token_type?: string
+  scope?: string
+}
+
+// ─────────────────────────────────────────
+// FUNCTIONS
+// ─────────────────────────────────────────
+
+export function generateState(userId: string, provider: string): string {
+  const state: OAuthState = {
+    userId,
+    provider,
+    createdAt: Date.now(),
+  }
+  const json = JSON.stringify(state)
+  return Buffer.from(json).toString('base64')
+}
+
+export function parseState(state: string): OAuthState | null {
+  try {
+    const decoded = Buffer.from(state, 'base64').toString('utf8')
+    const parsed = JSON.parse(decoded) as OAuthState
+
+    if (Date.now() - parsed.createdAt > 10 * 60 * 1000) {
+      return null
+    }
+
+    return parsed
+  } catch {
+    return null
+  }
+}
+
+export async function generateAuthUrl(
+  provider: string,
+  userId: string
+): Promise<string> {
+  const oauthProvider = await prisma.oAuthProvider.findUnique({
+    where: { provider },
+  })
+
+  if (!oauthProvider) throw new Error(`Unknown provider: ${provider}`)
+  if (!oauthProvider.isEnabled) throw new Error(`Provider ${provider} is not enabled`)
+
+  const state = generateState(userId, provider)
+
+  const params = new URLSearchParams({
+    client_id: oauthProvider.clientId,
+    redirect_uri: `${process.env['SERVER_URL']}/auth/callback/${provider}`,
+    scope: oauthProvider.defaultScopes.join(' '),
+    state,
+    response_type: 'code',
+  })
+
+  return `${oauthProvider.authUrl}?${params.toString()}`
+}
+
+export async function exchangeCode(
+  provider: string,
+  code: string,
+  state: string
+): Promise<{ userId: string }> {
+  const parsedState = parseState(state)
+  if (!parsedState) throw new Error('Invalid or expired state')
+
+  const oauthProvider = await prisma.oAuthProvider.findUnique({
+    where: { provider },
+  })
+  if (!oauthProvider) throw new Error(`Unknown provider: ${provider}`)
+
+  const clientSecret = decrypt(oauthProvider.clientSecretEnc)
+
+  const res = await fetch(oauthProvider.tokenUrl, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: `${process.env['SERVER_URL']}/auth/callback/${provider}`,
+      client_id: oauthProvider.clientId,
+      client_secret: clientSecret,
+    }),
+  })
+
+  if (!res.ok) {
+    throw new Error(`Token exchange failed: ${res.status}`)
+  }
+
+  const data = await res.json() as OAuthTokenResponse
+
+  const expiresAt = data.expires_in
+    ? new Date(Date.now() + data.expires_in * 1000)
+    : undefined
+
+  const scopes = data.scope?.split(' ') ?? oauthProvider.defaultScopes
+
+  await storeToken({
+    userId: parsedState.userId,
+    provider,
+    accessToken: data.access_token,
+    refreshToken: data.refresh_token,
+    expiresAt,
+    scopes,
+  })
+
+  return { userId: parsedState.userId }
+}
+
+export async function revokeOAuthToken(
+  provider: string,
+  userId: string
+): Promise<void> {
+  const oauthProvider = await prisma.oAuthProvider.findUnique({
+    where: { provider },
+  })
+
+  if (!oauthProvider?.revokeUrl) {
+    await revokeToken(userId, provider)
+    return
+  }
+
+  const tokenData = await getTokenForUser(userId, provider)
+  if (!tokenData) return
+
+  await fetch(oauthProvider.revokeUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: tokenData.accessToken }),
+  })
+
+  await revokeToken(userId, provider)
+}
