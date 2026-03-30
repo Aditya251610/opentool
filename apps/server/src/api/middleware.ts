@@ -7,7 +7,7 @@ declare module 'hono' {
   }
 }
 
-export async function apiKeyMiddleware(c: Context, next: Next): Promise<void> {
+export async function apiKeyMiddleware(c: Context, next: Next): Promise<Response | void> {
   const authHeader = c.req.header('Authorization')
 
   if (!authHeader) {

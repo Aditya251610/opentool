@@ -5,7 +5,7 @@ import { generateAuthUrl, exchangeCode, revokeOAuthToken } from '../../auth/oaut
 export const authRoutes = new Hono()
 
 authRoutes.get('/connect/:provider', apiKeyMiddleware, async (c) => {
-  const provider = c.req.param('provider')
+  const provider = c.req.param('provider')!
   const user = c.get('user')
 
   try {
@@ -18,7 +18,7 @@ authRoutes.get('/connect/:provider', apiKeyMiddleware, async (c) => {
 })
 
 authRoutes.get('/callback/:provider', async (c) => {
-  const provider = c.req.param('provider')
+  const provider = c.req.param('provider')!
   const code = c.req.query('code')
   const state = c.req.query('state')
 
@@ -39,7 +39,7 @@ authRoutes.get('/callback/:provider', async (c) => {
 })
 
 authRoutes.delete('/revoke/:provider', apiKeyMiddleware, async (c) => {
-  const provider = c.req.param('provider')
+  const provider = c.req.param('provider')!
   const user = c.get('user')
 
   try {
