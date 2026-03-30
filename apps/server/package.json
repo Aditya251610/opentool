@@ -6,6 +6,9 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc"
   },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "dependencies": {
     "@hono/node-server": "^1.19.12",
     "@modelcontextprotocol/sdk": "^1.0.0",
