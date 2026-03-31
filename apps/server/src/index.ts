@@ -3,6 +3,7 @@ import { logger } from 'hono/logger'
 import { cors } from 'hono/cors'
 import { serve } from '@hono/node-server'
 import { api } from './api'
+import { handleMcpHono } from './mcp/transport'
 
 const app = new Hono()
 
@@ -14,6 +15,8 @@ app.get('/health', (c) => {
 })
 
 app.route('/api', api)
+app.post('/mcp', handleMcpHono)
+app.get('/mcp', (c) => c.json({ error: 'Use POST /mcp to connect' }, 405))
 
 const port = Number(process.env.PORT ?? 3001)
 
