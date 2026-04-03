@@ -44,6 +44,12 @@ export async function executeTool(
       throw new Error(`Not connected to ${tool.provider}. Please authenticate first.`)
     }
     auth.accessToken = tokenData.accessToken
+  } else if (tool.authType === 'api_key') {
+    const tokenData = await refreshTokenIfExpired(userId, tool.provider)
+    if (!tokenData) {
+      throw new Error(`Not connected to ${tool.provider}. Please provide your API key.`)
+    }
+    auth.apiKey = tokenData.accessToken
   }
 
   // get toolDefinition id for audit log

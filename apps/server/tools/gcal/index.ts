@@ -1,0 +1,140 @@
+import { defineTool, z } from '@opentool/tool-schema'
+
+const GCAL_BASE = 'https://www.googleapis.com/calendar/v3'
+
+export const gcalCreateEvent = defineTool({
+  id: 'gcal.create_event',
+  name: 'Create Google Calendar Event',
+  description: 'Creates a new event in Google Calendar',
+  provider: 'gcal',
+  authType: 'oauth2',
+  requiredScopes: ['https://www.googleapis.com/auth/calendar'],
+  inputSchema: z.object({
+    summary: z.string().describe('Event title'),
+    description: z.string().optional().describe('Event description'),
+    start: z.string().describe('Start time in ISO 8601 format (e.g. "2024-03-15T10:00:00-05:00")'),
+    end: z.string().describe('End time in ISO 8601 format'),
+    location: z.string().optional().describe('Event location'),
+    attendees: z.array(z.string()).optional().describe('List of attendee email addresses'),
+    calendar_id: z.string().optional().describe('Calendar ID (default: "primary")'),
+    timezone: z.string().optional().describe('Timezone (e.g. "America/New_York")'),
+  }),
+  execute: async ({ input, auth }) => {
+    const calendarId = input.calendar_id ?? 'primary'
+    const timeZone = input.timezone ?? 'UTC'
+
+    const body: Record<string, unknown> = {
+      summary: input.summary,
+      description: input.description,
+      location: input.location,
+      start: { dateTime: input.start, timeZone },
+      end: { dateTime: input.end, timeZone },
+    }
+
+    if (input.attendees?.length) {
+      body.attendees = input.attendees.map((email) => ({ email }))
+    }
+
+    const res = await fetch(
+      `${GCAL_BASE}/calendars/${encodeURIComponent(calendarId)}/events`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${auth.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      }
+    )
+
+    if (!res.ok) {
+      const error = await res.json() as { error: { message: string } }
+      throw new Error(`Google Calendar API error: ${error.error.message}`)
+    }
+
+    const event = await res.json() as {
+      id: string
+      htmlLink: string
+      summary: string
+      start: { dateTime: string }
+      end: { dateTime: string }
+      status: string
+    }
+
+    return {
+      id: event.id,
+      url: event.htmlLink,
+      summary: event.summary,
+      start: event.start.dateTime,
+      end: event.end.dateTime,
+      status: event.status,
+    }
+  },
+})
+
+export const gcalListEvents = defineTool({
+  id: 'gcal.list_events',
+  name: 'List Google Calendar Events',
+  description: 'Lists upcoming events from Google Calendar',
+  provider: 'gcal',
+  authType: 'oauth2',
+  requiredScopes: ['https://www.googleapis.com/auth/calendar'],
+  inputSchema: z.object({
+    calendar_id: z.string().optional().describe('Calendar ID (default: "primary")'),
+    time_min: z.string().optional().describe('Start of time range in ISO 8601 (default: now)'),
+    time_max: z.string().optional().describe('End of time range in ISO 8601'),
+    max_results: z.number().optional().describe('Maximum events to return (default 10, max 250)'),
+    query: z.string().optional().describe('Free-text search query'),
+  }),
+  execute: async ({ input, auth }) => {
+    const calendarId = input.calendar_id ?? 'primary'
+    const params = new URLSearchParams({
+      singleEvents: 'true',
+      orderBy: 'startTime',
+      maxResults: String(input.max_results ?? 10),
+      timeMin: input.time_min ?? new Date().toISOString(),
+    })
+    if (input.time_max) params.set('timeMax', input.time_max)
+    if (input.query) params.set('q', input.query)
+
+    const res = await fetch(
+      `${GCAL_BASE}/calendars/${encodeURIComponent(calendarId)}/events?${params}`,
+      {
+        headers: { Authorization: `Bearer ${auth.accessToken}` },
+      }
+    )
+
+    if (!res.ok) {
+      const error = await res.json() as { error: { message: string } }
+      throw new Error(`Google Calendar API error: ${error.error.message}`)
+    }
+
+    const data = await res.json() as {
+      items: Array<{
+        id: string
+        htmlLink: string
+        summary: string
+        description?: string
+        location?: string
+        start: { dateTime?: string; date?: string }
+        end: { dateTime?: string; date?: string }
+        status: string
+      }>
+    }
+
+    return {
+      events: (data.items ?? []).map((e) => ({
+        id: e.id,
+        url: e.htmlLink,
+        summary: e.summary,
+        description: e.description,
+        location: e.location,
+        start: e.start.dateTime ?? e.start.date,
+        end: e.end.dateTime ?? e.end.date,
+        status: e.status,
+      })),
+    }
+  },
+})
+
+export const gcalTools = [gcalCreateEvent, gcalListEvents]
