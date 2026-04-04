@@ -51,3 +51,35 @@ userRoutes.get('/me', apiKeyMiddleware, async (c) => {
     return c.json({ error: message }, 500)
   }
 })
+
+userRoutes.patch('/me', apiKeyMiddleware, async (c) => {
+  try {
+    const user = c.get('user')
+    const body = await c.req.json()
+    const { name, email } = body
+
+    const data: Record<string, string> = {}
+    if (name !== undefined) data.name = name
+    if (email !== undefined) {
+      const existing = await prisma.user.findUnique({ where: { email } })
+      if (existing && existing.id !== user.id) {
+        return c.json({ error: 'Email already in use' }, 409)
+      }
+      data.email = email
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data,
+    })
+
+    return c.json({
+      id: updated.id,
+      email: updated.email,
+      name: updated.name,
+    })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    return c.json({ error: message }, 500)
+  }
+})

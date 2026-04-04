@@ -34,28 +34,45 @@ export default function ToolsList() {
 
   async function fetchTools() {
     try {
-      const res = await fetch(`${config.serverUrl}/api/tools`, {
-        headers: config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {},
-        signal: AbortSignal.timeout(5000),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      setTools(data.tools ?? data);
-    } catch {
-      // Fallback: show built-in providers
-      setTools([
-        { id: 'github', name: 'GitHub', provider: 'github', connected: false },
-        { id: 'notion', name: 'Notion', provider: 'notion', connected: false },
-        { id: 'slack', name: 'Slack', provider: 'slack', connected: false },
-        { id: 'linear', name: 'Linear', provider: 'linear', connected: false },
-        { id: 'gmail', name: 'Gmail', provider: 'gmail', connected: false },
-        { id: 'gcal', name: 'Google Calendar', provider: 'gcal', connected: false },
-        { id: 'stripe', name: 'Stripe', provider: 'stripe', connected: false },
-        { id: 'vercel', name: 'Vercel', provider: 'vercel', connected: false },
-        { id: 'resend', name: 'Resend', provider: 'resend', connected: false },
-        { id: 'postgres', name: 'PostgreSQL', provider: 'postgres', connected: false },
+      // Fetch all tools and connected tools in parallel
+      const headers = config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {};
+      const [toolsRes, connectedRes] = await Promise.all([
+        fetch(`${config.serverUrl}/api/tools`, {
+          headers,
+          signal: AbortSignal.timeout(10000),
+        }),
+        config.apiKey
+          ? fetch(`${config.serverUrl}/api/tools/connected`, {
+              headers,
+              signal: AbortSignal.timeout(10000),
+            }).catch(() => null)
+          : Promise.resolve(null),
       ]);
-      setError('Server unreachable — showing built-in providers');
+
+      if (!toolsRes.ok) throw new Error(`HTTP ${toolsRes.status}`);
+      const toolsData = await toolsRes.json();
+      const allTools: Tool[] = (toolsData.tools ?? toolsData).map((t: any) => ({
+        ...t,
+        connected: false,
+      }));
+
+      // Merge connected status from /api/tools/connected
+      if (connectedRes && connectedRes.ok) {
+        const connectedData = await connectedRes.json();
+        const connectedProviders = new Set(
+          (connectedData.connections ?? connectedData).map((c: any) => c.provider)
+        );
+        for (const tool of allTools) {
+          if (connectedProviders.has(tool.provider)) {
+            tool.connected = true;
+          }
+        }
+      }
+
+      setTools(allTools);
+    } catch {
+      setTools([]);
+      setError('Server unreachable — run: status');
     }
   }
 
@@ -67,6 +84,8 @@ export default function ToolsList() {
       </Box>
     );
   }
+
+  const connectedCount = tools.filter(t => t.connected).length;
 
   // Group by provider
   const grouped = new Map<string, Tool[]>();
@@ -86,31 +105,37 @@ export default function ToolsList() {
 
       <Box marginBottom={1}>
         <Text bold color="white">Available Tools</Text>
-        <Text dimColor> ({tools.length} total)</Text>
+        <Text dimColor> ({tools.length} total, </Text>
+        <Text color="green">{connectedCount} connected</Text>
+        <Text dimColor>)</Text>
       </Box>
 
-      {[...grouped.entries()].map(([provider, providerTools]) => (
-        <Box key={provider} flexDirection="column" marginBottom={1}>
-          <Box>
-            <Text color="cyan">{PROVIDER_ICONS[provider] ?? '◆  '}</Text>
-            <Text bold color="white">{provider.charAt(0).toUpperCase() + provider.slice(1)}</Text>
-          </Box>
-          {providerTools.map(t => (
-            <Box key={t.id} paddingLeft={4}>
-              <Text color={t.connected ? 'green' : 'gray'}>
-                {t.connected ? '●' : '○'}
-              </Text>
-              <Text color={t.connected ? 'white' : 'gray'}> {t.name}</Text>
+      {[...grouped.entries()].map(([provider, providerTools]) => {
+        const anyConnected = providerTools.some(t => t.connected);
+        return (
+          <Box key={provider} flexDirection="column" marginBottom={1}>
+            <Box>
+              <Text color={anyConnected ? 'green' : 'cyan'}>{PROVIDER_ICONS[provider] ?? '◆  '}</Text>
+              <Text bold color="white">{provider.charAt(0).toUpperCase() + provider.slice(1)}</Text>
+              {anyConnected && <Text color="green"> ✓</Text>}
             </Box>
-          ))}
-        </Box>
-      ))}
+            {providerTools.map(t => (
+              <Box key={t.id} paddingLeft={4}>
+                <Text color={t.connected ? 'green' : 'gray'}>
+                  {t.connected ? '●' : '○'}
+                </Text>
+                <Text color={t.connected ? 'white' : 'gray'}> {t.name}</Text>
+              </Box>
+            ))}
+          </Box>
+        );
+      })}
 
-      <Box marginTop={1}>
-        <Text dimColor>Run </Text>
-        <Text color="cyan">connect {'<provider>'}</Text>
-        <Text dimColor> to authenticate a tool</Text>
-      </Box>
+      {!config.apiKey && (
+        <Box marginTop={1}>
+          <Text color="yellow">⚠ Not logged in — run: login {'<email>'} {'<password>'} or set-key {'<api-key>'}</Text>
+        </Box>
+      )}
     </Box>
   );
 }

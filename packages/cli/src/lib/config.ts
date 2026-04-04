@@ -12,12 +12,12 @@ const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
 
 export function loadConfig(): OpenToolConfig {
   if (!existsSync(CONFIG_FILE)) {
-    return { serverUrl: 'http://localhost:3000' };
+    return { serverUrl: 'http://localhost:3001' };
   }
   try {
     return JSON.parse(readFileSync(CONFIG_FILE, 'utf-8'));
   } catch {
-    return { serverUrl: 'http://localhost:3000' };
+    return { serverUrl: 'http://localhost:3001' };
   }
 }
 

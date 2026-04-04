@@ -1,0 +1,213 @@
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Plus, Copy, Check, AlertTriangle, Trash2, Loader2 } from 'lucide-react'
+import { Card, Badge } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { fadeUp, stagger } from '@/lib/animation'
+import { useAuth } from '@/lib/auth-context'
+import { api, type ApiKey } from '@/lib/api'
+import { toast } from 'sonner'
+
+export default function KeysPage() {
+  const { apiKey } = useAuth()
+  const [keys, setKeys] = useState<ApiKey[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showCreate, setShowCreate] = useState(false)
+  const [newKeyName, setNewKeyName] = useState('')
+  const [newKeyValue, setNewKeyValue] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [revoking, setRevoking] = useState<string | null>(null)
+
+  const fetchKeys = useCallback(async () => {
+    if (!apiKey) return
+    try {
+      const { keys: serverKeys } = await api.keys.list(apiKey)
+      setKeys(serverKeys)
+    } catch {
+      toast.error('Failed to load API keys')
+    } finally {
+      setLoading(false)
+    }
+  }, [apiKey])
+
+  useEffect(() => { fetchKeys() }, [fetchKeys])
+
+  async function handleCreate() {
+    if (!newKeyName.trim() || !apiKey) return
+    setCreating(true)
+    try {
+      const result = await api.keys.create(apiKey, newKeyName.trim())
+      setNewKeyValue(result.key)
+      setShowCreate(false)
+      setNewKeyName('')
+      toast.success('API key created')
+      // Refresh key list
+      await fetchKeys()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to create key')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  async function handleRevoke(keyId: string) {
+    if (!apiKey) return
+    setRevoking(keyId)
+    try {
+      await api.keys.revoke(apiKey, keyId)
+      setKeys(prev => prev.filter(k => k.id !== keyId))
+      toast.success('API key revoked')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to revoke key')
+    } finally {
+      setRevoking(null)
+    }
+  }
+
+  function handleCopy() {
+    if (!newKeyValue) return
+    navigator.clipboard.writeText(newKeyValue)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <div>
+      {/* Header */}
+      <motion.div variants={fadeUp} initial="initial" animate="animate" className="flex items-center justify-between mb-2">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-[#ededed]">API Keys</h1>
+          <p className="text-[13px] text-[#525252] mt-1 max-w-lg">
+            API keys let your AI agents authenticate with OpenTool&apos;s MCP server. Treat them like passwords — never commit to source control.
+          </p>
+        </div>
+        <Button variant="primary" size="sm" onClick={() => setShowCreate(true)}>
+          <Plus size={14} /> Create Key
+        </Button>
+      </motion.div>
+
+      {/* New Key Banner */}
+      <AnimatePresence>
+        {newKeyValue && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="mt-6"
+          >
+            <Card highlighted>
+              <div className="flex items-center gap-2 text-[#eab308] mb-3">
+                <AlertTriangle size={15} />
+                <span className="text-[13px] font-medium">Save this key — it won&apos;t be shown again</span>
+              </div>
+              <div className="flex items-center gap-2 bg-[#0a0a0a] border border-[#1f1f1f] rounded-lg px-4 py-3">
+                <code className="flex-1 text-[13px] font-mono text-[#22c55e] break-all">{newKeyValue}</code>
+                <button
+                  onClick={handleCopy}
+                  className="shrink-0 p-1.5 rounded-md hover:bg-[#1a1a1a] transition-colors cursor-pointer"
+                >
+                  {copied ? <Check size={14} className="text-[#22c55e]" /> : <Copy size={14} className="text-[#525252]" />}
+                </button>
+              </div>
+              <Button variant="secondary" size="sm" className="mt-3" onClick={() => setNewKeyValue(null)}>
+                I&apos;ve saved my key
+              </Button>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Create Key Modal */}
+      <AnimatePresence>
+        {showCreate && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+              onClick={() => setShowCreate(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[420px] bg-[#111111] border border-[#1f1f1f] rounded-2xl p-6 shadow-2xl"
+            >
+              <h3 className="text-[17px] font-semibold text-[#ededed]">Create API Key</h3>
+              <p className="text-[13px] text-[#525252] mt-1">Give your key a name to identify where it&apos;s used.</p>
+
+              <div className="mt-5">
+                <Input
+                  label="Key Name"
+                  placeholder="e.g. Production, Claude Code, Local Dev"
+                  value={newKeyName}
+                  onChange={(e) => setNewKeyName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+                />
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <Button variant="secondary" className="flex-1" onClick={() => setShowCreate(false)}>Cancel</Button>
+                <Button variant="primary" className="flex-1" loading={creating} onClick={handleCreate}>Create Key</Button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Keys Table */}
+      <motion.div variants={fadeUp} initial="initial" animate="animate" className="mt-8">
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 size={24} className="animate-spin text-[#525252]" />
+          </div>
+        ) : keys.length === 0 && !newKeyValue ? (
+          <Card className="text-center py-16">
+            <div className="text-4xl mb-4">🔑</div>
+            <p className="text-[15px] font-medium text-[#a1a1aa]">No API keys yet</p>
+            <p className="text-[13px] text-[#525252] mt-1">Create your first API key to connect an AI agent.</p>
+            <Button variant="primary" size="sm" className="mt-4" onClick={() => setShowCreate(true)}>
+              <Plus size={14} /> Create API Key
+            </Button>
+          </Card>
+        ) : keys.length > 0 && (
+          <Card className="p-0 overflow-hidden">
+            {/* Table header */}
+            <div className="grid grid-cols-[1fr_140px_160px_120px_80px] gap-4 px-5 py-3 border-b border-[#1f1f1f] bg-[#0a0a0a]">
+              {['Name', 'Prefix', 'Created', 'Last Used', ''].map(h => (
+                <span key={h} className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#525252]">{h}</span>
+              ))}
+            </div>
+            {/* Rows */}
+            <motion.div variants={stagger} initial="initial" animate="animate">
+              {keys.map((key) => (
+                <motion.div
+                  key={key.id}
+                  variants={fadeUp}
+                  className="grid grid-cols-[1fr_140px_160px_120px_80px] gap-4 px-5 py-3.5 border-b border-[#1f1f1f] last:border-b-0 items-center"
+                >
+                  <span className="text-[13px] font-medium text-[#ededed]">{key.name}</span>
+                  <span className="text-[12px] font-mono text-[#a1a1aa] bg-[#0a0a0a] border border-[#1f1f1f] px-2 py-0.5 rounded w-fit">{key.keyPrefix}…</span>
+                  <span className="text-[13px] text-[#525252]">
+                    {new Date(key.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </span>
+                  <span className="text-[12px] text-[#525252]">
+                    {key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Never'}
+                  </span>
+                  <Button variant="danger" size="sm" loading={revoking === key.id} onClick={() => handleRevoke(key.id)}>
+                    <Trash2 size={12} />
+                  </Button>
+                </motion.div>
+              ))}
+            </motion.div>
+          </Card>
+        )}
+      </motion.div>
+    </div>
+  )
+}

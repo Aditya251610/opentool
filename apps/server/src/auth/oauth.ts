@@ -57,14 +57,16 @@ export async function generateAuthUrl(
     where: { provider },
   })
 
-  if (!oauthProvider) throw new Error(`Unknown provider: ${provider}`)
-  if (!oauthProvider.isEnabled) throw new Error(`Provider ${provider} is not enabled`)
+  if (!oauthProvider) throw new Error(`Provider "${provider}" not found. Run: npx tsx prisma/seed.ts`)
+  if (!oauthProvider.isEnabled) throw new Error(`Provider "${provider}" is not enabled — set ${provider.toUpperCase()}_CLIENT_ID and ${provider.toUpperCase()}_CLIENT_SECRET in .env, then re-run the seed.`)
+  if (!oauthProvider.clientId) throw new Error(`Provider "${provider}" is not configured — missing OAuth credentials`)
 
+  const serverUrl = process.env['SERVER_URL'] || 'http://localhost:3001'
   const state = generateState(userId, provider)
 
   const params = new URLSearchParams({
     client_id: oauthProvider.clientId,
-    redirect_uri: `${process.env['SERVER_URL']}/auth/callback/${provider}`,
+    redirect_uri: `${serverUrl}/api/auth/callback/${provider}`,
     scope: oauthProvider.defaultScopes.join(' '),
     state,
     response_type: 'code',
@@ -97,7 +99,7 @@ export async function exchangeCode(
     body: new URLSearchParams({
       grant_type: 'authorization_code',
       code,
-      redirect_uri: `${process.env['SERVER_URL']}/auth/callback/${provider}`,
+      redirect_uri: `${process.env['SERVER_URL'] || 'http://localhost:3001'}/api/auth/callback/${provider}`,
       client_id: oauthProvider.clientId,
       client_secret: clientSecret,
     }),
