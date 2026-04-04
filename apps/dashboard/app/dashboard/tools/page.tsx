@@ -80,9 +80,17 @@ export default function ToolsPage() {
     if (!apiKey) return
     setConnecting(provider)
     try {
-      const { url } = await api.tools.connectUrl(provider, apiKey)
-      // Redirect to OAuth provider
-      window.location.href = url
+      const res = await api.tools.connectUrl(provider, apiKey)
+      if (res.authType === 'API_KEY') {
+        // API key providers connect instantly (no OAuth redirect)
+        await api.tools.connectApiKey(provider, apiKey)
+        setConnectedProviders(prev => new Set([...prev, provider]))
+        toast.success(`${PROVIDERS[provider].name} connected!`)
+        setConnecting(null)
+      } else if (res.url) {
+        // Redirect to OAuth provider
+        window.location.href = res.url
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : `Failed to connect ${PROVIDERS[provider].name}`)
       setConnecting(null)

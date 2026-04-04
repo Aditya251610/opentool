@@ -64,13 +64,21 @@ export async function generateAuthUrl(
   const serverUrl = process.env['SERVER_URL'] || 'http://localhost:3001'
   const state = generateState(userId, provider)
 
+  const scopeSeparator = provider === 'linear' ? ',' : ' '
+
   const params = new URLSearchParams({
     client_id: oauthProvider.clientId,
     redirect_uri: `${serverUrl}/api/auth/callback/${provider}`,
-    scope: oauthProvider.defaultScopes.join(' '),
+    scope: oauthProvider.defaultScopes.join(scopeSeparator),
     state,
     response_type: 'code',
   })
+
+  // Google requires access_type=offline for refresh tokens
+  if (provider === 'gmail' || provider === 'gcal') {
+    params.set('access_type', 'offline')
+    params.set('prompt', 'consent')
+  }
 
   return `${oauthProvider.authUrl}?${params.toString()}`
 }
@@ -90,23 +98,41 @@ export async function exchangeCode(
 
   const clientSecret = decrypt(oauthProvider.clientSecretEnc)
 
+  const redirectUri = `${process.env['SERVER_URL'] || 'http://localhost:3001'}/api/auth/callback/${provider}`
+
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+    'Content-Type': 'application/x-www-form-urlencoded',
+  }
+
+  const bodyParams: Record<string, string> = {
+    grant_type: 'authorization_code',
+    code,
+  }
+
+  if (provider === 'notion') {
+    // Notion: Basic Auth with client_id:client_secret, include redirect_uri in body
+    headers['Authorization'] = `Basic ${Buffer.from(`${oauthProvider.clientId}:${clientSecret}`).toString('base64')}`
+    bodyParams['redirect_uri'] = redirectUri
+  } else if (provider === 'stripe') {
+    // Stripe: Basic Auth with secret_key as username (empty password), no redirect_uri
+    headers['Authorization'] = `Basic ${Buffer.from(`${clientSecret}:`).toString('base64')}`
+  } else {
+    // Default: client credentials in body
+    bodyParams['client_id'] = oauthProvider.clientId
+    bodyParams['client_secret'] = clientSecret
+    bodyParams['redirect_uri'] = redirectUri
+  }
+
   const res = await fetch(oauthProvider.tokenUrl, {
     method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: `${process.env['SERVER_URL'] || 'http://localhost:3001'}/api/auth/callback/${provider}`,
-      client_id: oauthProvider.clientId,
-      client_secret: clientSecret,
-    }),
+    headers,
+    body: new URLSearchParams(bodyParams),
   })
 
   if (!res.ok) {
-    throw new Error(`Token exchange failed: ${res.status}`)
+    const errBody = await res.text().catch(() => '')
+    throw new Error(`Token exchange failed: ${res.status} ${errBody}`)
   }
 
   const data = await res.json() as OAuthTokenResponse

@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { apiKeyMiddleware } from '../middleware'
 import { generateAuthUrl, exchangeCode, revokeOAuthToken } from '../../auth/oauth'
+import { storeToken } from '../../auth/broker'
 import bcrypt from 'bcryptjs'
 import { prisma } from '../../db/client'
 import { generateApiKey } from '../../auth/encryption'
@@ -97,6 +98,12 @@ authRoutes.get('/connect-url/:provider', apiKeyMiddleware, async (c) => {
   const provider = c.req.param('provider')!
   const user = c.get('user')
 
+  // Check if this is an API_KEY provider
+  const oauthProvider = await prisma.oAuthProvider.findUnique({ where: { provider } })
+  if (oauthProvider?.authType === 'API_KEY') {
+    return c.json({ authType: 'API_KEY', provider })
+  }
+
   try {
     const url = await generateAuthUrl(provider, user.id)
     return c.json({ url })
@@ -105,6 +112,37 @@ authRoutes.get('/connect-url/:provider', apiKeyMiddleware, async (c) => {
     const status = message.includes('not configured') || message.includes('not enabled') ? 501 : 400
     return c.json({ error: message }, status)
   }
+})
+
+// API key-based provider connection (Resend, PostgreSQL, etc.)
+authRoutes.post('/connect-api-key/:provider', apiKeyMiddleware, async (c) => {
+  const provider = c.req.param('provider')!
+  const user = c.get('user')
+
+  const oauthProvider = await prisma.oAuthProvider.findUnique({ where: { provider } })
+  if (!oauthProvider || oauthProvider.authType !== 'API_KEY') {
+    return c.json({ error: `Provider "${provider}" does not support API key auth` }, 400)
+  }
+
+  // Map provider to its env var
+  const apiKeyEnvMap: Record<string, string> = {
+    resend: 'RESEND_API_KEY',
+    postgres: 'POSTGRES_CONNECTION_STRING',
+  }
+  const envVar = apiKeyEnvMap[provider]
+  const apiKey = envVar ? process.env[envVar] : undefined
+  if (!apiKey) {
+    return c.json({ error: `No API key configured for ${provider}` }, 501)
+  }
+
+  await storeToken({
+    userId: user.id,
+    provider,
+    accessToken: apiKey,
+    scopes: oauthProvider.defaultScopes,
+  })
+
+  return c.json({ success: true, provider })
 })
 
 authRoutes.get('/connect/:provider', apiKeyMiddleware, async (c) => {

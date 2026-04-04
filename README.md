@@ -141,7 +141,28 @@ Full guide: [docs/contributing-a-tool.md](docs/contributing-a-tool.md)
 - **Server** — Hono, TypeScript, Prisma, Postgres, Redis
 - **Dashboard** — Next.js 14, Auth.js
 - **Protocol** — MCP (Model Context Protocol) TypeScript SDK
+- **SDKs** — TypeScript + Python
 - **Monorepo** — Turborepo + pnpm
+
+---
+
+## Documentation
+
+Full docs at [`docs/`](docs/README.md):
+
+- [Quickstart](docs/quickstart.md) — Zero to connected tools in 5 minutes
+- [Self-Hosting](docs/self-hosting.md) — Docker or manual setup
+- [Configuration](docs/configuration.md) — Every env var and OAuth setup
+- [Architecture](docs/architecture.md) — How it all fits together
+- [Authentication](docs/authentication.md) — OAuth flows and token management
+- [Tools](docs/tools.md) — All 10 providers, 23 actions
+- [MCP Integration](docs/mcp-integration.md) — Claude, Cursor, any MCP client
+- [SDK Reference](docs/sdk-reference.md) — TypeScript and Python
+- [CLI Reference](docs/cli-reference.md) — Terminal tool management
+- [API Reference](docs/api-reference.md) — Every REST endpoint
+- [Contributing a Tool](docs/contributing-a-tool.md) — Add a provider in ~100 lines
+- [Security](docs/security.md) — Encryption, tokens, threat model
+- [Troubleshooting](docs/troubleshooting.md) — Common issues and fixes
 
 ---
 
@@ -151,7 +172,8 @@ Full guide: [docs/contributing-a-tool.md](docs/contributing-a-tool.md)
 - [x] OAuth auth broker
 - [x] Dashboard
 - [x] CLI
-- [ ] Python SDK
+- [x] TypeScript SDK
+- [x] Python SDK
 - [ ] Team/org support
 - [ ] Tool marketplace
 - [ ] Usage analytics

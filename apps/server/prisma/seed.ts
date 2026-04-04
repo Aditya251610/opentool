@@ -125,10 +125,10 @@ async function main() {
       tokenUrl: '',
       revokeUrl: null,
       clientId: '',
-      clientSecretEnc: '',
+      clientSecretEnc: encryptIfSet(process.env.RESEND_API_KEY),
       defaultScopes: [],
       authType: AuthType.API_KEY,
-      isEnabled: false,
+      isEnabled: !!process.env.RESEND_API_KEY,
     },
     {
       provider: 'postgres',
@@ -137,10 +137,10 @@ async function main() {
       tokenUrl: '',
       revokeUrl: null,
       clientId: '',
-      clientSecretEnc: '',
+      clientSecretEnc: encryptIfSet(process.env.POSTGRES_CONNECTION_STRING),
       defaultScopes: [],
       authType: AuthType.API_KEY,
-      isEnabled: false,
+      isEnabled: !!process.env.POSTGRES_CONNECTION_STRING,
     },
   ]
 

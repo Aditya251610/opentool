@@ -52,7 +52,12 @@ export const api = {
         headers: authHeaders(apiKey),
       }),
     connectUrl: (provider: string, apiKey: string) =>
-      request<{ url: string }>(`/api/auth/connect-url/${provider}`, {
+      request<{ url?: string; authType?: string; provider?: string }>(`/api/auth/connect-url/${provider}`, {
+        headers: authHeaders(apiKey),
+      }),
+    connectApiKey: (provider: string, apiKey: string) =>
+      request<{ success: boolean; provider: string }>(`/api/auth/connect-api-key/${provider}`, {
+        method: 'POST',
         headers: authHeaders(apiKey),
       }),
     disconnect: (provider: string, apiKey: string) =>
