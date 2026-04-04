@@ -16,11 +16,12 @@ export const vercelListDeployments = defineTool({
     target: z.enum(['production', 'preview']).optional().describe('Filter by deployment target'),
   }),
   execute: async ({ input, auth }) => {
+    const teamId = input.teamId || (auth.metadata?.team_id as string | undefined)
     const params = new URLSearchParams({
       projectId: input.projectId,
       limit: String(input.limit ?? 10),
     })
-    if (input.teamId) params.set('teamId', input.teamId)
+    if (teamId) params.set('teamId', teamId)
     if (input.target) params.set('target', input.target)
 
     const res = await fetch(`${VERCEL_BASE}/v6/deployments?${params}`, {
@@ -72,8 +73,9 @@ export const vercelGetDeployment = defineTool({
     teamId: z.string().optional().describe('Team ID or slug'),
   }),
   execute: async ({ input, auth }) => {
+    const teamId = input.teamId || (auth.metadata?.team_id as string | undefined)
     const params = new URLSearchParams()
-    if (input.teamId) params.set('teamId', input.teamId)
+    if (teamId) params.set('teamId', teamId)
     const qs = params.toString() ? `?${params}` : ''
 
     const res = await fetch(`${VERCEL_BASE}/v13/deployments/${input.idOrUrl}${qs}`, {

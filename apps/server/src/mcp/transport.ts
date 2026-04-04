@@ -15,14 +15,35 @@ export async function handleMcpHono(c: Context): Promise<Response> {
   try {
     const mcpServer = await createMcpServer(parts[1])
 
-    // Use in-memory transport instead of HTTP transport
-    // This handles the JSON-RPC directly without needing Node IncomingMessage
     const { InMemoryTransport } = await import('@modelcontextprotocol/sdk/inMemory.js')
 
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
     await mcpServer.connect(serverTransport)
 
     const body = await c.req.json()
+
+    // Auto-initialize if the request isn't an initialize call
+    if (body.method !== 'initialize') {
+      await new Promise<void>((resolve) => {
+        const origHandler = clientTransport.onmessage
+        clientTransport.onmessage = () => {
+          clientTransport.onmessage = origHandler
+          // Send initialized notification
+          clientTransport.send({ jsonrpc: '2.0', method: 'notifications/initialized' })
+          resolve()
+        }
+        clientTransport.send({
+          jsonrpc: '2.0',
+          id: '_init',
+          method: 'initialize',
+          params: {
+            protocolVersion: '2024-11-05',
+            capabilities: {},
+            clientInfo: { name: 'opentool-http', version: '1.0.0' },
+          },
+        })
+      })
+    }
 
     return new Promise((resolve) => {
       clientTransport.onmessage = (message) => {

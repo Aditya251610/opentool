@@ -18,6 +18,9 @@ export interface OAuthTokenResponse {
   expires_in?: number
   token_type?: string
   scope?: string
+  team_id?: string            // Vercel integration
+  installation_id?: string    // Vercel integration
+  [key: string]: unknown      // other provider-specific fields
 }
 
 // ─────────────────────────────────────────
@@ -64,7 +67,7 @@ export async function generateAuthUrl(
   const serverUrl = process.env['SERVER_URL'] || 'http://localhost:3001'
   const state = generateState(userId, provider)
 
-  const scopeSeparator = provider === 'linear' ? ',' : ' '
+  const scopeSeparator = (provider === 'linear' || provider === 'slack') ? ',' : ' '
 
   const params = new URLSearchParams({
     client_id: oauthProvider.clientId,
@@ -143,6 +146,11 @@ export async function exchangeCode(
 
   const scopes = data.scope?.split(' ') ?? oauthProvider.defaultScopes
 
+  // Capture provider-specific metadata (e.g. Vercel team_id)
+  const rawMetadata: Record<string, unknown> = {}
+  if (data.team_id) rawMetadata.team_id = data.team_id
+  if (data.installation_id) rawMetadata.installation_id = data.installation_id
+
   await storeToken({
     userId: parsedState.userId,
     provider,
@@ -150,6 +158,7 @@ export async function exchangeCode(
     refreshToken: data.refresh_token,
     expiresAt,
     scopes,
+    ...(Object.keys(rawMetadata).length > 0 && { rawMetadata }),
   })
 
   return { userId: parsedState.userId }

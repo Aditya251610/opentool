@@ -36,6 +36,7 @@ export interface StoreTokenParams {
   refreshToken?: string
   expiresAt?: Date
   scopes: string[]
+  rawMetadata?: Record<string, unknown>
 }
 
 // ─────────────────────────────────────────
@@ -162,6 +163,7 @@ export async function storeToken(params: StoreTokenParams): Promise<void> {
       refreshTokenEnc,
       accessTokenExpiry: params.expiresAt ?? null,
       scopes: params.scopes,
+      ...(params.rawMetadata && { rawMetadata: params.rawMetadata }),
     },
     create: {
       connectionId: connection.id,
@@ -169,6 +171,7 @@ export async function storeToken(params: StoreTokenParams): Promise<void> {
       refreshTokenEnc,
       accessTokenExpiry: params.expiresAt ?? null,
       scopes: params.scopes,
+      ...(params.rawMetadata && { rawMetadata: params.rawMetadata }),
     },
   })
 
@@ -194,8 +197,8 @@ export async function refreshTokenIfExpired(
 
   const { tokenStore } = connection
 
-  // not expired — return current token
-  if (tokenStore.accessTokenExpiry && tokenStore.accessTokenExpiry > new Date()) {
+  // no expiry set (e.g. GitHub) or not yet expired — return current token
+  if (!tokenStore.accessTokenExpiry || tokenStore.accessTokenExpiry > new Date()) {
     return getTokenForUser(userId, provider)
   }
 

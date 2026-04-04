@@ -20,7 +20,7 @@ export async function createMcpServer(apiKey: string): Promise<McpServer> {
     server.tool(
       tool.id,
       tool.description,
-      tool.inputJsonSchema,
+      tool.inputZodShape,
       async (input: Record<string, unknown>) => {
         const result = await executeTool(tool.id, input, user.id)
         return {

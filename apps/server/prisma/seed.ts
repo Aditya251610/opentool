@@ -49,7 +49,7 @@ async function main() {
       revokeUrl: 'https://slack.com/api/auth.revoke',
       clientId: process.env.SLACK_CLIENT_ID ?? '',
       clientSecretEnc: encryptIfSet(process.env.SLACK_CLIENT_SECRET),
-      defaultScopes: ['channels:read', 'chat:write', 'users:read'],
+      defaultScopes: ['channels:read', 'channels:history', 'groups:history', 'channels:join', 'chat:write', 'users:read'],
       authType: AuthType.OAUTH2,
       isEnabled: !!(process.env.SLACK_CLIENT_ID && process.env.SLACK_CLIENT_SECRET),
     },

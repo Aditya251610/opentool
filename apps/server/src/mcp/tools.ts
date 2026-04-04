@@ -8,6 +8,7 @@ export interface ConnectedTool {
   id: string
   description: string
   inputJsonSchema: Record<string, unknown>
+  inputZodShape: Record<string, unknown>
 }
 
 export async function getConnectedTools(userId: string): Promise<ConnectedTool[]> {
@@ -25,6 +26,7 @@ export async function getConnectedTools(userId: string): Promise<ConnectedTool[]
       id: t.id,
       description: t.description,
       inputJsonSchema: t.inputJsonSchema,
+      inputZodShape: (t.inputSchema as any)._def.shape(),
     }))
 }
 
@@ -44,6 +46,15 @@ export async function executeTool(
       throw new Error(`Not connected to ${tool.provider}. Please authenticate first.`)
     }
     auth.accessToken = tokenData.accessToken
+
+    // Fetch provider-specific metadata (e.g. Vercel team_id)
+    const conn = await prisma.toolConnection.findFirst({
+      where: { userId, provider: { provider: tool.provider } },
+      include: { tokenStore: { select: { rawMetadata: true } } },
+    })
+    if (conn?.tokenStore?.rawMetadata) {
+      auth.metadata = conn.tokenStore.rawMetadata as Record<string, unknown>
+    }
   } else if (tool.authType === 'api_key') {
     const tokenData = await refreshTokenIfExpired(userId, tool.provider)
     if (!tokenData) {
