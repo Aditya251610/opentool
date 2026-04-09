@@ -16,7 +16,7 @@ const CONFIG_SNIPPET = `{
   "mcpServers": {
     "opentool": {
       "command": "npx",
-      "args": ["@opentool/cli", "mcp", "start"],
+      "args": ["@opentool-ts/cli", "mcp", "start"],
       "env": {
         "OPENTOOL_API_KEY": "ot_your-key-here"
       }

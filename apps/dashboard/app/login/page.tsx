@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input'
 const ease: [number, number, number, number] = [0.23, 1, 0.32, 1]
 
 const TERMINAL_LINES = [
-  { text: '$ npx @opentool/cli mcp start', color: '#22c55e', delay: 0.3 },
+  { text: '$ npx @opentool-ts/cli mcp start', color: '#22c55e', delay: 0.3 },
   { text: '→ Loading tools...', color: 'rgba(255,255,255,0.3)', delay: 0.8 },
   { text: '✓ github       (5 tools)', color: 'rgba(255,255,255,0.55)', delay: 1.3 },
   { text: '✓ notion        (3 tools)', color: 'rgba(255,255,255,0.55)', delay: 1.6 },

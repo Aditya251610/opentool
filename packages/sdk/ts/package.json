@@ -1,5 +1,5 @@
 {
-  "name": "@opentool/sdk",
+  "name": "@opentool-ts/sdk",
   "version": "0.1.0",
   "description": "TypeScript SDK for the OpenTool MCP server — manage tools, auth, and API keys programmatically.",
   "main": "dist/index.js",
@@ -30,7 +30,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/opentool.git",
+    "url": "https://github.com/Aditya251610/opentool.git",
     "directory": "packages/sdk/ts"
   },
   "publishConfig": {

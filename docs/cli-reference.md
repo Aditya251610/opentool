@@ -2,7 +2,7 @@
 
 > Manage your tools without leaving the terminal. Because some of us live here.
 
-The OpenTool CLI (`@opentool/cli`) is an interactive terminal application built with Ink (React for terminals). It lets you manage tools, execute actions, and configure your OpenTool instance — all from the command line.
+The OpenTool CLI (`@opentool-ts/cli`) is an interactive terminal application built with Ink (React for terminals). It lets you manage tools, execute actions, and configure your OpenTool instance — all from the command line.
 
 ---
 
@@ -10,10 +10,10 @@ The OpenTool CLI (`@opentool/cli`) is an interactive terminal application built 
 
 ```bash
 # Global install
-npm install -g @opentool/cli
+npm install -g @opentool-ts/cli
 
 # Or run directly with npx
-npx @opentool/cli
+npx @opentool-ts/cli
 ```
 
 ---
@@ -129,7 +129,7 @@ Once authorized, return here.
 The CLI also serves as an MCP transport for AI agents:
 
 ```bash
-OPENTOOL_API_KEY=ot_your_key npx @opentool/cli mcp start
+OPENTOOL_API_KEY=ot_your_key npx @opentool-ts/cli mcp start
 ```
 
 This starts a stdio-based MCP server that AI clients (Claude Desktop, Cursor, etc.) can connect to. See [MCP Integration](./mcp-integration.md) for setup instructions.

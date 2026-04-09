@@ -11,17 +11,17 @@ OpenTool ships with official SDKs for TypeScript and Python. Both provide typed,
 ### Installation
 
 ```bash
-npm install @opentool/sdk
+npm install @opentool-ts/sdk
 # or
-pnpm add @opentool/sdk
+pnpm add @opentool-ts/sdk
 # or
-yarn add @opentool/sdk
+yarn add @opentool-ts/sdk
 ```
 
 ### Quick Start
 
 ```typescript
-import { OpenTool } from '@opentool/sdk'
+import { OpenTool } from '@opentool-ts/sdk'
 
 const client = new OpenTool({
   apiKey: 'ot_your_api_key',
@@ -121,7 +121,7 @@ const status = await client.health()
 ### Error Handling
 
 ```typescript
-import { OpenToolError, AuthenticationError, NotFoundError } from '@opentool/sdk'
+import { OpenToolError, AuthenticationError, NotFoundError } from '@opentool-ts/sdk'
 
 try {
   await client.tools.execute('github.create_issue', { ... })

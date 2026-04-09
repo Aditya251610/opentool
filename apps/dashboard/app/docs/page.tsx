@@ -351,7 +351,7 @@ GOOGLE_CLIENT_SECRET=""
               </div>
 
               <Code className="mt-6">{`# Run the CLI
-npx @opentool/cli
+npx @opentool-ts/cli
 
 # Or from the monorepo
 cd packages/cli && pnpm dev`}</Code>
@@ -391,7 +391,7 @@ cd packages/cli && pnpm dev`}</Code>
   "mcpServers": {
     "opentool": {
       "command": "npx",
-      "args": ["@opentool/cli", "mcp", "start"],
+      "args": ["@opentool-ts/cli", "mcp", "start"],
       "env": {
         "OPENTOOL_API_KEY": "ot_your_api_key_here"
       }
@@ -401,7 +401,7 @@ cd packages/cli && pnpm dev`}</Code>
 
               <h3 className="text-[20px] font-semibold text-white mt-8">Claude Code</h3>
               <Code className="mt-4">{`# Initialize and add to Claude Code
-npx @opentool/cli init
+npx @opentool-ts/cli init
 claude mcp add opentool`}</Code>
 
               <h3 className="text-[20px] font-semibold text-white mt-8">Cursor</h3>
@@ -410,7 +410,7 @@ claude mcp add opentool`}</Code>
   "mcpServers": {
     "opentool": {
       "command": "npx",
-      "args": ["@opentool/cli", "mcp", "start"],
+      "args": ["@opentool-ts/cli", "mcp", "start"],
       "env": {
         "OPENTOOL_API_KEY": "ot_your_api_key_here"
       }

@@ -149,7 +149,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
   "mcpServers": {
     "opentool": {
       "command": "npx",
-      "args": ["@opentool/cli", "mcp", "start"],
+      "args": ["@opentool-ts/cli", "mcp", "start"],
       "env": {
         "OPENTOOL_API_KEY": "your-api-key-here"
       }
@@ -161,7 +161,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 ### Claude Code
 
 ```bash
-npx @opentool/cli init
+npx @opentool-ts/cli init
 claude mcp add opentool
 ```
 

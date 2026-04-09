@@ -11,7 +11,7 @@ OpenTool is a monorepo with a clean separation of concerns. Here's the full pict
 ```
 ┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
 │   AI Agent       │     │   Dashboard       │     │   CLI            │
-│ (Claude, Cursor, │     │ (Next.js :3000)   │     │ (@opentool/cli)  │
+│ (Claude, Cursor, │     │ (Next.js :3000)   │     │ (@opentool-ts/cli)  │
 │  any MCP client) │     │                   │     │                  │
 └────────┬─────────┘     └────────┬──────────┘     └────────┬─────────┘
          │ MCP (JSON-RPC)         │ REST API                │ REST API
@@ -82,7 +82,7 @@ opentool/
 │
 ├── packages/
 │   ├── sdk/
-│   │   ├── ts/                  # TypeScript SDK (@opentool/sdk)
+│   │   ├── ts/                  # TypeScript SDK (@opentool-ts/sdk)
 │   │   └── python/              # Python SDK (opentool)
 │   ├── tool-schema/             # Shared tool definition types
 │   └── cli/                     # Interactive terminal UI (Ink)

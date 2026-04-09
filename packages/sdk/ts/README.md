@@ -1,17 +1,17 @@
-# @opentool/sdk
+# @opentool-ts/sdk
 
 TypeScript SDK for the OpenTool MCP server. Manage tools, auth, and API keys programmatically.
 
 ## Install
 
 ```bash
-npm install @opentool/sdk
+npm install @opentool-ts/sdk
 ```
 
 ## Quick Start
 
 ```ts
-import { OpenTool } from '@opentool/sdk'
+import { OpenTool } from '@opentool-ts/sdk'
 
 const client = new OpenTool({
   baseUrl: 'http://localhost:3001',
@@ -105,7 +105,7 @@ const result = await client.tools.execute('slack.send_message', {
 ## Error Handling
 
 ```ts
-import { OpenTool, OpenToolError, AuthenticationError } from '@opentool/sdk'
+import { OpenTool, OpenToolError, AuthenticationError } from '@opentool-ts/sdk'
 
 try {
   await client.tools.connected()

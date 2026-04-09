@@ -35,7 +35,7 @@ For Claude Desktop, add to `claude_desktop_config.json`:
   "mcpServers": {
     "opentool": {
       "command": "npx",
-      "args": ["@opentool/cli", "mcp", "start"],
+      "args": ["@opentool-ts/cli", "mcp", "start"],
       "env": {
         "OPENTOOL_API_KEY": "your-api-key-here"
       }
@@ -46,7 +46,7 @@ For Claude Desktop, add to `claude_desktop_config.json`:
 
 For Claude Code:
 ```bash
-npx @opentool/cli init
+npx @opentool-ts/cli init
 claude mcp add opentool
 ```
 
@@ -111,9 +111,9 @@ opentool/
 │   │   └── tools/       # Tool definitions
 │   └── dashboard/       # Next.js dashboard
 ├── packages/
-│   ├── sdk/             # @opentool/sdk — TypeScript SDK
+│   ├── sdk/             # @opentool-ts/sdk — TypeScript SDK
 │   ├── tool-schema/     # Shared tool definition types
-│   └── cli/             # @opentool/cli
+│   └── cli/             # @opentool-ts/cli
 └── docker-compose.yml
 ```
 

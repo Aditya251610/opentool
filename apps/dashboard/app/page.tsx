@@ -14,7 +14,7 @@ import {
 const ease: [number, number, number, number] = [0.23, 1, 0.32, 1]
 
 const TERMINAL_LINES = [
-  { text: '$ npx @opentool/cli mcp start', color: '#22c55e', delay: 0.6 },
+  { text: '$ npx @opentool-ts/cli mcp start', color: '#22c55e', delay: 0.6 },
   { text: '→ Loading tools...', color: 'rgba(255,255,255,0.3)', delay: 1.2 },
   { text: '✓ github        5 tools', color: 'rgba(255,255,255,0.55)', delay: 1.7 },
   { text: '✓ notion         3 tools', color: 'rgba(255,255,255,0.55)', delay: 2.0 },
@@ -582,7 +582,7 @@ export default function LandingPage() {
   "mcpServers": {
     "opentool": {
       "command": "npx",
-      "args": ["@opentool/cli", "mcp", "start"],
+      "args": ["@opentool-ts/cli", "mcp", "start"],
       "env": { "OPENTOOL_API_KEY": "ot_..." }
     }
   }
@@ -592,12 +592,12 @@ export default function LandingPage() {
   "mcpServers": {
     "opentool": {
       "command": "npx",
-      "args": ["@opentool/cli", "mcp", "start"],
+      "args": ["@opentool-ts/cli", "mcp", "start"],
       "env": { "OPENTOOL_API_KEY": "ot_..." }
     }
   }
 }`}
-                  {configTab === 'cli' && `npx @opentool/cli init
+                  {configTab === 'cli' && `npx @opentool-ts/cli init
 claude mcp add opentool`}
                 </motion.pre>
               </AnimatePresence>

@@ -10,7 +10,7 @@ import type { OpenToolConfig, HealthStatus } from './types'
  *
  * @example
  * ```ts
- * import { OpenTool } from '@opentool/sdk'
+ * import { OpenTool } from '@opentool-ts/sdk'
  *
  * const client = new OpenTool({
  *   baseUrl: 'http://localhost:3001',

@@ -136,10 +136,10 @@ The connected tools list is fetched on page load.
 **Fix:**
 ```bash
 # Install globally
-npm install -g @opentool/cli
+npm install -g @opentool-ts/cli
 
 # Or use npx
-npx @opentool/cli
+npx @opentool-ts/cli
 ```
 
 ### "Unable to connect to server"

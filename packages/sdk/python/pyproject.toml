@@ -29,9 +29,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/your-org/opentool"
-Repository = "https://github.com/your-org/opentool"
-Documentation = "https://github.com/your-org/opentool"
+Homepage = "https://github.com/Aditya251610/opentool"
+Repository = "https://github.com/Aditya251610/opentool"
+Documentation = "https://github.com/Aditya251610/opentool"
 
 [project.optional-dependencies]
 dev = [

@@ -27,7 +27,7 @@ Add this to your Claude Desktop config:
   "mcpServers": {
     "opentool": {
       "command": "npx",
-      "args": ["@opentool/cli", "mcp", "start"],
+      "args": ["@opentool-ts/cli", "mcp", "start"],
       "env": {
         "OPENTOOL_API_KEY": "ot_your_api_key_here"
       }
@@ -40,7 +40,7 @@ Restart Claude Desktop. Your connected tools appear automatically.
 
 ### How it works
 
-1. Claude Desktop spawns `@opentool/cli mcp start` as a subprocess
+1. Claude Desktop spawns `@opentool-ts/cli mcp start` as a subprocess
 2. The CLI connects to your OpenTool server via stdio transport
 3. Claude discovers all your connected tools (GitHub, Slack, etc.)
 4. When Claude wants to use a tool, it sends a JSON-RPC request through the CLI
@@ -52,10 +52,10 @@ Restart Claude Desktop. Your connected tools appear automatically.
 
 ```bash
 # One-time setup
-npx @opentool/cli init
+npx @opentool-ts/cli init
 
 # Add as MCP server
-claude mcp add opentool -- npx @opentool/cli mcp start
+claude mcp add opentool -- npx @opentool-ts/cli mcp start
 ```
 
 ---
@@ -153,7 +153,7 @@ Cursor supports MCP servers. Add to your Cursor settings:
   "mcpServers": {
     "opentool": {
       "command": "npx",
-      "args": ["@opentool/cli", "mcp", "start"],
+      "args": ["@opentool-ts/cli", "mcp", "start"],
       "env": {
         "OPENTOOL_API_KEY": "ot_your_api_key_here"
       }
@@ -168,7 +168,7 @@ Cursor supports MCP servers. Add to your Cursor settings:
 
 Any client that supports the MCP protocol can connect. The pattern is the same:
 
-1. **Stdio transport:** Run `npx @opentool/cli mcp start` with `OPENTOOL_API_KEY` env var
+1. **Stdio transport:** Run `npx @opentool-ts/cli mcp start` with `OPENTOOL_API_KEY` env var
 2. **HTTP transport:** POST to `/mcp` with Bearer auth
 
 ---
