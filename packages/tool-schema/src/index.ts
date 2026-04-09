@@ -6,6 +6,7 @@ export interface AuthContext {
   accessToken?: string
   apiKey?: string
   userId: string
+  metadata?: Record<string, unknown>   // provider-specific (e.g. Vercel team_id)
 }
 
 export interface ToolExecuteParams<TInput> {

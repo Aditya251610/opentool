@@ -1,15 +1,17 @@
 import { prisma } from '../db/client'
 import { encrypt, decrypt, hashApiKey } from './encryption'
 import Redis from 'ioredis'
-import { ConnectionStatus } from '@prisma/client'
+import { ConnectionStatus, Prisma } from '@prisma/client'
+import { config } from '../config'
+import { logger } from '../logger'
+import { CACHE_KEY_PREFIX, TOKEN_CACHE_DEFAULT_TTL } from '../constants'
+import { ProviderNotFoundError } from '../errors'
+import crypto from 'crypto'
 
-const redis = new Redis(process.env['REDIS_URL'] ?? 'redis://localhost:6379')
-
-const CACHE_PREFIX = 'token'
-const DEFAULT_TTL = 3600
+const redis = new Redis(config.redisUrl)
 
 function cacheKey(userId: string, provider: string): string {
-  return `${CACHE_PREFIX}:${userId}:${provider}`
+  return `${CACHE_KEY_PREFIX}:${userId}:${provider}`
 }
 
 // ─────────────────────────────────────────
@@ -43,22 +45,38 @@ export interface StoreTokenParams {
 // FUNCTIONS
 // ─────────────────────────────────────────
 
+/** Resolves a raw API key to the owning user, or returns null if invalid/revoked/expired. */
 export async function resolveApiKey(rawKey: string): Promise<ResolvedUser | null> {
-  const keyHash = hashApiKey(rawKey)
+  const computedHash = hashApiKey(rawKey)
 
   const apiKey = await prisma.apiKey.findUnique({
-    where: { keyHash },
+    where: { keyHash: computedHash },
     include: { user: true },
   })
 
-  // not found, revoked, or expired
+  // Timing-safe comparison to prevent timing attacks
+  // Always perform the comparison even if the key was not found
   if (!apiKey) return null
+
+  let isValid = false
+  try {
+    isValid = crypto.timingSafeEqual(
+      Buffer.from(apiKey.keyHash),
+      Buffer.from(computedHash)
+    )
+  } catch {
+    // timingSafeEqual throws if buffers are different lengths, treat as invalid
+    isValid = false
+  }
+
+  // not found, hash mismatch, revoked, or expired
+  if (!isValid) return null
   if (apiKey.revokedAt) return null
   if (apiKey.expiresAt && apiKey.expiresAt < new Date()) return null
 
   // update lastUsedAt — fire and forget, don't block the response
   prisma.apiKey.update({
-    where: { keyHash },
+    where: { keyHash: computedHash },
     data: { lastUsedAt: new Date() },
   }).catch(() => {})
 
@@ -69,18 +87,23 @@ export async function resolveApiKey(rawKey: string): Promise<ResolvedUser | null
   }
 }
 
+/** Retrieves the decrypted token for a user + provider, checking Redis cache then DB. */
 export async function getTokenForUser(
   userId: string,
   provider: string
 ): Promise<TokenData | null> {
   // check Redis cache first
-  const cached = await redis.get(cacheKey(userId, provider))
-  if (cached) {
-    const parsed = JSON.parse(cached)
-    return {
-      ...parsed,
-      expiresAt: parsed.expiresAt ? new Date(parsed.expiresAt) : null,
+  try {
+    const cached = await redis.get(cacheKey(userId, provider))
+    if (cached) {
+      const parsed = JSON.parse(cached)
+      return {
+        ...parsed,
+        expiresAt: parsed.expiresAt ? new Date(parsed.expiresAt) : null,
+      }
     }
+  } catch (err) {
+    logger.warn('Redis cache unavailable, falling through to DB', { provider })
   }
 
   // cache miss — hit DB
@@ -114,22 +137,27 @@ export async function getTokenForUser(
   // cache with TTL
   const ttl = tokenStore.accessTokenExpiry
     ? Math.floor((tokenStore.accessTokenExpiry.getTime() - Date.now()) / 1000)
-    : DEFAULT_TTL
+    : TOKEN_CACHE_DEFAULT_TTL
 
   if (ttl > 0) {
-    await redis.set(cacheKey(userId, provider), JSON.stringify(tokenData), 'EX', ttl)
+    try {
+      await redis.set(cacheKey(userId, provider), JSON.stringify(tokenData), 'EX', ttl)
+    } catch (err) {
+      logger.warn('Redis cache write failed', { provider })
+    }
   }
 
   return tokenData
 }
 
+/** Stores (upserts) an OAuth token for a user + provider, encrypting secrets and invalidating cache. */
 export async function storeToken(params: StoreTokenParams): Promise<void> {
   const oauthProvider = await prisma.oAuthProvider.findUnique({
     where: { provider: params.provider },
   })
 
   if (!oauthProvider) {
-    throw new Error(`Unknown provider: ${params.provider}`)
+    throw new ProviderNotFoundError(params.provider)
   }
 
   // upsert connection
@@ -163,7 +191,7 @@ export async function storeToken(params: StoreTokenParams): Promise<void> {
       refreshTokenEnc,
       accessTokenExpiry: params.expiresAt ?? null,
       scopes: params.scopes,
-      ...(params.rawMetadata && { rawMetadata: params.rawMetadata }),
+      ...(params.rawMetadata && { rawMetadata: params.rawMetadata as Prisma.InputJsonValue }),
     },
     create: {
       connectionId: connection.id,
@@ -171,14 +199,19 @@ export async function storeToken(params: StoreTokenParams): Promise<void> {
       refreshTokenEnc,
       accessTokenExpiry: params.expiresAt ?? null,
       scopes: params.scopes,
-      ...(params.rawMetadata && { rawMetadata: params.rawMetadata }),
+      ...(params.rawMetadata && { rawMetadata: params.rawMetadata as Prisma.InputJsonValue }),
     },
   })
 
   // invalidate cache
-  await redis.del(cacheKey(params.userId, params.provider))
+  try {
+    await redis.del(cacheKey(params.userId, params.provider))
+  } catch (err) {
+    logger.warn('Redis cache invalidation failed', { provider: params.provider })
+  }
 }
 
+/** Refreshes the token if expired, returning the fresh token or null if re-auth is needed. */
 export async function refreshTokenIfExpired(
   userId: string,
   provider: string
@@ -225,6 +258,7 @@ export async function refreshTokenIfExpired(
       where: { id: connection.id },
       data: { status: ConnectionStatus.EXPIRED },
     })
+    logger.warn('Token refresh failed', { userId, provider })
     return null
   }
 
@@ -250,6 +284,7 @@ export async function refreshTokenIfExpired(
   return getTokenForUser(userId, provider)
 }
 
+/** Revokes a user's connection to a provider, deleting stored tokens and invalidating cache. */
 export async function revokeToken(userId: string, provider: string): Promise<void> {
   const providerId = await getProviderIdBySlug(provider)
 
@@ -268,7 +303,11 @@ export async function revokeToken(userId: string, provider: string): Promise<voi
     where: { connectionId: connection.id },
   })
 
-  await redis.del(cacheKey(userId, provider))
+  try {
+    await redis.del(cacheKey(userId, provider))
+  } catch (err) {
+    logger.warn('Redis cache invalidation failed', { provider })
+  }
 }
 
 // ─────────────────────────────────────────
@@ -280,6 +319,6 @@ async function getProviderIdBySlug(provider: string): Promise<string> {
     where: { provider },
     select: { id: true },
   })
-  if (!p) throw new Error(`Unknown provider: ${provider}`)
+  if (!p) throw new ProviderNotFoundError(provider)
   return p.id
 }

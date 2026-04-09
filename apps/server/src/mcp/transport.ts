@@ -1,5 +1,6 @@
 import { createMcpServer } from './server'
 import { Context } from 'hono'
+import { logger } from '../logger'
 
 export async function handleMcpHono(c: Context): Promise<Response> {
   const authHeader = c.req.header('Authorization')
@@ -55,6 +56,7 @@ export async function handleMcpHono(c: Context): Promise<Response> {
       clientTransport.send(body)
     })
   } catch (error) {
+    logger.error('MCP transport error', error)
     const message = error instanceof Error ? error.message : 'Unknown error'
     return c.json({ error: message }, 401)
   }

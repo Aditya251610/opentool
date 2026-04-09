@@ -1,17 +1,33 @@
 import { Hono } from 'hono'
+import { z } from 'zod'
 import { apiKeyMiddleware } from '../middleware'
 import { prisma } from '../../db/client'
+import { logger } from '../../logger'
+
+const createUserSchema = z.object({
+  email: z.string().email('Valid email is required'),
+  name: z.string().optional(),
+})
+
+const updateUserSchema = z.object({
+  name: z.string().optional(),
+  email: z.string().email('Valid email is required').optional(),
+}).refine(data => data.name !== undefined || data.email !== undefined, {
+  message: 'At least one field (name or email) must be provided',
+})
 
 export const userRoutes = new Hono()
 
 userRoutes.post('/', async (c) => {
   try {
-    const { email, name } = await c.req.json()
+    const body = await c.req.json()
+    const parsed = createUserSchema.safeParse(body)
 
-    if (!email) {
-      return c.json({ error: 'Email is required' }, 400)
+    if (!parsed.success) {
+      return c.json({ error: parsed.error.errors[0]?.message ?? 'Invalid input' }, 400)
     }
 
+    const { email, name } = parsed.data
     const existing = await prisma.user.findUnique({ where: { email } })
     if (existing) {
       return c.json({ error: 'User already exists' }, 409)
@@ -21,6 +37,7 @@ userRoutes.post('/', async (c) => {
 
     return c.json({ id: user.id, email: user.email, name: user.name }, 201)
   } catch (error) {
+    logger.error('Failed to create user', error)
     const message = error instanceof Error ? error.message : 'Unknown error'
     return c.json({ error: message }, 500)
   }
@@ -47,6 +64,7 @@ userRoutes.get('/me', apiKeyMiddleware, async (c) => {
       connectedToolsCount: fetchedUser._count.toolConnections,
     })
   } catch (error) {
+    logger.error('Failed to fetch user profile', error)
     const message = error instanceof Error ? error.message : 'Unknown error'
     return c.json({ error: message }, 500)
   }
@@ -56,8 +74,13 @@ userRoutes.patch('/me', apiKeyMiddleware, async (c) => {
   try {
     const user = c.get('user')
     const body = await c.req.json()
-    const { name, email } = body
+    const parsed = updateUserSchema.safeParse(body)
 
+    if (!parsed.success) {
+      return c.json({ error: parsed.error.errors[0]?.message ?? 'Invalid input' }, 400)
+    }
+
+    const { name, email } = parsed.data
     const data: Record<string, string> = {}
     if (name !== undefined) data.name = name
     if (email !== undefined) {
@@ -79,6 +102,7 @@ userRoutes.patch('/me', apiKeyMiddleware, async (c) => {
       name: updated.name,
     })
   } catch (error) {
+    logger.error('Failed to update user', error)
     const message = error instanceof Error ? error.message : 'Unknown error'
     return c.json({ error: message }, 500)
   }

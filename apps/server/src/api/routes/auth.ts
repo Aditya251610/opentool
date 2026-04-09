@@ -1,10 +1,27 @@
 import { Hono } from 'hono'
+import { z } from 'zod'
 import { apiKeyMiddleware } from '../middleware'
 import { generateAuthUrl, exchangeCode, revokeOAuthToken } from '../../auth/oauth'
 import { storeToken } from '../../auth/broker'
 import bcrypt from 'bcryptjs'
 import { prisma } from '../../db/client'
 import { generateApiKey } from '../../auth/encryption'
+import { config, getApiKeyForProvider } from '../../config'
+import { logger } from '../../logger'
+import { BCRYPT_ROUNDS, PASSWORD_MIN_LENGTH, PROVIDERS } from '../../constants'
+
+const signupSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(PASSWORD_MIN_LENGTH, `Password must be at least ${PASSWORD_MIN_LENGTH} characters`),
+  name: z.string().max(100).optional(),
+})
+
+const loginSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(1, 'Password is required'),
+})
+
+const providerParamSchema = z.enum(PROVIDERS as unknown as [string, ...string[]])
 
 export const authRoutes = new Hono()
 
@@ -12,21 +29,18 @@ export const authRoutes = new Hono()
 
 authRoutes.post('/signup', async (c) => {
   try {
-    const { email, name, password } = await c.req.json()
-
-    if (!email || !password) {
-      return c.json({ error: 'Email and password are required' }, 400)
+    const parsed = signupSchema.safeParse(await c.req.json())
+    if (!parsed.success) {
+      return c.json({ error: parsed.error.issues[0].message }, 400)
     }
-    if (password.length < 8) {
-      return c.json({ error: 'Password must be at least 8 characters' }, 400)
-    }
+    const { email, password, name } = parsed.data
 
     const existing = await prisma.user.findUnique({ where: { email } })
     if (existing) {
       return c.json({ error: 'User already exists' }, 409)
     }
 
-    const passwordHash = await bcrypt.hash(password, 12)
+    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS)
     const user = await prisma.user.create({
       data: { email, name: name || null, passwordHash },
     })
@@ -42,7 +56,7 @@ authRoutes.post('/signup', async (c) => {
       apiKey: raw,
     }, 201)
   } catch (error) {
-    console.error('Signup error:', error)
+    logger.error('Signup error', error)
     if (error instanceof Error && error.message.includes("Can't reach database")) {
       return c.json({ error: 'Unable to connect to database. Please check your DATABASE_URL.' }, 503)
     }
@@ -52,11 +66,11 @@ authRoutes.post('/signup', async (c) => {
 
 authRoutes.post('/login', async (c) => {
   try {
-    const { email, password } = await c.req.json()
-
-    if (!email || !password) {
-      return c.json({ error: 'Email and password are required' }, 400)
+    const parsed = loginSchema.safeParse(await c.req.json())
+    if (!parsed.success) {
+      return c.json({ error: parsed.error.issues[0].message }, 400)
     }
+    const { email, password } = parsed.data
 
     const user = await prisma.user.findUnique({ where: { email } })
     if (!user || !user.passwordHash) {
@@ -84,7 +98,7 @@ authRoutes.post('/login', async (c) => {
       apiKey: raw,
     })
   } catch (error) {
-    console.error('Login error:', error)
+    logger.error('Login error', error)
     if (error instanceof Error && error.message.includes("Can't reach database")) {
       return c.json({ error: 'Unable to connect to database. Please check your DATABASE_URL.' }, 503)
     }
@@ -95,7 +109,11 @@ authRoutes.post('/login', async (c) => {
 // ─── OAuth Tool Connection ────────────────
 
 authRoutes.get('/connect-url/:provider', apiKeyMiddleware, async (c) => {
-  const provider = c.req.param('provider')!
+  const providerResult = providerParamSchema.safeParse(c.req.param('provider'))
+  if (!providerResult.success) {
+    return c.json({ error: `Unknown provider: ${c.req.param('provider')}` }, 404)
+  }
+  const provider = providerResult.data
   const user = c.get('user')
 
   // Check if this is an API_KEY provider
@@ -114,9 +132,12 @@ authRoutes.get('/connect-url/:provider', apiKeyMiddleware, async (c) => {
   }
 })
 
-// API key-based provider connection (Resend, PostgreSQL, etc.)
 authRoutes.post('/connect-api-key/:provider', apiKeyMiddleware, async (c) => {
-  const provider = c.req.param('provider')!
+  const providerResult = providerParamSchema.safeParse(c.req.param('provider'))
+  if (!providerResult.success) {
+    return c.json({ error: `Unknown provider: ${c.req.param('provider')}` }, 404)
+  }
+  const provider = providerResult.data
   const user = c.get('user')
 
   const oauthProvider = await prisma.oAuthProvider.findUnique({ where: { provider } })
@@ -124,13 +145,7 @@ authRoutes.post('/connect-api-key/:provider', apiKeyMiddleware, async (c) => {
     return c.json({ error: `Provider "${provider}" does not support API key auth` }, 400)
   }
 
-  // Map provider to its env var
-  const apiKeyEnvMap: Record<string, string> = {
-    resend: 'RESEND_API_KEY',
-    postgres: 'POSTGRES_CONNECTION_STRING',
-  }
-  const envVar = apiKeyEnvMap[provider]
-  const apiKey = envVar ? process.env[envVar] : undefined
+  const apiKey = getApiKeyForProvider(provider)
   if (!apiKey) {
     return c.json({ error: `No API key configured for ${provider}` }, 501)
   }
@@ -146,7 +161,11 @@ authRoutes.post('/connect-api-key/:provider', apiKeyMiddleware, async (c) => {
 })
 
 authRoutes.get('/connect/:provider', apiKeyMiddleware, async (c) => {
-  const provider = c.req.param('provider')!
+  const providerResult = providerParamSchema.safeParse(c.req.param('provider'))
+  if (!providerResult.success) {
+    return c.json({ error: `Unknown provider: ${c.req.param('provider')}` }, 404)
+  }
+  const provider = providerResult.data
   const user = c.get('user')
 
   try {
@@ -159,7 +178,11 @@ authRoutes.get('/connect/:provider', apiKeyMiddleware, async (c) => {
 })
 
 authRoutes.get('/callback/:provider', async (c) => {
-  const provider = c.req.param('provider')!
+  const providerResult = providerParamSchema.safeParse(c.req.param('provider'))
+  if (!providerResult.success) {
+    return c.json({ error: `Unknown provider: ${c.req.param('provider')}` }, 404)
+  }
+  const provider = providerResult.data
   const code = c.req.query('code')
   const state = c.req.query('state')
 
@@ -167,20 +190,39 @@ authRoutes.get('/callback/:provider', async (c) => {
     return c.json({ error: 'Missing code or state' }, 400)
   }
 
+  // Verify the state's provider matches the URL param to prevent cross-provider injection
+  try {
+    const parsedState = JSON.parse(Buffer.from(state, 'base64').toString())
+    if (parsedState.provider && parsedState.provider !== provider) {
+      logger.error('Provider mismatch in OAuth callback', undefined, {
+        urlProvider: provider,
+        stateProvider: parsedState.provider,
+      })
+      return c.json({ error: 'Provider mismatch in OAuth state' }, 400)
+    }
+  } catch {
+    // State parsing is best-effort; exchangeCode will validate further
+  }
+
   try {
     await exchangeCode(provider, code, state)
     return c.redirect(
-      `${process.env['DASHBOARD_URL']}/dashboard/tools?connected=${provider}`
+      `${config.dashboardUrl}/dashboard/tools?connected=${provider}`
     )
   } catch (error) {
+    logger.error('OAuth callback error', error, { provider })
     return c.redirect(
-      `${process.env['DASHBOARD_URL']}/dashboard/tools?error=${provider}`
+      `${config.dashboardUrl}/dashboard/tools?error=${provider}`
     )
   }
 })
 
 authRoutes.delete('/revoke/:provider', apiKeyMiddleware, async (c) => {
-  const provider = c.req.param('provider')!
+  const providerResult = providerParamSchema.safeParse(c.req.param('provider'))
+  if (!providerResult.success) {
+    return c.json({ error: `Unknown provider: ${c.req.param('provider')}` }, 404)
+  }
+  const provider = providerResult.data
   const user = c.get('user')
 
   try {

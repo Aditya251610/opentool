@@ -1,7 +1,13 @@
 import { Hono } from 'hono'
+import { z } from 'zod'
 import { prisma } from '../../db/client'
 import { apiKeyMiddleware } from '../middleware'
 import { generateApiKey } from '../../auth/encryption'
+import { logger } from '../../logger'
+
+const createKeySchema = z.object({
+  name: z.string().min(1, 'Key name is required').max(100),
+})
 
 export const keyRoutes = new Hono()
 
@@ -10,12 +16,13 @@ keyRoutes.post('/', apiKeyMiddleware, async (c) => {
 
   try {
     const body = await c.req.json()
-    const { name } = body
+    const parsed = createKeySchema.safeParse(body)
 
-    if (!name) {
-      return c.json({ error: 'Key name is required' }, 400)
+    if (!parsed.success) {
+      return c.json({ error: parsed.error.errors[0]?.message ?? 'Invalid input' }, 400)
     }
 
+    const { name } = parsed.data
     const { raw, hash, prefix } = generateApiKey()
 
     await prisma.apiKey.create({
@@ -29,6 +36,7 @@ keyRoutes.post('/', apiKeyMiddleware, async (c) => {
 
     return c.json({ key: raw, prefix, name }, 201)
   } catch (error) {
+    logger.error('Failed to create API key', error)
     const message = error instanceof Error ? error.message : 'Unknown error'
     return c.json({ error: message }, 500)
   }
@@ -52,6 +60,7 @@ keyRoutes.get('/', apiKeyMiddleware, async (c) => {
 
     return c.json({ keys })
   } catch (error) {
+    logger.error('Failed to list API keys', error)
     const message = error instanceof Error ? error.message : 'Unknown error'
     return c.json({ error: message }, 500)
   }
@@ -75,6 +84,7 @@ keyRoutes.delete('/:id', apiKeyMiddleware, async (c) => {
 
     return c.json({ success: true })
   } catch (error) {
+    logger.error('Failed to revoke API key', error)
     const message = error instanceof Error ? error.message : 'Unknown error'
     return c.json({ error: message }, 500)
   }

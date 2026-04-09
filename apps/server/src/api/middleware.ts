@@ -1,5 +1,6 @@
 import { Context, Next } from 'hono'
 import { resolveApiKey, ResolvedUser } from '../auth/broker'
+import { logger } from '../logger'
 
 declare module 'hono' {
   interface ContextVariableMap {

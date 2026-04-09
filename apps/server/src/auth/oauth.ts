@@ -1,6 +1,10 @@
 import { prisma } from '../db/client'
 import { decrypt } from './encryption'
 import { storeToken, getTokenForUser, revokeToken } from './broker'
+import { config } from '../config'
+import { logger } from '../logger'
+import { OAUTH_STATE_TTL_MS, COMMA_SCOPE_PROVIDERS } from '../constants'
+import { ProviderNotFoundError } from '../errors'
 
 // ─────────────────────────────────────────
 // TYPES
@@ -27,6 +31,7 @@ export interface OAuthTokenResponse {
 // FUNCTIONS
 // ─────────────────────────────────────────
 
+/** Generates a base64-encoded OAuth state parameter containing user ID, provider, and timestamp. */
 export function generateState(userId: string, provider: string): string {
   const state: OAuthState = {
     userId,
@@ -37,12 +42,13 @@ export function generateState(userId: string, provider: string): string {
   return Buffer.from(json).toString('base64')
 }
 
+/** Parses and validates an OAuth state parameter, returning null if expired or malformed. */
 export function parseState(state: string): OAuthState | null {
   try {
     const decoded = Buffer.from(state, 'base64').toString('utf8')
     const parsed = JSON.parse(decoded) as OAuthState
 
-    if (Date.now() - parsed.createdAt > 10 * 60 * 1000) {
+    if (Date.now() - parsed.createdAt > OAUTH_STATE_TTL_MS) {
       return null
     }
 
@@ -52,6 +58,7 @@ export function parseState(state: string): OAuthState | null {
   }
 }
 
+/** Builds the full OAuth authorization URL for a provider, including state and scopes. */
 export async function generateAuthUrl(
   provider: string,
   userId: string
@@ -60,14 +67,14 @@ export async function generateAuthUrl(
     where: { provider },
   })
 
-  if (!oauthProvider) throw new Error(`Provider "${provider}" not found. Run: npx tsx prisma/seed.ts`)
+  if (!oauthProvider) throw new ProviderNotFoundError(provider)
   if (!oauthProvider.isEnabled) throw new Error(`Provider "${provider}" is not enabled — set ${provider.toUpperCase()}_CLIENT_ID and ${provider.toUpperCase()}_CLIENT_SECRET in .env, then re-run the seed.`)
   if (!oauthProvider.clientId) throw new Error(`Provider "${provider}" is not configured — missing OAuth credentials`)
 
-  const serverUrl = process.env['SERVER_URL'] || 'http://localhost:3001'
+  const serverUrl = config.serverUrl
   const state = generateState(userId, provider)
 
-  const scopeSeparator = (provider === 'linear' || provider === 'slack') ? ',' : ' '
+  const scopeSeparator = COMMA_SCOPE_PROVIDERS.includes(provider as any) ? ',' : ' '
 
   const params = new URLSearchParams({
     client_id: oauthProvider.clientId,
@@ -86,6 +93,7 @@ export async function generateAuthUrl(
   return `${oauthProvider.authUrl}?${params.toString()}`
 }
 
+/** Exchanges an OAuth authorization code for tokens and stores them. */
 export async function exchangeCode(
   provider: string,
   code: string,
@@ -97,11 +105,11 @@ export async function exchangeCode(
   const oauthProvider = await prisma.oAuthProvider.findUnique({
     where: { provider },
   })
-  if (!oauthProvider) throw new Error(`Unknown provider: ${provider}`)
+  if (!oauthProvider) throw new ProviderNotFoundError(provider)
 
   const clientSecret = decrypt(oauthProvider.clientSecretEnc)
 
-  const redirectUri = `${process.env['SERVER_URL'] || 'http://localhost:3001'}/api/auth/callback/${provider}`
+  const redirectUri = `${config.serverUrl}/api/auth/callback/${provider}`
 
   const headers: Record<string, string> = {
     Accept: 'application/json',
@@ -164,6 +172,7 @@ export async function exchangeCode(
   return { userId: parsedState.userId }
 }
 
+/** Revokes an OAuth token, calling the provider's revoke endpoint if available. */
 export async function revokeOAuthToken(
   provider: string,
   userId: string

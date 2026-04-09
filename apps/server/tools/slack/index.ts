@@ -3,7 +3,8 @@ import { defineTool, z } from '@opentool/tool-schema'
 const SLACK_BASE = 'https://slack.com/api'
 
 // Resolve a channel name (e.g. "general", "#general") to a channel ID
-async function resolveChannel(token: string, channel: string): Promise<string> {
+async function resolveChannel(token: string | undefined, channel: string): Promise<string> {
+  if (!token) throw new Error('Slack access token is required')
   // Already a channel ID
   if (/^[CDG][A-Z0-9]+$/.test(channel)) return channel
 
@@ -20,7 +21,8 @@ async function resolveChannel(token: string, channel: string): Promise<string> {
 }
 
 // Try to join a channel (best-effort, won't fail if missing scope)
-async function tryJoinChannel(token: string, channelId: string): Promise<void> {
+async function tryJoinChannel(token: string | undefined, channelId: string): Promise<void> {
+  if (!token) return
   await fetch(`${SLACK_BASE}/conversations.join`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
