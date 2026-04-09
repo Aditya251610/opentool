@@ -7,13 +7,14 @@ settings:
 importers:
 
   .:
+    dependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
     devDependencies:
       turbo:
         specifier: latest
         version: 2.8.21
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
 
   apps/dashboard:
     dependencies:
@@ -81,6 +82,12 @@ importers:
       '@prisma/client':
         specifier: ^5.0.0
         version: 5.22.0(prisma@5.22.0)
+      '@types/bcryptjs':
+        specifier: ^3.0.0
+        version: 3.0.0
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.37
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
@@ -93,16 +100,13 @@ importers:
       prisma:
         specifier: ^5.0.0
         version: 5.22.0
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
       zod:
         specifier: ^3.0.0
         version: 3.25.76
     devDependencies:
-      '@types/bcryptjs':
-        specifier: ^3.0.0
-        version: 3.0.0
-      '@types/node':
-        specifier: ^20.0.0
-        version: 20.19.37
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.58.1
         version: 8.58.1(@typescript-eslint/parser@8.58.1(eslint@10.2.0(jiti@1.21.7))(typescript@5.9.3))(eslint@10.2.0(jiti@1.21.7))(typescript@5.9.3)
