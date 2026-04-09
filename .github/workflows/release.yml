@@ -79,9 +79,35 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        if: startsWith(github.ref, 'refs/tags/sdk-ts-v')
+      - uses: actions/setup-node@v4
+        if: startsWith(github.ref, 'refs/tags/sdk-ts-v')
+        with:
+          node-version: 20
+      - uses: actions/setup-python@v5
+        if: startsWith(github.ref, 'refs/tags/sdk-py-v')
+        with:
+          python-version: '3.12'
+      - name: Build TS SDK tarball
+        if: startsWith(github.ref, 'refs/tags/sdk-ts-v')
+        run: |
+          cd packages/sdk/ts && pnpm install && pnpm build
+          npm pack
+          mv *.tgz ../../../
+      - name: Build Python SDK artifacts
+        if: startsWith(github.ref, 'refs/tags/sdk-py-v')
+        run: |
+          pip install build
+          cd packages/sdk/python && python -m build
+          mv dist/* ../../../
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
           draft: false
           prerelease: false
+          files: |
+            *.tgz
+            *.whl
+            *.tar.gz
