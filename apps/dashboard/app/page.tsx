@@ -134,7 +134,7 @@ function Footer() {
           {[
             { title: 'Product', links: [['Features', '/#features'], ['Tools', '/#tools'], ['Docs', '/docs']] },
             { title: 'Developers', links: [['Documentation', '/docs'], ['GitHub', 'https://github.com/Aditya251610/opentool'], ['Self-hosting', '/docs#self-hosting']] },
-            { title: 'Community', links: [['Report an issue', 'https://github.com/Aditya251610/opentool/issues'], ['Request a tool', 'https://github.com/Aditya251610/opentool/issues/new']] },
+            { title: 'Legal', links: [['Privacy Policy', '/privacy'], ['Terms of Service', '/terms'], ['Report an issue', 'https://github.com/Aditya251610/opentool/issues']] },
           ].map((col) => (
             <div key={col.title}>
               <h4 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[rgba(255,255,255,0.25)] mb-4">{col.title}</h4>
@@ -148,7 +148,10 @@ function Footer() {
         </div>
         <div className="pt-6 border-t border-[rgba(255,255,255,0.06)] flex flex-col sm:flex-row justify-between items-center gap-2">
           <span className="text-[12px] text-[rgba(255,255,255,0.2)]">© 2025 OpenTool · MIT License · Open source</span>
-          <span className="text-[12px] text-[rgba(255,255,255,0.2)]">Built for developers who ship.</span>
+          <div className="flex items-center gap-4">
+            <Link href="/privacy" className="text-[12px] text-[rgba(255,255,255,0.2)] hover:text-white transition-colors">Privacy</Link>
+            <Link href="/terms" className="text-[12px] text-[rgba(255,255,255,0.2)] hover:text-white transition-colors">Terms</Link>
+          </div>
         </div>
       </div>
     </footer>
