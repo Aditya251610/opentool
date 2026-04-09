@@ -1,3 +1,4 @@
+import { safeToolError } from '../utils'
 import { defineTool, z } from '@opentool/tool-schema'
 
 const RESEND_BASE = 'https://api.resend.com'
@@ -10,17 +11,17 @@ export const resendSendEmail = defineTool({
   authType: 'api_key',
   requiredScopes: [],
   inputSchema: z.object({
-    from: z.string().describe('Sender email address (must be from a verified domain)'),
-    to: z.string().describe('Recipient email address'),
+    from: z.string().email().describe('Sender email address (must be from a verified domain)'),
+    to: z.string().email().describe('Recipient email address'),
     subject: z.string().describe('Email subject'),
     html: z.string().optional().describe('Email body as HTML'),
     text: z.string().optional().describe('Email body as plain text'),
-    cc: z.array(z.string()).optional().describe('CC email addresses'),
-    bcc: z.array(z.string()).optional().describe('BCC email addresses'),
-    reply_to: z.string().optional().describe('Reply-to email address'),
+    cc: z.array(z.string().email()).optional().describe('CC email addresses'),
+    bcc: z.array(z.string().email()).optional().describe('BCC email addresses'),
+    reply_to: z.string().email().optional().describe('Reply-to email address'),
     tags: z.array(z.object({
-      name: z.string(),
-      value: z.string(),
+      name: z.string().describe('Tag name'),
+      value: z.string().describe('Tag value'),
     })).optional().describe('Email tags for tracking'),
   }),
   execute: async ({ input, auth }) => {
@@ -49,7 +50,7 @@ export const resendSendEmail = defineTool({
 
     if (!res.ok) {
       const error = await res.json() as { message: string }
-      throw new Error(`Resend API error: ${error.message}`)
+      throw safeToolError(error, 'Resend', 'execute')
     }
 
     const data = await res.json() as { id: string }

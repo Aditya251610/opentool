@@ -96,10 +96,22 @@ export async function getTokenForUser(
   try {
     const cached = await redis.get(cacheKey(userId, provider))
     if (cached) {
-      const parsed = JSON.parse(cached)
-      return {
-        ...parsed,
-        expiresAt: parsed.expiresAt ? new Date(parsed.expiresAt) : null,
+      try {
+        // Decrypt the cached data before parsing
+        const decrypted = decrypt(cached)
+        const parsed = JSON.parse(decrypted)
+        return {
+          ...parsed,
+          expiresAt: parsed.expiresAt ? new Date(parsed.expiresAt) : null,
+        }
+      } catch (decryptErr) {
+        // Cache is corrupted or tampered with, delete it and fall through to DB
+        logger.warn('Redis cache decryption failed, invalidating entry', { provider })
+        try {
+          await redis.del(cacheKey(userId, provider))
+        } catch (delErr) {
+          logger.warn('Failed to delete corrupted cache entry', { provider })
+        }
       }
     }
   } catch (err) {
@@ -134,14 +146,16 @@ export async function getTokenForUser(
     scopes: tokenStore.scopes,
   }
 
-  // cache with TTL
+  // cache with TTL — store encrypted
   const ttl = tokenStore.accessTokenExpiry
     ? Math.floor((tokenStore.accessTokenExpiry.getTime() - Date.now()) / 1000)
     : TOKEN_CACHE_DEFAULT_TTL
 
   if (ttl > 0) {
     try {
-      await redis.set(cacheKey(userId, provider), JSON.stringify(tokenData), 'EX', ttl)
+      // Encrypt the token data before caching
+      const encryptedCache = encrypt(JSON.stringify(tokenData))
+      await redis.set(cacheKey(userId, provider), encryptedCache, 'EX', ttl)
     } catch (err) {
       logger.warn('Redis cache write failed', { provider })
     }

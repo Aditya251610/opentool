@@ -1,3 +1,4 @@
+import { safeToolError } from '../utils'
 import { defineTool, z } from '@opentool/tool-schema'
 
 const LINEAR_API = 'https://api.linear.app/graphql'
@@ -15,7 +16,7 @@ async function linearQuery(token: string, query: string, variables: Record<strin
   const data = await res.json() as { data?: unknown; errors?: Array<{ message: string }> }
 
   if (data.errors?.length) {
-    throw new Error(`Linear API error: ${data.errors[0].message}`)
+    throw safeToolError(data.errors[0], 'Linear', 'execute')
   }
 
   return data.data
@@ -32,7 +33,7 @@ export const linearCreateIssue = defineTool({
     teamId: z.string().describe('The ID of the team to create the issue in'),
     title: z.string().describe('Issue title'),
     description: z.string().optional().describe('Issue description (Markdown supported)'),
-    priority: z.number().optional().describe('Priority (0=None, 1=Urgent, 2=High, 3=Medium, 4=Low)'),
+    priority: z.number().int().min(0).max(4).optional().describe('Priority (0=None, 1=Urgent, 2=High, 3=Medium, 4=Low)'),
     assigneeId: z.string().optional().describe('User ID to assign the issue to'),
     labelIds: z.array(z.string()).optional().describe('Label IDs to apply'),
   }),
@@ -99,7 +100,7 @@ export const linearUpdateIssueStatus = defineTool({
   inputSchema: z.object({
     issueId: z.string().describe('The ID of the issue to update'),
     stateId: z.string().describe('The ID of the workflow state to transition to'),
-    priority: z.number().optional().describe('New priority (0=None, 1=Urgent, 2=High, 3=Medium, 4=Low)'),
+    priority: z.number().int().min(0).max(4).optional().describe('New priority (0=None, 1=Urgent, 2=High, 3=Medium, 4=Low)'),
     assigneeId: z.string().optional().describe('New assignee user ID'),
   }),
   execute: async ({ input, auth }) => {

@@ -1,0 +1,45 @@
+name: Release SDKs
+
+on:
+  push:
+    tags:
+      - 'sdk-ts-v*'
+      - 'sdk-py-v*'
+
+jobs:
+  publish-ts:
+    if: startsWith(github.ref, 'refs/tags/sdk-ts-v')
+    name: Publish TypeScript SDK
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+      - run: cd packages/sdk/ts && pnpm install && pnpm build
+      - run: cd packages/sdk/ts && npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-py:
+    if: startsWith(github.ref, 'refs/tags/sdk-py-v')
+    name: Publish Python SDK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install build twine
+      - run: cd packages/sdk/python && python -m build
+      - run: cd packages/sdk/python && twine upload dist/*
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}

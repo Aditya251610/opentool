@@ -9,6 +9,7 @@ import { generateApiKey } from '../../auth/encryption'
 import { config, getApiKeyForProvider } from '../../config'
 import { logger } from '../../logger'
 import { BCRYPT_ROUNDS, PASSWORD_MIN_LENGTH, PROVIDERS } from '../../constants'
+import { authEvents } from '../../metrics'
 
 const signupSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -51,6 +52,9 @@ authRoutes.post('/signup', async (c) => {
       data: { userId: user.id, name: 'Default Key', keyHash: hash, keyPrefix: prefix },
     })
 
+    // Record signup event
+    authEvents.inc({ event: 'signup' })
+
     return c.json({
       user: { id: user.id, email: user.email, name: user.name },
       apiKey: raw,
@@ -92,6 +96,9 @@ authRoutes.post('/login', async (c) => {
     await prisma.apiKey.create({
       data: { userId: user.id, name: 'Dashboard Session', keyHash: hash, keyPrefix: prefix },
     })
+
+    // Record login event
+    authEvents.inc({ event: 'login' })
 
     return c.json({
       user: { id: user.id, email: user.email, name: user.name },
@@ -206,6 +213,8 @@ authRoutes.get('/callback/:provider', async (c) => {
 
   try {
     await exchangeCode(provider, code, state)
+    // Record OAuth connection event
+    authEvents.inc({ event: 'connect', provider })
     return c.redirect(
       `${config.dashboardUrl}/dashboard/tools?connected=${provider}`
     )

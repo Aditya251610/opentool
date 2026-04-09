@@ -34,7 +34,21 @@ toolRoutes.get('/connected', apiKeyMiddleware, async (c) => {
 
     const connections = await prisma.toolConnection.findMany({
       where: { userId: user.id, status: ConnectionStatus.CONNECTED },
-      include: { provider: { include: { toolDefinitions: true } } },
+      select: {
+        provider: {
+          select: {
+            provider: true,
+            toolDefinitions: {
+              select: {
+                toolId: true,
+                name: true,
+                description: true,
+                authType: true,
+              },
+            },
+          },
+        },
+      },
     })
 
     const tools = connections.flatMap(conn =>

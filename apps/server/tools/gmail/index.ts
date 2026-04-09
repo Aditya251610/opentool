@@ -1,3 +1,4 @@
+import { safeToolError } from '../utils'
 import { defineTool, z } from '@opentool/tool-schema'
 
 const GMAIL_BASE = 'https://gmail.googleapis.com/gmail/v1/users/me'
@@ -24,11 +25,11 @@ export const gmailSendEmail = defineTool({
   authType: 'oauth2',
   requiredScopes: ['https://www.googleapis.com/auth/gmail.send'],
   inputSchema: z.object({
-    to: z.string().describe('Recipient email address'),
+    to: z.string().email().describe('Recipient email address'),
     subject: z.string().describe('Email subject'),
     body: z.string().describe('Email body (HTML supported)'),
-    cc: z.string().optional().describe('CC email address'),
-    bcc: z.string().optional().describe('BCC email address'),
+    cc: z.string().email().optional().describe('CC email address'),
+    bcc: z.string().email().optional().describe('BCC email address'),
   }),
   execute: async ({ input, auth }) => {
     const raw = encodeEmail(input.to, input.subject, input.body)
@@ -44,7 +45,7 @@ export const gmailSendEmail = defineTool({
 
     if (!res.ok) {
       const error = await res.json() as { error: { message: string } }
-      throw new Error(`Gmail API error: ${error.error.message}`)
+      throw safeToolError(error.error, 'Gmail', 'execute')
     }
 
     const data = await res.json() as { id: string; threadId: string; labelIds: string[] }
@@ -73,7 +74,7 @@ export const gmailReadEmail = defineTool({
 
     if (!res.ok) {
       const error = await res.json() as { error: { message: string } }
-      throw new Error(`Gmail API error: ${error.error.message}`)
+      throw safeToolError(error.error, 'Gmail', 'execute')
     }
 
     const msg = await res.json() as {
@@ -137,7 +138,7 @@ export const gmailSearchEmails = defineTool({
 
     if (!res.ok) {
       const error = await res.json() as { error: { message: string } }
-      throw new Error(`Gmail API error: ${error.error.message}`)
+      throw safeToolError(error.error, 'Gmail', 'execute')
     }
 
     const data = await res.json() as {

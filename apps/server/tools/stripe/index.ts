@@ -1,3 +1,4 @@
+import { safeToolError } from '../utils'
 import { defineTool, z } from '@opentool/tool-schema'
 
 const STRIPE_BASE = 'https://api.stripe.com/v1'
@@ -18,8 +19,8 @@ export const stripeCreatePaymentLink = defineTool({
   requiredScopes: ['read_write'],
   inputSchema: z.object({
     price_id: z.string().describe('Stripe Price ID (e.g. "price_1234...")'),
-    quantity: z.number().optional().describe('Quantity (default 1)'),
-    after_completion_url: z.string().optional().describe('URL to redirect to after payment'),
+    quantity: z.number().int().positive().max(99999).optional().describe('Quantity (default 1, max 99999)'),
+    after_completion_url: z.string().url().refine(url => url.startsWith('https://'), { message: 'URL must use HTTPS' }).optional().describe('URL to redirect to after payment (must be HTTPS)'),
   }),
   execute: async ({ input, auth }) => {
     const params = new URLSearchParams()
@@ -38,7 +39,7 @@ export const stripeCreatePaymentLink = defineTool({
 
     if (!res.ok) {
       const error = await res.json() as { error: { message: string } }
-      throw new Error(`Stripe API error: ${error.error.message}`)
+      throw safeToolError(error.error, 'Stripe', 'execute')
     }
 
     const link = await res.json() as {
@@ -60,8 +61,8 @@ export const stripeListCustomers = defineTool({
   authType: 'oauth2',
   requiredScopes: ['read_write'],
   inputSchema: z.object({
-    email: z.string().optional().describe('Filter by customer email'),
-    limit: z.number().optional().describe('Number of customers to return (default 10, max 100)'),
+    email: z.string().email().optional().describe('Filter by customer email'),
+    limit: z.number().int().positive().max(100).optional().describe('Number of customers to return (default 10, max 100)'),
     starting_after: z.string().optional().describe('Cursor for pagination (customer ID)'),
   }),
   execute: async ({ input, auth }) => {
@@ -77,7 +78,7 @@ export const stripeListCustomers = defineTool({
 
     if (!res.ok) {
       const error = await res.json() as { error: { message: string } }
-      throw new Error(`Stripe API error: ${error.error.message}`)
+      throw safeToolError(error.error, 'Stripe', 'execute')
     }
 
     const data = await res.json() as {

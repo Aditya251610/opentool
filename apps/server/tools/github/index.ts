@@ -1,4 +1,5 @@
 import { defineTool, z } from '@opentool/tool-schema'
+import { safeToolError } from '../utils'
 
 export const githubCreateIssue = defineTool({
   id: 'github.create_issue',
@@ -35,7 +36,7 @@ export const githubCreateIssue = defineTool({
 
     if (!res.ok) {
       const error = await res.json() as { message: string }
-      throw new Error(`GitHub API error: ${error.message}`)
+      throw safeToolError(error, 'GitHub', 'execute')
     }
 
     const issue = await res.json() as {
@@ -86,7 +87,7 @@ export const githubListIssues = defineTool({
 
     if (!res.ok) {
       const error = await res.json() as { message: string }
-      throw new Error(`GitHub API error: ${error.message}`)
+      throw safeToolError(error, 'GitHub', 'execute')
     }
 
     const issues = await res.json() as Array<{
@@ -146,7 +147,7 @@ export const githubCreatePR = defineTool({
 
     if (!res.ok) {
       const error = await res.json() as { message: string }
-      throw new Error(`GitHub API error: ${error.message}`)
+      throw safeToolError(error, 'GitHub', 'execute')
     }
 
     const pr = await res.json() as {
@@ -197,7 +198,7 @@ export const githubCommentOnIssue = defineTool({
 
     if (!res.ok) {
       const error = await res.json() as { message: string }
-      throw new Error(`GitHub API error: ${error.message}`)
+      throw safeToolError(error, 'GitHub', 'execute')
     }
 
     const comment = await res.json() as {
@@ -241,7 +242,7 @@ export const githubGetRepo = defineTool({
 
     if (!res.ok) {
       const error = await res.json() as { message: string }
-      throw new Error(`GitHub API error: ${error.message}`)
+      throw safeToolError(error, 'GitHub', 'execute')
     }
 
     const repo = await res.json() as {

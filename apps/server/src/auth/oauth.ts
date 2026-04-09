@@ -1,3 +1,4 @@
+import crypto from 'crypto'
 import { prisma } from '../db/client'
 import { decrypt } from './encryption'
 import { storeToken, getTokenForUser, revokeToken } from './broker'
@@ -7,6 +8,20 @@ import { OAUTH_STATE_TTL_MS, COMMA_SCOPE_PROVIDERS } from '../constants'
 import { ProviderNotFoundError } from '../errors'
 
 // ─────────────────────────────────────────
+// PKCE UTILITIES
+// ─────────────────────────────────────────
+
+/** Generates a code verifier for PKCE (43-128 character URL-safe string). */
+function generateCodeVerifier(): string {
+  return crypto.randomBytes(32).toString('base64url')
+}
+
+/** Generates a code challenge from a verifier using SHA-256. */
+function generateCodeChallenge(verifier: string): string {
+  return crypto.createHash('sha256').update(verifier).digest('base64url')
+}
+
+// ─────────────────────────────────────────
 // TYPES
 // ─────────────────────────────────────────
 
@@ -14,6 +29,7 @@ export interface OAuthState {
   userId: string
   provider: string
   createdAt: number
+  codeVerifier: string  // PKCE code verifier for secure token exchange
 }
 
 export interface OAuthTokenResponse {
@@ -31,12 +47,14 @@ export interface OAuthTokenResponse {
 // FUNCTIONS
 // ─────────────────────────────────────────
 
-/** Generates a base64-encoded OAuth state parameter containing user ID, provider, and timestamp. */
+/** Generates a base64-encoded OAuth state parameter containing user ID, provider, timestamp, and PKCE code verifier. */
 export function generateState(userId: string, provider: string): string {
+  const codeVerifier = generateCodeVerifier()
   const state: OAuthState = {
     userId,
     provider,
     createdAt: Date.now(),
+    codeVerifier,
   }
   const json = JSON.stringify(state)
   return Buffer.from(json).toString('base64')
@@ -58,7 +76,7 @@ export function parseState(state: string): OAuthState | null {
   }
 }
 
-/** Builds the full OAuth authorization URL for a provider, including state and scopes. */
+/** Builds the full OAuth authorization URL for a provider, including state, PKCE parameters, and scopes. */
 export async function generateAuthUrl(
   provider: string,
   userId: string
@@ -73,6 +91,10 @@ export async function generateAuthUrl(
 
   const serverUrl = config.serverUrl
   const state = generateState(userId, provider)
+  const parsedState = parseState(state)
+  if (!parsedState) throw new Error('Failed to generate state')
+
+  const codeChallenge = generateCodeChallenge(parsedState.codeVerifier)
 
   const scopeSeparator = COMMA_SCOPE_PROVIDERS.includes(provider as any) ? ',' : ' '
 
@@ -82,6 +104,8 @@ export async function generateAuthUrl(
     scope: oauthProvider.defaultScopes.join(scopeSeparator),
     state,
     response_type: 'code',
+    code_challenge: codeChallenge,
+    code_challenge_method: 'S256',
   })
 
   // Google requires access_type=offline for refresh tokens
@@ -119,6 +143,7 @@ export async function exchangeCode(
   const bodyParams: Record<string, string> = {
     grant_type: 'authorization_code',
     code,
+    code_verifier: parsedState.codeVerifier,  // Include PKCE code verifier
   }
 
   if (provider === 'notion') {

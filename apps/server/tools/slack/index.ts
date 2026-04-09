@@ -1,4 +1,5 @@
 import { defineTool, z } from '@opentool/tool-schema'
+import { safeToolError } from '../utils'
 
 const SLACK_BASE = 'https://slack.com/api'
 
@@ -85,7 +86,7 @@ export const slackSendMessage = defineTool({
     }
 
     if (!data.ok) {
-      throw new Error(`Slack API error: ${data.error}`)
+      throw safeToolError(data, 'Slack', 'execute')
     }
 
     return {
@@ -140,7 +141,7 @@ export const slackReadChannel = defineTool({
     }
 
     if (!data.ok) {
-      throw new Error(`Slack API error: ${data.error}`)
+      throw safeToolError(data, 'Slack', 'execute')
     }
 
     return {

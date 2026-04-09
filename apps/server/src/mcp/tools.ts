@@ -6,7 +6,10 @@ import { ConnectionStatus, AuditAction, AuditStatus } from '@prisma/client'
 import { AuthContext, ToolDefinition } from '@opentool/tool-schema'
 import { config } from '../config'
 import { logger } from '../logger'
+import { captureException } from '../error-tracking'
 import { AuthRequiredError, ToolNotFoundError } from '../errors'
+import { MAX_RESPONSE_ROWS, MAX_RESPONSE_BYTES, TOOL_TIMEOUT_MS } from '../constants'
+import { toolExecutions, toolErrors, toolDuration } from '../metrics'
 
 // ─── Types ────────────────────────────────
 
@@ -24,14 +27,84 @@ export interface UserTool extends ConnectedTool {
 
 // ─── Helpers ──────────────────────────────
 
+/** Sensitive keys that should be redacted from logs (case-insensitive, normalized). */
+const SENSITIVE_KEYS = new Set([
+  'password',
+  'token',
+  'secret',
+  'key',
+  'apikey',
+  'api_key',
+  'connectionstring',
+  'connection_string',
+  'accesstoken',
+  'access_token',
+  'refreshtoken',
+  'refresh_token',
+  'bearertoken',
+  'bearer_token',
+  'authorization',
+  'credential',
+  'credentials',
+  'privatekey',
+  'private_key',
+  'clientsecret',
+  'client_secret',
+])
+
+/** Normalizes a key for comparison by converting to lowercase and removing hyphens/underscores. */
+function normalizeKey(key: string): string {
+  return key.toLowerCase().replace(/[-_]/g, '')
+}
+
 /** Strips sensitive fields from tool input before writing to the audit log. */
-function sanitizeInput(input: unknown): unknown {
+export function sanitizeInput(input: unknown): unknown {
   if (typeof input !== 'object' || input === null) return input
-  const sanitized = { ...input as Record<string, unknown> }
-  for (const key of ['password', 'token', 'secret', 'key', 'connectionString']) {
-    if (key in sanitized) sanitized[key] = '[REDACTED]'
+  const sanitized: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(input as Record<string, unknown>)) {
+    if (SENSITIVE_KEYS.has(normalizeKey(key))) {
+      sanitized[key] = '[REDACTED]'
+    } else if (typeof value === 'object' && value !== null) {
+      sanitized[key] = sanitizeInput(value) // recursive
+    } else {
+      sanitized[key] = value
+    }
   }
   return sanitized
+}
+
+/** Strips sensitive fields from tool output and truncates large strings. */
+export function sanitizeOutput(output: unknown): unknown {
+  if (typeof output === 'string') {
+    return output.length > 10000 ? output.substring(0, 10000) + '...[truncated]' : output
+  }
+  if (typeof output !== 'object' || output === null) return output
+  const sanitized: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(output as Record<string, unknown>)) {
+    if (SENSITIVE_KEYS.has(normalizeKey(key))) {
+      sanitized[key] = '[REDACTED]'
+    } else if (typeof value === 'string' && value.length > 10000) {
+      sanitized[key] = value.substring(0, 10000) + '...[truncated]'
+    } else if (typeof value === 'object' && value !== null) {
+      sanitized[key] = sanitizeOutput(value) // recursive
+    } else {
+      sanitized[key] = value
+    }
+  }
+  return sanitized
+}
+
+/** Executes a function with a timeout, rejecting if it takes too long. */
+async function executeWithTimeout<T>(
+  fn: () => Promise<T>,
+  timeoutMs: number
+): Promise<T> {
+  return Promise.race([
+    fn(),
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Tool execution timed out')), timeoutMs)
+    ),
+  ])
 }
 
 // ─── Tool Listing ─────────────────────────
@@ -129,9 +202,31 @@ export async function executeTool(
   let result: unknown
 
   try {
-    result = await tool.execute({ input, auth })
+    result = await executeWithTimeout(
+      () => tool.execute({ input, auth }),
+      TOOL_TIMEOUT_MS
+    )
+    
+    // Record successful execution
+    const durationSecs = (Date.now() - startTime) / 1000
+    toolExecutions.inc({ provider: tool.provider, tool: toolId })
+    toolDuration.observe(durationSecs)
   } catch (error) {
     const durationMs = Date.now() - startTime
+    
+    // Record tool error
+    toolErrors.inc({ provider: tool.provider, tool: toolId })
+    
+    // Capture exception for error tracking
+    if (error instanceof Error) {
+      captureException(error, {
+        userId,
+        toolId,
+        provider: tool.provider,
+        operation: 'tool_execute',
+      })
+    }
+    
     void prisma.auditLog.create({
       data: {
         userId,

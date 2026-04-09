@@ -25,6 +25,8 @@ export const config = {
   dashboardUrl: process.env['DASHBOARD_URL'] ?? 'http://localhost:3000',
   nodeEnv: (process.env['NODE_ENV'] ?? 'development') as 'development' | 'production' | 'test',
   port: Number(process.env['PORT'] ?? 3001),
+  postgresAllowedHosts: process.env['POSTGRES_ALLOWED_HOSTS']?.split(',').map(h => h.trim()).filter(Boolean) || [],
+  sentryDsn: process.env['SENTRY_DSN'] || '',
 } as const
 
 /**

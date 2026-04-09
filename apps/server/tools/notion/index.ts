@@ -1,7 +1,38 @@
+import { safeToolError } from '../utils'
 import { defineTool, z } from '@opentool/tool-schema'
 
 const NOTION_VERSION = '2022-06-28'
 const NOTION_BASE = 'https://api.notion.com/v1'
+
+function safeJsonParse(input: string, fieldName: string): Record<string, unknown> {
+  try {
+    const parsed = JSON.parse(input)
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      throw new Error(`${fieldName} must be a JSON object`)
+    }
+    return parsed as Record<string, unknown>
+  } catch (e) {
+    if (e instanceof SyntaxError) {
+      throw new Error(`Invalid JSON in ${fieldName}: ${e.message}`)
+    }
+    throw e
+  }
+}
+
+function safeJsonParseArray(input: string, fieldName: string): unknown[] {
+  try {
+    const parsed = JSON.parse(input)
+    if (!Array.isArray(parsed)) {
+      throw new Error(`${fieldName} must be a JSON array`)
+    }
+    return parsed
+  } catch (e) {
+    if (e instanceof SyntaxError) {
+      throw new Error(`Invalid JSON in ${fieldName}: ${e.message}`)
+    }
+    throw e
+  }
+}
 
 function notionHeaders(token: string) {
   return {
@@ -31,7 +62,7 @@ export const notionCreatePage = defineTool({
       : { page_id: input.parent_id }
 
     const properties: Record<string, unknown> = input.properties
-      ? JSON.parse(input.properties)
+      ? safeJsonParse(input.properties, 'properties')
       : {}
 
     if (input.parent_type === 'database_id') {
@@ -66,7 +97,7 @@ export const notionCreatePage = defineTool({
 
     if (!res.ok) {
       const error = await res.json() as { message: string }
-      throw new Error(`Notion API error: ${error.message}`)
+      throw safeToolError(error, 'Notion', 'execute')
     }
 
     const page = await res.json() as {
@@ -94,8 +125,8 @@ export const notionQueryDatabase = defineTool({
   }),
   execute: async ({ input, auth }) => {
     const body: Record<string, unknown> = {}
-    if (input.filter) body.filter = JSON.parse(input.filter)
-    if (input.sorts) body.sorts = JSON.parse(input.sorts)
+    if (input.filter) body.filter = safeJsonParse(input.filter, 'filter')
+    if (input.sorts) body.sorts = safeJsonParseArray(input.sorts, 'sorts')
     if (input.page_size) body.page_size = input.page_size
 
     const res = await fetch(
@@ -109,7 +140,7 @@ export const notionQueryDatabase = defineTool({
 
     if (!res.ok) {
       const error = await res.json() as { message: string }
-      throw new Error(`Notion API error: ${error.message}`)
+      throw safeToolError(error, 'Notion', 'execute')
     }
 
     const data = await res.json() as {
@@ -167,7 +198,7 @@ export const notionUpdateBlock = defineTool({
 
     if (!res.ok) {
       const error = await res.json() as { message: string }
-      throw new Error(`Notion API error: ${error.message}`)
+      throw safeToolError(error, 'Notion', 'execute')
     }
 
     const block = await res.json() as {

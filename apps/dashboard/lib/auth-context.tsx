@@ -34,8 +34,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      const storedKey = localStorage.getItem(STORAGE_KEY)
-      const storedUser = localStorage.getItem(STORAGE_USER)
+      const storedKey = sessionStorage.getItem(STORAGE_KEY)
+      const storedUser = sessionStorage.getItem(STORAGE_USER)
       if (storedKey) setApiKey(storedKey)
       if (storedUser) setUser(JSON.parse(storedUser))
     } catch {}
@@ -43,15 +43,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const login = useCallback((key: string, userData: User) => {
-    localStorage.setItem(STORAGE_KEY, key)
-    localStorage.setItem(STORAGE_USER, JSON.stringify(userData))
+    sessionStorage.setItem(STORAGE_KEY, key)
+    sessionStorage.setItem(STORAGE_USER, JSON.stringify(userData))
     setApiKey(key)
     setUser(userData)
   }, [])
 
   const logout = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY)
-    localStorage.removeItem(STORAGE_USER)
+    sessionStorage.removeItem(STORAGE_KEY)
+    sessionStorage.removeItem(STORAGE_USER)
     setApiKey(null)
     setUser(null)
   }, [])

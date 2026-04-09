@@ -38,5 +38,8 @@ COPY --from=build-server /app/apps/server/package.json ./apps/server/package.jso
 ENV NODE_ENV=production
 EXPOSE 3001
 
+RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 opentool
+USER opentool
+
 WORKDIR /app/apps/server
 CMD ["node", "dist/src/index.js"]

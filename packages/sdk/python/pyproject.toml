@@ -28,6 +28,11 @@ dependencies = [
     "pydantic>=2.0.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/your-org/opentool"
+Repository = "https://github.com/your-org/opentool"
+Documentation = "https://github.com/your-org/opentool"
+
 [project.optional-dependencies]
 dev = [
     "mypy>=1.8.0",

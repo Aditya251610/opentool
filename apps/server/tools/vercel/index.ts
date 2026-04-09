@@ -1,3 +1,4 @@
+import { safeToolError } from '../utils'
 import { defineTool, z } from '@opentool/tool-schema'
 
 const VERCEL_BASE = 'https://api.vercel.com'
@@ -30,7 +31,7 @@ export const vercelListDeployments = defineTool({
 
     if (!res.ok) {
       const error = await res.json() as { error: { message: string } }
-      throw new Error(`Vercel API error: ${error.error.message}`)
+      throw safeToolError(error.error, 'Vercel', 'execute')
     }
 
     const data = await res.json() as {
@@ -69,7 +70,10 @@ export const vercelGetDeployment = defineTool({
   authType: 'oauth2',
   requiredScopes: [],
   inputSchema: z.object({
-    idOrUrl: z.string().describe('Deployment ID or URL'),
+    idOrUrl: z.string().describe('Deployment ID (e.g. dpl_abc123) or URL').refine(
+      (val) => /^dpl_[a-zA-Z0-9]+$/.test(val) || /^https?:\/\//.test(val),
+      { message: 'Must be a deployment ID (dpl_xxx) or URL' }
+    ),
     teamId: z.string().optional().describe('Team ID or slug'),
   }),
   execute: async ({ input, auth }) => {
@@ -78,13 +82,13 @@ export const vercelGetDeployment = defineTool({
     if (teamId) params.set('teamId', teamId)
     const qs = params.toString() ? `?${params}` : ''
 
-    const res = await fetch(`${VERCEL_BASE}/v13/deployments/${input.idOrUrl}${qs}`, {
+    const res = await fetch(`${VERCEL_BASE}/v13/deployments/${encodeURIComponent(input.idOrUrl)}${qs}`, {
       headers: { Authorization: `Bearer ${auth.accessToken}` },
     })
 
     if (!res.ok) {
       const error = await res.json() as { error: { message: string } }
-      throw new Error(`Vercel API error: ${error.error.message}`)
+      throw safeToolError(error.error, 'Vercel', 'execute')
     }
 
     const d = await res.json() as {

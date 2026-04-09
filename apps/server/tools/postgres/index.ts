@@ -1,4 +1,6 @@
+import { safeToolError } from '../utils'
 import { defineTool, z } from '@opentool/tool-schema'
+import { config } from '../../src/config'
 
 export const postgresExecuteQuery = defineTool({
   id: 'postgres.execute_query',
@@ -13,6 +15,42 @@ export const postgresExecuteQuery = defineTool({
     params: z.array(z.string()).optional().describe('Query parameters for parameterized queries'),
   }),
   execute: async ({ input }) => {
+    // Query length limit: 10000 chars
+    if (input.query.length > 10000) {
+      throw new Error('Query exceeds maximum length of 10000 characters')
+    }
+
+    // Parse connection string to extract hostname
+    let connectionUrl: URL
+    try {
+      connectionUrl = new URL(input.connection_string)
+    } catch (error) {
+      throw new Error('Invalid connection string format')
+    }
+
+    const hostname = connectionUrl.hostname
+    if (!hostname) {
+      throw new Error('Connection string must contain a hostname')
+    }
+
+    // Check hostname against allowlist
+    if (config.postgresAllowedHosts.length === 0) {
+      throw new Error(
+        'PostgreSQL connections are not configured. ' +
+        'Administrator must set POSTGRES_ALLOWED_HOSTS environment variable with comma-separated list of allowed hostnames'
+      )
+    }
+
+    const isAllowed = config.postgresAllowedHosts.some(
+      (allowed) => hostname.toLowerCase() === allowed.toLowerCase()
+    )
+
+    if (!isAllowed) {
+      throw new Error(
+        `PostgreSQL connection to "${hostname}" is not allowed. Allowed hosts: ${config.postgresAllowedHosts.join(', ')}`
+      )
+    }
+
     // Dynamic import to avoid compile-time dependency on pg
     let pg: any
     try {
@@ -29,19 +67,28 @@ export const postgresExecuteQuery = defineTool({
 
     try {
       await client.connect()
+
+      // Set query timeout to 30 seconds
+      await client.query('SET statement_timeout = 30000')
+
       const result = await client.query(input.query, input.params)
 
+      // Truncate result rows if exceeds 1000
+      const rows = result.rows.slice(0, 1000)
+      const truncated = result.rows.length > 1000
+
       return {
-        rows: result.rows,
+        rows,
         rowCount: result.rowCount,
         fields: result.fields.map((f: { name: string; dataTypeID: number }) => ({
           name: f.name,
           dataTypeID: f.dataTypeID,
         })),
+        ...(truncated && { _warning: `Results truncated: returned 1000 of ${result.rows.length} rows` }),
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Query execution failed'
-      throw new Error(`PostgreSQL error: ${message}`)
+      throw safeToolError(error, 'PostgreSQL', 'execute')
     } finally {
       await client.end()
     }

@@ -68,6 +68,20 @@ docker-compose up -d
 Dashboard available at `http://localhost:3000`
 MCP server available at `http://localhost:3001`
 
+### Production Deployment
+
+For complete self-hosting and production deployment guides, see:
+
+- **[Self-Hosting Guide](docs/self-hosting.md)** — Docker Compose, manual setup, reverse proxy configuration, health checks, and backups
+- **[Security Guide](docs/security.md)** — Encryption, authentication, threat model, data handling, and vulnerability reporting
+
+Key production checklist:
+- Use HTTPS with valid SSL certificates
+- Set a strong `TOKEN_ENCRYPTION_KEY` (64 hex characters)
+- Configure `SERVER_URL` and `DASHBOARD_URL` for your domain
+- Back up your encryption key separately from database backups
+- Monitor audit logs for unexpected activity
+
 ---
 
 ## Supported Tools

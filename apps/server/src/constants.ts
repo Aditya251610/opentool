@@ -41,3 +41,10 @@ export const API_KEY_ENV_MAP: Record<string, string> = {
   resend: 'RESEND_API_KEY',
   postgres: 'POSTGRES_CONNECTION_STRING',
 } as const
+
+// ─── Tool Response Truncation ─────────────
+export const MAX_RESPONSE_ROWS = 1000
+export const MAX_RESPONSE_BYTES = 1_048_576 // 1MB
+
+// ─── Tool Execution ───────────────────────
+export const TOOL_TIMEOUT_MS = 30000 // 30 seconds
