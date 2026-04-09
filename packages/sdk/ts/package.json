@@ -1,6 +1,6 @@
 {
   "name": "@opentool-ts/sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "TypeScript SDK for the OpenTool MCP server — manage tools, auth, and API keys programmatically.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
