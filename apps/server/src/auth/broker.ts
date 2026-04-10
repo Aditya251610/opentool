@@ -50,22 +50,9 @@ export async function resolveApiKey(rawKey: string): Promise<ResolvedUser | null
   const strippedKey = stripApiKeyPrefix(rawKey)
   const computedHash = hashApiKey(strippedKey)
 
-  logger.info('resolveApiKey debug', {
-    rawKeyLen: rawKey.length,
-    rawKeyPrefix: rawKey.slice(0, 10),
-    strippedKeyLen: strippedKey.length,
-    hashPrefix: computedHash.slice(0, 16),
-  })
-
   const apiKey = await prisma.apiKey.findUnique({
     where: { keyHash: computedHash },
     include: { user: true },
-  })
-
-  logger.info('resolveApiKey lookup result', {
-    found: !!apiKey,
-    revoked: apiKey?.revokedAt ? true : false,
-    expired: apiKey?.expiresAt ? apiKey.expiresAt < new Date() : false,
   })
 
   // Timing-safe comparison to prevent timing attacks
