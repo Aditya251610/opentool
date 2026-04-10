@@ -34,9 +34,18 @@ export function hashApiKey(rawKey: string): string {
 }
 
 /** Generates a new API key with a raw value, its SHA-256 hash, and a display prefix. */
-export function generateApiKey(): { raw: string; hash: string; prefix: string } {
+export function generateApiKey(): { raw: string; hash: string; prefix: string; fullKey: string } {
   const raw = crypto.randomBytes(32).toString('hex')
   const prefix = `${API_KEY_PREFIX}${raw.slice(0, 8)}`
   const hash = hashApiKey(raw)
-  return { raw, hash, prefix }
+  const fullKey = `${API_KEY_PREFIX}${raw}`
+  return { raw, hash, prefix, fullKey }
+}
+
+/** Strips the ot_ prefix from a key if present, for hashing. */
+export function stripApiKeyPrefix(key: string): string {
+  if (key.startsWith(API_KEY_PREFIX)) {
+    return key.slice(API_KEY_PREFIX.length)
+  }
+  return key
 }

@@ -23,7 +23,7 @@ keyRoutes.post('/', apiKeyMiddleware, async (c) => {
     }
 
     const { name } = parsed.data
-    const { raw, hash, prefix } = generateApiKey()
+    const { raw, hash, prefix, fullKey } = generateApiKey()
 
     await prisma.apiKey.create({
       data: {
@@ -34,7 +34,7 @@ keyRoutes.post('/', apiKeyMiddleware, async (c) => {
       },
     })
 
-    return c.json({ key: raw, prefix, name }, 201)
+    return c.json({ key: fullKey, prefix, name }, 201)
   } catch (error) {
     logger.error('Failed to create API key', error)
     const message = error instanceof Error ? error.message : 'Unknown error'

@@ -1,5 +1,5 @@
 import { prisma } from '../db/client'
-import { encrypt, decrypt, hashApiKey } from './encryption'
+import { encrypt, decrypt, hashApiKey, stripApiKeyPrefix } from './encryption'
 import Redis from 'ioredis'
 import { ConnectionStatus, Prisma } from '@prisma/client'
 import { config } from '../config'
@@ -47,7 +47,8 @@ export interface StoreTokenParams {
 
 /** Resolves a raw API key to the owning user, or returns null if invalid/revoked/expired. */
 export async function resolveApiKey(rawKey: string): Promise<ResolvedUser | null> {
-  const computedHash = hashApiKey(rawKey)
+  const strippedKey = stripApiKeyPrefix(rawKey)
+  const computedHash = hashApiKey(strippedKey)
 
   const apiKey = await prisma.apiKey.findUnique({
     where: { keyHash: computedHash },

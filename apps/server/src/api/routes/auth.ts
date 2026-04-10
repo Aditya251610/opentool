@@ -47,7 +47,7 @@ authRoutes.post('/signup', async (c) => {
     })
 
     // Auto-generate first API key
-    const { raw, hash, prefix } = generateApiKey()
+    const { raw, hash, prefix, fullKey } = generateApiKey()
     await prisma.apiKey.create({
       data: { userId: user.id, name: 'Default Key', keyHash: hash, keyPrefix: prefix },
     })
@@ -57,7 +57,7 @@ authRoutes.post('/signup', async (c) => {
 
     return c.json({
       user: { id: user.id, email: user.email, name: user.name },
-      apiKey: raw,
+      apiKey: fullKey,
     }, 201)
   } catch (error) {
     logger.error('Signup error', error)
@@ -92,7 +92,7 @@ authRoutes.post('/login', async (c) => {
       data: { revokedAt: new Date() },
     })
 
-    const { raw, hash, prefix } = generateApiKey()
+    const { raw, hash, prefix, fullKey } = generateApiKey()
     await prisma.apiKey.create({
       data: { userId: user.id, name: 'Dashboard Session', keyHash: hash, keyPrefix: prefix },
     })
