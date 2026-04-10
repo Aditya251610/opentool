@@ -100,8 +100,8 @@ export function ResendIcon({ size = 20, className = '', style }: IconProps) {
 
 export function NeonIcon({ size = 20, className = '', style }: IconProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 36 36" fill="none" className={className} style={style}>
-      <path d="M27.516 0H8.484A8.484 8.484 0 000 8.484V24.6a2.916 2.916 0 005.088 1.944l6.468-7.344V27.6a2.4 2.4 0 004.32 1.44L18 26.4V8.4l9.516 12.816V8.484A8.484 8.484 0 0036 8.484v18.132A8.484 8.484 0 0127.516 36H8.484A8.484 8.484 0 010 27.516" fill="currentColor"/>
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" className={className} style={style}>
+      <path d="M63 0.018V63.553L38.418 42.25V63.553H0V0L63 0.018ZM7.723 55.839H30.695V25.324L55.278 47.048V7.729L7.723 7.716V55.839Z" fill="#37C38F"/>
     </svg>
   )
 }
