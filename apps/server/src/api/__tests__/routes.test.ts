@@ -60,7 +60,9 @@ vi.mock('../../auth/encryption', () => ({
     raw: 'test-api-key-raw-value',
     hash: 'test-api-key-hash',
     prefix: 'ot_test',
+    fullKey: 'ot_test-api-key-raw-value',
   })),
+  stripApiKeyPrefix: vi.fn((key: string) => key.startsWith('ot_') ? key.slice(3) : key),
 }))
 
 // Mock logger
@@ -201,7 +203,7 @@ describe('Auth routes - Signup validation', () => {
     expect(res.status).toBe(201)
     const body = await res.json() as Record<string, unknown>
     expect(body.user).toBeDefined()
-    expect(body.apiKey).toBe('test-api-key-raw-value')
+    expect(body.apiKey).toBe('ot_test-api-key-raw-value')
   })
 
   it('POST /api/auth/signup should reject duplicate email', async () => {
