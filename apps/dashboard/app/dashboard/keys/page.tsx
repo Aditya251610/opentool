@@ -18,7 +18,14 @@ export default function KeysPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [newKeyName, setNewKeyName] = useState('')
   const [newKeyValue, setNewKeyValue] = useState<string | null>(null)
-  const [copied, setCopied] = useState(false)
+  const [copiedPrefix, setCopiedPrefix] = useState<string | null>(null)
+
+  function handleCopyPrefix(prefix: string) {
+    navigator.clipboard.writeText(prefix)
+    setCopiedPrefix(prefix)
+    toast.success('Prefix copied')
+    setTimeout(() => setCopiedPrefix(null), 2000)
+  }
   const [creating, setCreating] = useState(false)
   const [revoking, setRevoking] = useState<string | null>(null)
 
@@ -26,7 +33,7 @@ export default function KeysPage() {
     if (!apiKey) return
     try {
       const { keys: serverKeys } = await api.keys.list(apiKey)
-      setKeys(serverKeys)
+      setKeys(serverKeys.filter(k => k.name !== 'Dashboard Session'))
     } catch {
       toast.error('Failed to load API keys')
     } finally {
@@ -68,11 +75,14 @@ export default function KeysPage() {
     }
   }
 
+  const [newKeyCopied, setNewKeyCopied] = useState(false)
+
   function handleCopy() {
     if (!newKeyValue) return
     navigator.clipboard.writeText(newKeyValue)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    setNewKeyCopied(true)
+    toast.success('API key copied')
+    setTimeout(() => setNewKeyCopied(false), 2000)
   }
 
   return (
@@ -111,7 +121,7 @@ export default function KeysPage() {
                   onClick={handleCopy}
                   className="shrink-0 p-1.5 rounded-md hover:bg-[#1a1a1a] transition-colors cursor-pointer"
                 >
-                  {copied ? <Check size={14} className="text-[#22c55e]" /> : <Copy size={14} className="text-[#525252]" />}
+                  {newKeyCopied ? <Check size={14} className="text-[#22c55e]" /> : <Copy size={14} className="text-[#525252]" />}
                 </button>
               </div>
               <Button variant="secondary" size="sm" className="mt-3" onClick={() => setNewKeyValue(null)}>
@@ -192,7 +202,16 @@ export default function KeysPage() {
                   className="grid grid-cols-[1fr_140px_160px_120px_80px] gap-4 px-5 py-3.5 border-b border-[#1f1f1f] last:border-b-0 items-center min-w-[600px]"
                 >
                   <span className="text-[13px] font-medium text-[#ededed]">{key.name}</span>
-                  <span className="text-[12px] font-mono text-[#a1a1aa] bg-[#0a0a0a] border border-[#1f1f1f] px-2 py-0.5 rounded w-fit">{key.keyPrefix}…</span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="text-[12px] font-mono text-[#a1a1aa] bg-[#0a0a0a] border border-[#1f1f1f] px-2 py-0.5 rounded">{key.keyPrefix}…</span>
+                    <button
+                      onClick={() => handleCopyPrefix(key.keyPrefix)}
+                      className="p-1 rounded-md hover:bg-[#1a1a1a] transition-colors cursor-pointer"
+                      title="Copy prefix"
+                    >
+                      {copiedPrefix === key.keyPrefix ? <Check size={12} className="text-[#22c55e]" /> : <Copy size={12} className="text-[#525252]" />}
+                    </button>
+                  </span>
                   <span className="text-[13px] text-[#525252]">
                     {new Date(key.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </span>
