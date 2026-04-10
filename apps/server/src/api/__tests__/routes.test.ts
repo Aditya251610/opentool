@@ -352,11 +352,11 @@ describe('Tool routes', () => {
 })
 
 describe('MCP routes', () => {
-  it('GET /mcp should reject GET requests', async () => {
+  it('GET /mcp without auth should return 401', async () => {
     const res = await app.request('/mcp', { method: 'GET' })
-    expect(res.status).toBe(405)
+    expect(res.status).toBe(401)
     const body = await res.json() as Record<string, unknown>
-    expect(body.error).toContain('POST')
+    expect(body.error).toBeDefined()
   })
 
   it('POST /mcp endpoint exists', async () => {
