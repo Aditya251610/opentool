@@ -129,6 +129,14 @@ export async function handleMcpStreamable(c: Context): Promise<Response> {
       id: null,
     }), { status: 400, headers: { 'Content-Type': 'application/json' } })
   } catch (error) {
+    // Return 401 for invalid API keys so MCP clients handle it gracefully
+    if (error instanceof Error && error.message === 'Invalid API key') {
+      return new Response(JSON.stringify({
+        jsonrpc: '2.0',
+        error: { code: -32001, message: 'Invalid API key' },
+        id: null,
+      }), { status: 401, headers: { 'Content-Type': 'application/json' } })
+    }
     logger.error('MCP transport error', error)
     const message = error instanceof Error ? error.message : 'Unknown error'
     return new Response(JSON.stringify({
