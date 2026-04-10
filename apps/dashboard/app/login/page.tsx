@@ -22,7 +22,7 @@ const TERMINAL_LINES = [
   { text: '✓ gmail         (3 tools)', color: 'rgba(255,255,255,0.55)', delay: 2.5 },
   { text: '→ 15 tools loaded', color: 'rgba(255,255,255,0.3)', delay: 3.0 },
   { text: '✓ OpenTool MCP server running', color: '#22c55e', delay: 3.4 },
-  { text: '→ Listening at http://localhost:3001/mcp', color: 'rgba(255,255,255,0.4)', delay: 3.8 },
+  { text: '→ Listening at https://opentool.space/mcp', color: 'rgba(255,255,255,0.4)', delay: 3.8 },
 ]
 
 function TerminalLine({ text, color, delay }: { text: string; color: string; delay: number }) {

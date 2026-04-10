@@ -164,6 +164,7 @@ export default function ToolsPage() {
             placeholder="Search tools..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            autoComplete="off"
             className="w-full h-9 pl-9 pr-3 rounded-lg bg-[#111111] border border-[#1f1f1f] text-sm text-[#ededed] placeholder-[#525252] outline-none focus:border-[#06b6d4] transition-colors"
           />
         </div>
@@ -255,11 +256,14 @@ export default function ToolsPage() {
                 {API_KEY_LABELS[apiKeyModal]?.label || 'API Key'}
               </label>
               <input
-                type="password"
+                type="text"
+                autoComplete="off"
+                data-1p-ignore
+                data-lpignore="true"
                 value={providerKeyInput}
                 onChange={(e) => setProviderKeyInput(e.target.value)}
                 placeholder={API_KEY_LABELS[apiKeyModal]?.placeholder || 'Enter your API key'}
-                className="w-full h-10 px-3 rounded-lg bg-[#111111] border border-[#1f1f1f] text-sm text-[#ededed] placeholder-[#525252] outline-none focus:border-[#06b6d4] transition-colors mb-2"
+                className="w-full h-10 px-3 rounded-lg bg-[#111111] border border-[#1f1f1f] text-sm text-[#ededed] placeholder-[#525252] outline-none focus:border-[#06b6d4] transition-colors mb-2 [-webkit-text-security:disc]"
                 autoFocus
                 onKeyDown={(e) => { if (e.key === 'Enter') handleApiKeySubmit() }}
               />

@@ -1,5 +1,18 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
+export function getServerUrl(): string {
+  return API_URL.replace(/\/$/, '')
+}
+
+export function getServerHost(): string {
+  try {
+    const url = new URL(API_URL)
+    return url.host
+  } catch {
+    return API_URL.replace(/^https?:\/\//, '').replace(/\/$/, '')
+  }
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     ...options,

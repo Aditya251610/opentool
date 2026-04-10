@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { CodeBlock } from '@/components/ui/code-block'
 import { stagger, fadeUp } from '@/lib/animation'
 import { useAuth } from '@/lib/auth-context'
-import { api } from '@/lib/api'
+import { api, getServerHost } from '@/lib/api'
 import Link from 'next/link'
 
 const CONFIG_SNIPPET = `{
@@ -156,8 +156,8 @@ export default function OverviewPage() {
               </div>
             </div>
             <div className="space-y-3 flex-1">
-              <InfoRow label="MCP Endpoint" value="localhost:3001/mcp" />
-              <InfoRow label="API Endpoint" value="localhost:3001/api" />
+              <InfoRow label="MCP Endpoint" value={`${getServerHost()}/mcp`} />
+              <InfoRow label="API Endpoint" value={`${getServerHost()}/api`} />
               <InfoRow label="Providers" value={`${Object.keys(PROVIDERS).length} registered`} />
               <InfoRow label="Protocol" value="MCP v1.0" />
             </div>
