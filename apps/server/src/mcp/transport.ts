@@ -35,9 +35,19 @@ setInterval(() => {
 function extractBearerToken(c: Context): string | null {
   const authHeader = c.req.header('Authorization')
   if (!authHeader) return null
-  const parts = authHeader.split(' ')
-  if (parts[0] !== 'Bearer' || !parts[1]) return null
-  return parts[1]
+
+  // Standard: "Bearer <token>"
+  // Some MCP clients double-prefix: "Bearer Bearer <token>"
+  // Also accept raw token without Bearer prefix
+  let token = authHeader
+  if (token.startsWith('Bearer ')) {
+    token = token.slice(7).trim()
+  }
+  // Handle double Bearer prefix (MCP client added Bearer on top of config value)
+  if (token.startsWith('Bearer ')) {
+    token = token.slice(7).trim()
+  }
+  return token || null
 }
 
 /**
