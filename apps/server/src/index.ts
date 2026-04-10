@@ -10,7 +10,7 @@ import { logger } from './logger'
 import { captureException } from './error-tracking'
 import { prisma } from './db/client'
 import { api } from './api'
-import { handleMcpHono } from './mcp/transport'
+import { handleMcpStreamable, closeAllMcpSessions } from './mcp/transport'
 import { metrics, httpRequests } from './metrics'
 
 const app = new Hono()
@@ -174,8 +174,19 @@ app.get('/health', async (c) => {
 })
 
 app.route('/api', api)
-app.post('/mcp', handleMcpHono)
-app.get('/mcp', (c) => c.json({ error: 'Use POST /mcp to connect' }, 405))
+app.all('/mcp', handleMcpStreamable)
+
+// Return 404 for OAuth discovery endpoints so MCP clients know OAuth is not required
+app.get('/.well-known/oauth-authorization-server', (c) =>
+  c.json({ error: 'OAuth is not supported. Use Bearer token authentication.' }, 404))
+app.get('/.well-known/oauth-protected-resource', (c) =>
+  c.json({ error: 'OAuth is not supported. Use Bearer token authentication.' }, 404))
+app.all('/authorize', (c) =>
+  c.json({ error: 'OAuth is not supported. Use Bearer token in Authorization header.' }, 404))
+app.all('/token', (c) =>
+  c.json({ error: 'OAuth is not supported. Use Bearer token in Authorization header.' }, 404))
+app.all('/register', (c) =>
+  c.json({ error: 'OAuth is not supported. Use Bearer token in Authorization header.' }, 404))
 
 // Global error handler — captures exceptions to error tracking service
 app.onError((err, c) => {
@@ -217,7 +228,8 @@ const shutdown = async (signal: string) => {
   }
 
   // Disconnect from services
-  logger.info('Disconnecting from database and cache')
+  logger.info('Closing MCP sessions and disconnecting from database and cache')
+  await closeAllMcpSessions()
   await prisma.$disconnect()
   redis.disconnect()
   rateLimitRedis.disconnect()
