@@ -14,6 +14,19 @@ import { useSearchParams } from 'next/navigation'
 
 type Filter = 'all' | 'connected' | 'available'
 
+const API_KEY_LABELS: Record<string, { label: string; placeholder: string; help: string }> = {
+  resend: {
+    label: 'Resend API Key',
+    placeholder: 're_xxxxxxxxxxxx',
+    help: 'Get your API key from resend.com/api-keys',
+  },
+  postgres: {
+    label: 'Neon API Key',
+    placeholder: 'neon_xxxxxxxxxxxx',
+    help: 'Get your API key from console.neon.tech',
+  },
+}
+
 export default function ToolsPage() {
   const { apiKey } = useAuth()
   const searchParams = useSearchParams()
@@ -23,6 +36,8 @@ export default function ToolsPage() {
   const [connecting, setConnecting] = useState<string | null>(null)
   const [disconnecting, setDisconnecting] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [apiKeyModal, setApiKeyModal] = useState<string | null>(null)
+  const [providerKeyInput, setProviderKeyInput] = useState('')
 
   // Fetch connected tools from server
   useEffect(() => {
@@ -82,10 +97,9 @@ export default function ToolsPage() {
     try {
       const res = await api.tools.connectUrl(provider, apiKey)
       if (res.authType === 'API_KEY') {
-        // API key providers connect instantly (no OAuth redirect)
-        await api.tools.connectApiKey(provider, apiKey)
-        setConnectedProviders(prev => new Set([...prev, provider]))
-        toast.success(`${PROVIDERS[provider].name} connected!`)
+        // Show modal for user to enter their own API key
+        setApiKeyModal(provider)
+        setProviderKeyInput('')
         setConnecting(null)
       } else if (res.url) {
         // Redirect to OAuth provider
@@ -93,6 +107,22 @@ export default function ToolsPage() {
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : `Failed to connect ${PROVIDERS[provider].name}`)
+      setConnecting(null)
+    }
+  }
+
+  async function handleApiKeySubmit() {
+    if (!apiKey || !apiKeyModal || !providerKeyInput.trim()) return
+    setConnecting(apiKeyModal)
+    try {
+      await api.tools.connectApiKey(apiKeyModal, apiKey, providerKeyInput.trim())
+      setConnectedProviders(prev => new Set([...prev, apiKeyModal]))
+      toast.success(`${PROVIDERS[apiKeyModal].name} connected!`)
+      setApiKeyModal(null)
+      setProviderKeyInput('')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : `Failed to connect ${PROVIDERS[apiKeyModal].name}`)
+    } finally {
       setConnecting(null)
     }
   }
@@ -126,8 +156,8 @@ export default function ToolsPage() {
       </motion.div>
 
       {/* Search + Filter */}
-      <motion.div variants={fadeUp} initial="initial" animate="animate" className="flex items-center gap-3 mb-6">
-        <div className="relative w-80">
+      <motion.div variants={fadeUp} initial="initial" animate="animate" className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
+        <div className="relative w-full sm:w-80">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#525252]" />
           <input
             type="text"
@@ -164,7 +194,7 @@ export default function ToolsPage() {
       ) : (
         <>
           {/* Tool Grid */}
-          <motion.div variants={stagger} initial="initial" animate="animate" className="grid grid-cols-3 gap-4">
+          <motion.div variants={stagger} initial="initial" animate="animate" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <AnimatePresence mode="popLayout">
               {filtered.map(([key, provider]) => (
                 <motion.div
@@ -196,6 +226,67 @@ export default function ToolsPage() {
           )}
         </>
       )}
+
+      {/* API Key Modal */}
+      <AnimatePresence>
+        {apiKeyModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+            onClick={() => { setApiKeyModal(null); setProviderKeyInput('') }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2 }}
+              className="w-full max-w-md mx-4 p-6 rounded-xl bg-[#0a0a0a] border border-[#1f1f1f] shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-[16px] font-semibold text-[#ededed] mb-1">
+                Connect {PROVIDERS[apiKeyModal]?.name}
+              </h3>
+              <p className="text-[13px] text-[#525252] mb-5">
+                Enter your own {API_KEY_LABELS[apiKeyModal]?.label || 'API key'}. It will be encrypted and stored securely.
+              </p>
+              <label className="block text-[12px] font-medium text-[#a1a1aa] mb-2">
+                {API_KEY_LABELS[apiKeyModal]?.label || 'API Key'}
+              </label>
+              <input
+                type="password"
+                value={providerKeyInput}
+                onChange={(e) => setProviderKeyInput(e.target.value)}
+                placeholder={API_KEY_LABELS[apiKeyModal]?.placeholder || 'Enter your API key'}
+                className="w-full h-10 px-3 rounded-lg bg-[#111111] border border-[#1f1f1f] text-sm text-[#ededed] placeholder-[#525252] outline-none focus:border-[#06b6d4] transition-colors mb-2"
+                autoFocus
+                onKeyDown={(e) => { if (e.key === 'Enter') handleApiKeySubmit() }}
+              />
+              <p className="text-[11px] text-[#525252] mb-5">
+                {API_KEY_LABELS[apiKeyModal]?.help || 'Your key is never shared and only used for your tool calls.'}
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => { setApiKeyModal(null); setProviderKeyInput('') }}
+                  className="px-4 py-2 rounded-lg text-[13px] text-[#a1a1aa] hover:text-white border border-[#1f1f1f] hover:border-[#333] transition-colors"
+                >
+                  Cancel
+                </button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  loading={connecting === apiKeyModal}
+                  onClick={handleApiKeySubmit}
+                  className={!providerKeyInput.trim() ? 'opacity-50 pointer-events-none' : ''}
+                >
+                  Connect
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

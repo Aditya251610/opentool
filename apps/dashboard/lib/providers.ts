@@ -1,6 +1,6 @@
 import {
   GitHubIcon, NotionIcon, SlackIcon, LinearIcon, GmailIcon,
-  GoogleCalendarIcon, StripeIcon, VercelIcon, ResendIcon, PostgreSQLIcon,
+  GoogleCalendarIcon, StripeIcon, VercelIcon, ResendIcon, NeonIcon,
 } from '@/components/icons'
 import type { ComponentType, CSSProperties } from 'react'
 
@@ -97,12 +97,12 @@ export const PROVIDERS: Record<string, ProviderMeta> = {
     authType: 'api_key',
   },
   postgres: {
-    name: 'PostgreSQL',
-    Icon: PostgreSQLIcon,
-    color: '#336791',
-    bg: '#0d1520',
-    description: 'Execute SQL queries',
+    name: 'Neon',
+    Icon: NeonIcon,
+    color: '#00e599',
+    bg: '#0a1a14',
+    description: 'Serverless PostgreSQL queries',
     tools: ['execute_query'],
-    authType: 'none',
+    authType: 'api_key',
   },
 }

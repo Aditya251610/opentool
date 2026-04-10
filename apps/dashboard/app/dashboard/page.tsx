@@ -82,19 +82,21 @@ export default function OverviewPage() {
     <div>
       {/* Header */}
       <motion.div variants={fadeUp} initial="initial" animate="animate" className="mb-8">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-[#ededed]">Overview</h1>
             <p className="text-[13px] text-[#525252] mt-1">Your OpenTool instance at a glance.</p>
           </div>
-          <Button variant="ghost" size="sm">
-            Documentation <ExternalLink size={12} />
-          </Button>
+          <Link href="/docs" target="_blank">
+            <Button variant="ghost" size="sm">
+              Documentation <ExternalLink size={12} />
+            </Button>
+          </Link>
         </div>
       </motion.div>
 
       {/* Stats */}
-      <motion.div variants={stagger} initial="initial" animate="animate" className="grid grid-cols-4 gap-4 mb-8">
+      <motion.div variants={stagger} initial="initial" animate="animate" className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[
           { label: 'Connected Tools', value: stats.loading ? '—' : String(stats.connectedCount), sub: `of ${Object.keys(PROVIDERS).length} providers`, accent: true },
           { label: 'Available Actions', value: stats.loading ? '—' : String(stats.totalTools), sub: 'across all providers' },
@@ -118,8 +120,8 @@ export default function OverviewPage() {
       </motion.div>
 
       {/* Quick Setup + Server Status */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <motion.div variants={fadeUp} initial="initial" animate="animate" className="col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+        <motion.div variants={fadeUp} initial="initial" animate="animate" className="lg:col-span-2">
           <Card highlighted>
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-[15px] font-semibold text-[#ededed]">Get started with OpenTool</h2>
@@ -187,7 +189,7 @@ export default function OverviewPage() {
               <Button variant="ghost" size="sm">Manage tools →</Button>
             </Link>
           </div>
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
             {Object.entries(PROVIDERS).map(([key, p]) => {
               const isConnected = connectedProviders.has(key)
               return (

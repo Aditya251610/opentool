@@ -55,10 +55,11 @@ export const api = {
       request<{ url?: string; authType?: string; provider?: string }>(`/api/auth/connect-url/${provider}`, {
         headers: authHeaders(apiKey),
       }),
-    connectApiKey: (provider: string, apiKey: string) =>
+    connectApiKey: (provider: string, apiKey: string, providerApiKey?: string) =>
       request<{ success: boolean; provider: string }>(`/api/auth/connect-api-key/${provider}`, {
         method: 'POST',
-        headers: authHeaders(apiKey),
+        headers: { ...authHeaders(apiKey), 'Content-Type': 'application/json' },
+        body: providerApiKey ? JSON.stringify({ apiKey: providerApiKey }) : undefined,
       }),
     disconnect: (provider: string, apiKey: string) =>
       request<{ success: boolean }>('/api/auth/revoke/' + provider, {

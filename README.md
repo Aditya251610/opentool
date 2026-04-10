@@ -22,7 +22,7 @@ Built for solo developers building with AI agents.
 ## Quickstart (Hosted)
 
 **1. Get your API key**
-Sign up at [opentool.dev](https://opentool.dev) → Settings → Generate API key
+Sign up at [opentool.space](https://opentool.space) → Settings → Generate API key
 
 **2. Connect your tools**
 Go to the dashboard → Tools → Connect GitHub, Notion, Slack etc.

@@ -1,9 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { motion } from 'framer-motion'
-import { LayoutGrid, Wrench, Key, Settings, LogOut } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { LayoutGrid, Wrench, Key, Settings, LogOut, Menu, X } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { OpenToolLogo } from '@/components/icons'
 import { useRouter } from 'next/navigation'
@@ -19,6 +20,7 @@ export function Sidebar() {
   const pathname = usePathname()
   const { user, logout } = useAuth()
   const router = useRouter()
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   function handleLogout() {
     logout()
@@ -27,8 +29,8 @@ export function Sidebar() {
 
   const initial = user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || '?'
 
-  return (
-    <nav className="w-60 h-screen fixed left-0 top-0 flex flex-col border-r border-[#1f1f1f] bg-[#0a0a0a] px-3 py-4 z-50">
+  const navContent = (
+    <>
       {/* Logo */}
       <motion.div
         initial={{ opacity: 0, x: -8 }}
@@ -64,7 +66,7 @@ export function Sidebar() {
                 animate: { opacity: 1, x: 0, transition: { duration: 0.15 } },
               }}
             >
-              <Link href={item.href}>
+              <Link href={item.href} onClick={() => setMobileOpen(false)}>
                 <div className="relative flex items-center gap-2.5 h-8 px-2 rounded-md">
                   {isActive && (
                     <motion.div
@@ -109,6 +111,50 @@ export function Sidebar() {
           </button>
         </div>
       </div>
-    </nav>
+    </>
+  )
+
+  return (
+    <>
+      {/* Mobile header */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-[#0a0a0a] border-b border-[#1f1f1f] flex items-center justify-between px-4 z-50">
+        <OpenToolLogo className="h-4 w-auto" />
+        <button
+          onClick={() => setMobileOpen(!mobileOpen)}
+          className="p-2 rounded-md hover:bg-[#1a1a1a] transition-colors text-[#a1a1aa] cursor-pointer"
+        >
+          {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+      </div>
+
+      {/* Mobile sidebar overlay */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+              onClick={() => setMobileOpen(false)}
+            />
+            <motion.nav
+              initial={{ x: -240 }}
+              animate={{ x: 0 }}
+              exit={{ x: -240 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+              className="md:hidden w-60 h-screen fixed left-0 top-0 flex flex-col border-r border-[#1f1f1f] bg-[#0a0a0a] px-3 py-4 z-50"
+            >
+              {navContent}
+            </motion.nav>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Desktop sidebar */}
+      <nav className="hidden md:flex w-60 h-screen fixed left-0 top-0 flex-col border-r border-[#1f1f1f] bg-[#0a0a0a] px-3 py-4 z-50">
+        {navContent}
+      </nav>
+    </>
   )
 }

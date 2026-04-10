@@ -152,9 +152,19 @@ authRoutes.post('/connect-api-key/:provider', apiKeyMiddleware, async (c) => {
     return c.json({ error: `Provider "${provider}" does not support API key auth` }, 400)
   }
 
-  const apiKey = getApiKeyForProvider(provider)
+  // Accept user-provided API key from request body
+  let userApiKey: string | undefined
+  try {
+    const body = await c.req.json<{ apiKey?: string }>()
+    userApiKey = body.apiKey
+  } catch {
+    // No body or invalid JSON — fall through
+  }
+
+  // Use user-provided key, or fall back to server env var
+  const apiKey = userApiKey || getApiKeyForProvider(provider)
   if (!apiKey) {
-    return c.json({ error: `No API key configured for ${provider}` }, 501)
+    return c.json({ error: `Please provide your own API key for ${provider}` }, 400)
   }
 
   await storeToken({

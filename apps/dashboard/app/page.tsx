@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
 import {
   OpenToolLogo, GitHubIcon, NotionIcon, SlackIcon, LinearIcon,
-  GmailIcon, GoogleCalendarIcon, StripeIcon, VercelIcon, ResendIcon, PostgreSQLIcon
+  GmailIcon, GoogleCalendarIcon, StripeIcon, VercelIcon, ResendIcon, NeonIcon
 } from '@/components/icons'
 
 /* ─── Constants ─── */
@@ -35,7 +35,7 @@ const TOOLS: { name: string; Icon: typeof GitHubIcon; tools: number }[] = [
   { name: 'Stripe', Icon: StripeIcon, tools: 2 },
   { name: 'Vercel', Icon: VercelIcon, tools: 2 },
   { name: 'Resend', Icon: ResendIcon, tools: 1 },
-  { name: 'PostgreSQL', Icon: PostgreSQLIcon, tools: 1 },
+  { name: 'Neon', Icon: NeonIcon, tools: 1 },
 ]
 
 /* ─── Reusable bits ─── */

@@ -70,7 +70,7 @@ export default function SettingsPage() {
               <p className="text-[12px] text-[#525252]">{user?.email}</p>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4 max-w-lg">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg">
             <Input
               label="Full Name"
               value={name}

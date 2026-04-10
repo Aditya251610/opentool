@@ -78,7 +78,7 @@ export default function KeysPage() {
   return (
     <div>
       {/* Header */}
-      <motion.div variants={fadeUp} initial="initial" animate="animate" className="flex items-center justify-between mb-2">
+      <motion.div variants={fadeUp} initial="initial" animate="animate" className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-[#ededed]">API Keys</h1>
           <p className="text-[13px] text-[#525252] mt-1 max-w-lg">
@@ -176,9 +176,9 @@ export default function KeysPage() {
             </Button>
           </Card>
         ) : keys.length > 0 && (
-          <Card className="p-0 overflow-hidden">
+          <Card className="p-0 overflow-x-auto">
             {/* Table header */}
-            <div className="grid grid-cols-[1fr_140px_160px_120px_80px] gap-4 px-5 py-3 border-b border-[#1f1f1f] bg-[#0a0a0a]">
+            <div className="grid grid-cols-[1fr_140px_160px_120px_80px] gap-4 px-5 py-3 border-b border-[#1f1f1f] bg-[#0a0a0a] min-w-[600px]">
               {['Name', 'Prefix', 'Created', 'Last Used', ''].map(h => (
                 <span key={h} className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#525252]">{h}</span>
               ))}
@@ -189,7 +189,7 @@ export default function KeysPage() {
                 <motion.div
                   key={key.id}
                   variants={fadeUp}
-                  className="grid grid-cols-[1fr_140px_160px_120px_80px] gap-4 px-5 py-3.5 border-b border-[#1f1f1f] last:border-b-0 items-center"
+                  className="grid grid-cols-[1fr_140px_160px_120px_80px] gap-4 px-5 py-3.5 border-b border-[#1f1f1f] last:border-b-0 items-center min-w-[600px]"
                 >
                   <span className="text-[13px] font-medium text-[#ededed]">{key.name}</span>
                   <span className="text-[12px] font-mono text-[#a1a1aa] bg-[#0a0a0a] border border-[#1f1f1f] px-2 py-0.5 rounded w-fit">{key.keyPrefix}…</span>
