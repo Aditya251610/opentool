@@ -29,25 +29,19 @@ Go to the dashboard → Tools → Connect GitHub, Notion, Slack etc.
 
 **3. Connect your agent**
 
-For Claude Desktop, add to `claude_desktop_config.json`:
+For VS Code, add to `mcp.json`:
 ```json
 {
-  "mcpServers": {
-    "opentool": {
-      "command": "npx",
-      "args": ["@opentool-ts/cli", "mcp", "start"],
-      "env": {
-        "OPENTOOL_API_KEY": "your-api-key-here"
-      }
-    }
-  }
-}
-```
-
-For Claude Code:
-```bash
-npx @opentool-ts/cli init
-claude mcp add opentool
+   "servers": {
+     "opentool": {
+       "type": "http",
+       "url": "https://opentool.onrender.com/mcp",
+       "headers": {
+         "Authorization": "Bearer <TOKEN>"
+       }
+     }
+   }
+ }
 ```
 
 That's it. Your agent now has access to all your connected tools.
