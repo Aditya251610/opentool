@@ -4,7 +4,7 @@ import { defineTool, z } from '@opentool/tool-schema'
 const VERCEL_BASE = 'https://api.vercel.com'
 
 export const vercelListDeployments = defineTool({
-  id: 'vercel.list_deployments',
+  id: 'vercel_list_deployments',
   name: 'List Vercel Deployments',
   description: 'Lists deployments for a Vercel project',
   provider: 'vercel',
@@ -63,7 +63,7 @@ export const vercelListDeployments = defineTool({
 })
 
 export const vercelGetDeployment = defineTool({
-  id: 'vercel.get_deployment',
+  id: 'vercel_get_deployment',
   name: 'Get Vercel Deployment',
   description: 'Gets detailed information about a specific Vercel deployment',
   provider: 'vercel',

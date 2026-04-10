@@ -4,7 +4,7 @@ import { defineTool, z } from '@opentool/tool-schema'
 const GCAL_BASE = 'https://www.googleapis.com/calendar/v3'
 
 export const gcalCreateEvent = defineTool({
-  id: 'gcal.create_event',
+  id: 'gcal_create_event',
   name: 'Create Google Calendar Event',
   description: 'Creates a new event in Google Calendar',
   provider: 'gcal',
@@ -74,7 +74,7 @@ export const gcalCreateEvent = defineTool({
 })
 
 export const gcalListEvents = defineTool({
-  id: 'gcal.list_events',
+  id: 'gcal_list_events',
   name: 'List Google Calendar Events',
   description: 'Lists upcoming events from Google Calendar',
   provider: 'gcal',

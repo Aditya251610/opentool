@@ -32,7 +32,7 @@ async function tryJoinChannel(token: string | undefined, channelId: string): Pro
 }
 
 export const slackSendMessage = defineTool({
-  id: 'slack.send_message',
+  id: 'slack_send_message',
   name: 'Send Slack Message',
   description: 'Sends a message to a Slack channel or conversation',
   provider: 'slack',
@@ -98,7 +98,7 @@ export const slackSendMessage = defineTool({
 })
 
 export const slackReadChannel = defineTool({
-  id: 'slack.read_channel',
+  id: 'slack_read_channel',
   name: 'Read Slack Channel',
   description: 'Reads recent message history from a Slack channel',
   provider: 'slack',

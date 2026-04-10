@@ -3,7 +3,7 @@ import { defineTool, z } from '@opentool/tool-schema'
 import { config } from '../../src/config'
 
 export const postgresExecuteQuery = defineTool({
-  id: 'postgres.execute_query',
+  id: 'postgres_execute_query',
   name: 'Execute PostgreSQL Query',
   description: 'Executes a SQL query against a PostgreSQL database. Requires the pg package.',
   provider: 'postgres',

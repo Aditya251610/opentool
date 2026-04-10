@@ -18,7 +18,7 @@ function encodeEmail(to: string, subject: string, body: string, from?: string): 
 }
 
 export const gmailSendEmail = defineTool({
-  id: 'gmail.send_email',
+  id: 'gmail_send_email',
   name: 'Send Gmail Email',
   description: 'Sends an email via Gmail',
   provider: 'gmail',
@@ -55,7 +55,7 @@ export const gmailSendEmail = defineTool({
 })
 
 export const gmailReadEmail = defineTool({
-  id: 'gmail.read_email',
+  id: 'gmail_read_email',
   name: 'Read Gmail Email',
   description: 'Reads a specific email message by ID',
   provider: 'gmail',
@@ -116,7 +116,7 @@ export const gmailReadEmail = defineTool({
 })
 
 export const gmailSearchEmails = defineTool({
-  id: 'gmail.search_emails',
+  id: 'gmail_search_emails',
   name: 'Search Gmail Emails',
   description: 'Searches for emails in Gmail using a query string',
   provider: 'gmail',

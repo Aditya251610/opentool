@@ -4,7 +4,7 @@ import { defineTool, z } from '@opentool/tool-schema'
 const RESEND_BASE = 'https://api.resend.com'
 
 export const resendSendEmail = defineTool({
-  id: 'resend.send_email',
+  id: 'resend_send_email',
   name: 'Send Email via Resend',
   description: 'Sends an email using the Resend API',
   provider: 'resend',

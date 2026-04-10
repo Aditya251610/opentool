@@ -123,13 +123,13 @@ model OAuthProvider {
 // ─────────────────────────────────────────
 // TOOL DEFINITION
 // The registry — one row per tool action
-// e.g. "github.create_issue", "notion.query_database"
+// e.g. "github_create_issue", "notion.query_database"
 // ─────────────────────────────────────────
 
 model ToolDefinition {
   id           String   @id @default(cuid())
   providerId   String
-  toolId       String   @unique             // "github.create_issue"
+  toolId       String   @unique             // "github_create_issue"
   name         String
   description  String
   inputSchema  Json                          // JSON Schema of tool inputs

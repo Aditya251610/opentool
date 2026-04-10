@@ -2,7 +2,7 @@ import { defineTool, z } from '@opentool/tool-schema'
 import { safeToolError } from '../utils'
 
 export const githubCreateIssue = defineTool({
-  id: 'github.create_issue',
+  id: 'github_create_issue',
   name: 'Create GitHub Issue',
   description: 'Creates a new issue in a GitHub repository',
   provider: 'github',
@@ -56,7 +56,7 @@ export const githubCreateIssue = defineTool({
 })
 
 export const githubListIssues = defineTool({
-  id: 'github.list_issues',
+  id: 'github_list_issues',
   name: 'List GitHub Issues',
   description: 'Lists issues in a GitHub repository',
   provider: 'github',
@@ -109,7 +109,7 @@ export const githubListIssues = defineTool({
 })
 
 export const githubCreatePR = defineTool({
-  id: 'github.create_pr',
+  id: 'github_create_pr',
   name: 'Create GitHub Pull Request',
   description: 'Creates a new pull request in a GitHub repository',
   provider: 'github',
@@ -169,7 +169,7 @@ export const githubCreatePR = defineTool({
 })
 
 export const githubCommentOnIssue = defineTool({
-  id: 'github.comment_on_issue',
+  id: 'github_comment_on_issue',
   name: 'Comment on GitHub Issue',
   description: 'Adds a comment to an existing GitHub issue or pull request',
   provider: 'github',
@@ -218,7 +218,7 @@ export const githubCommentOnIssue = defineTool({
 })
 
 export const githubGetRepo = defineTool({
-  id: 'github.get_repo',
+  id: 'github_get_repo',
   name: 'Get GitHub Repository',
   description: 'Gets information about a GitHub repository',
   provider: 'github',

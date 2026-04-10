@@ -23,7 +23,7 @@ async function linearQuery(token: string, query: string, variables: Record<strin
 }
 
 export const linearCreateIssue = defineTool({
-  id: 'linear.create_issue',
+  id: 'linear_create_issue',
   name: 'Create Linear Issue',
   description: 'Creates a new issue in Linear',
   provider: 'linear',
@@ -91,7 +91,7 @@ export const linearCreateIssue = defineTool({
 })
 
 export const linearUpdateIssueStatus = defineTool({
-  id: 'linear.update_status',
+  id: 'linear_update_status',
   name: 'Update Linear Issue Status',
   description: 'Updates the status/state of an existing Linear issue',
   provider: 'linear',

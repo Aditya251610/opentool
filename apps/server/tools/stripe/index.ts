@@ -11,7 +11,7 @@ function stripeHeaders(token: string) {
 }
 
 export const stripeCreatePaymentLink = defineTool({
-  id: 'stripe.create_payment_link',
+  id: 'stripe_create_payment_link',
   name: 'Create Stripe Payment Link',
   description: 'Creates a Stripe payment link for a given price',
   provider: 'stripe',
@@ -54,7 +54,7 @@ export const stripeCreatePaymentLink = defineTool({
 })
 
 export const stripeListCustomers = defineTool({
-  id: 'stripe.list_customers',
+  id: 'stripe_list_customers',
   name: 'List Stripe Customers',
   description: 'Lists customers in your Stripe account',
   provider: 'stripe',

@@ -43,7 +43,7 @@ function notionHeaders(token: string) {
 }
 
 export const notionCreatePage = defineTool({
-  id: 'notion.create_page',
+  id: 'notion_create_page',
   name: 'Create Notion Page',
   description: 'Creates a new page in a Notion database or as a child of another page',
   provider: 'notion',
@@ -111,7 +111,7 @@ export const notionCreatePage = defineTool({
 })
 
 export const notionQueryDatabase = defineTool({
-  id: 'notion.query_database',
+  id: 'notion_query_database',
   name: 'Query Notion Database',
   description: 'Queries a Notion database with optional filters and sorts',
   provider: 'notion',
@@ -168,7 +168,7 @@ export const notionQueryDatabase = defineTool({
 })
 
 export const notionUpdateBlock = defineTool({
-  id: 'notion.update_block',
+  id: 'notion_update_block',
   name: 'Update Notion Block',
   description: 'Updates the content of an existing block in Notion',
   provider: 'notion',
