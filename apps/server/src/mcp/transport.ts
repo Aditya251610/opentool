@@ -47,6 +47,13 @@ function extractBearerToken(c: Context): string | null {
  */
 export async function handleMcpStreamable(c: Context): Promise<Response> {
   const apiKey = extractBearerToken(c)
+  logger.info('MCP request received', {
+    method: c.req.method,
+    hasAuth: !!apiKey,
+    keyPrefix: apiKey ? apiKey.slice(0, 10) + '...' : 'none',
+    accept: c.req.header('Accept') || 'none',
+    sessionId: c.req.header('mcp-session-id') || 'none',
+  })
   if (!apiKey) {
     return new Response(JSON.stringify({
       jsonrpc: '2.0',
