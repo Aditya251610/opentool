@@ -1041,6 +1041,59 @@ claude mcp add opentool`}
         </div>
       </section>
 
+      {/* ═══════════════════ FAQ (SEO + AI Search) ═══════════════════ */}
+      <section className="py-16 md:py-32 px-6 border-t border-white/[0.04] section-lazy">
+        <div className="max-w-[700px] mx-auto">
+          <FadeIn className="text-center mb-10 md:mb-20">
+            <SectionLabel>FAQ</SectionLabel>
+            <h2 className="text-[28px] sm:text-[40px] md:text-[56px] font-extrabold text-white mt-4 leading-[1.05] tracking-[-0.03em]">
+              Common questions.
+            </h2>
+          </FadeIn>
+
+          <div className="space-y-4">
+            {[
+              {
+                q: 'What is OpenTool?',
+                a: 'OpenTool is an open-source, self-hosted MCP (Model Context Protocol) server that gives AI agents like Claude, GPT, and Cursor secure, authenticated access to tools like GitHub, Notion, Slack, and more. Think of it as the open-source alternative to Arcade.dev.',
+              },
+              {
+                q: 'What is an MCP server?',
+                a: 'MCP (Model Context Protocol) is a standard by Anthropic that lets AI agents call external tools securely. An MCP server acts as the bridge — it handles authentication, tool execution, and security so your agent can create GitHub issues, send Slack messages, or query databases.',
+              },
+              {
+                q: 'How is OpenTool different from Arcade.dev?',
+                a: 'OpenTool is fully open-source (MIT licensed), self-hosted (runs on your infrastructure), and free forever. Your OAuth tokens and API keys never leave your server. Arcade.dev is proprietary, cloud-hosted, and requires a paid subscription.',
+              },
+              {
+                q: 'Which AI agents work with OpenTool?',
+                a: 'Any agent that supports MCP — Claude Desktop, Cursor, Windsurf, Claude Code, and any custom agent using the MCP SDK. OpenTool exposes a standard MCP endpoint that works with all compliant clients.',
+              },
+              {
+                q: 'How do I deploy OpenTool?',
+                a: 'One command: docker compose up -d. OpenTool ships as a Docker image with PostgreSQL included. No external dependencies, no cloud accounts needed.',
+              },
+              {
+                q: 'Is my data secure?',
+                a: 'Yes. OpenTool runs entirely on your infrastructure. OAuth tokens are encrypted with AES-256-GCM before storage. API keys are hashed with bcrypt. Every tool call is logged in an audit trail. Your tokens never leave your server.',
+              },
+            ].map((faq, i) => (
+              <FadeIn key={i} delay={i * 0.05}>
+                <details className="group rounded-xl border border-white/[0.06] hover:border-white/[0.1] transition-colors">
+                  <summary className="flex items-center justify-between px-6 py-4 cursor-pointer list-none text-[15px] font-medium text-white/80 group-hover:text-white transition-colors">
+                    {faq.q}
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 ml-4 text-white/20 group-open:rotate-45 transition-transform duration-200"><path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                  </summary>
+                  <div className="px-6 pb-5 text-[14px] text-white/40 leading-relaxed">
+                    {faq.a}
+                  </div>
+                </details>
+              </FadeIn>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ═══════════════════ FINAL CTA ═══════════════════ */}
       <section className="relative py-20 md:py-36 px-6 border-t border-white/[0.04]">
         <div className="absolute inset-0 hero-glow pointer-events-none" />

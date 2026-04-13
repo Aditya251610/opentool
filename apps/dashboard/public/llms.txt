@@ -1,0 +1,60 @@
+# OpenTool
+
+> One MCP server. All your tools. Fully open-source and self-hosted.
+
+OpenTool is an open-source, self-hosted MCP (Model Context Protocol) server that gives AI agents secure, authenticated access to third-party tools like GitHub, Notion, Slack, Linear, Gmail, Google Calendar, Stripe, Vercel, Resend, and Neon (PostgreSQL). It is the open-source alternative to Arcade.dev.
+
+## Key Facts
+
+- License: MIT (fully open source)
+- Self-hosted: runs on your own infrastructure via Docker
+- Protocol: MCP v1.0 (Model Context Protocol by Anthropic)
+- Providers: 10 (GitHub, Notion, Slack, Linear, Gmail, Google Calendar, Stripe, Vercel, Resend, Neon)
+- Tools: 23 individual actions across all providers
+- Auth: OAuth 2.0 broker + API key auth, AES-256-GCM token encryption
+- Security: tokens never leave your server, full audit trail
+- Stack: TypeScript, Node.js, Express, PostgreSQL, Next.js
+
+## What Problem Does OpenTool Solve?
+
+AI agents (Claude, GPT, Cursor, Windsurf) need access to external tools (create GitHub issues, send Slack messages, query databases). Each tool requires separate OAuth setup, token management, and security handling. OpenTool consolidates this into a single MCP server — connect once, use everywhere. Unlike Arcade.dev, OpenTool is fully open-source and self-hosted, meaning your tokens and data never leave your infrastructure.
+
+## How It Works
+
+1. Deploy OpenTool with `docker compose up -d`
+2. Open the dashboard, connect providers via OAuth (30 seconds each)
+3. Generate an API key from the dashboard
+4. Add OpenTool as an MCP server in your AI agent's config (Claude Desktop, Cursor, etc.)
+5. Your agent can now create issues, send messages, query databases — all authenticated and logged
+
+## Supported Tools
+
+- **GitHub** (5 tools): create_issue, list_issues, create_pull_request, search_repositories, get_file_contents
+- **Notion** (3 tools): search_pages, create_page, query_database
+- **Slack** (2 tools): send_message, list_channels
+- **Linear** (2 tools): create_issue, list_issues
+- **Gmail** (3 tools): send_email, list_emails, search_emails
+- **Google Calendar** (2 tools): list_events, create_event
+- **Stripe** (2 tools): list_customers, create_invoice
+- **Vercel** (1 tool): list_deployments
+- **Resend** (2 tools): send_email, list_emails
+- **Neon / PostgreSQL** (1 tool): execute_sql
+
+## Links
+
+- Website: https://opentool.dev
+- GitHub: https://github.com/Aditya251610/opentool
+- Documentation: https://opentool.dev/docs
+- Privacy Policy: https://opentool.dev/privacy
+- Terms of Service: https://opentool.dev/terms
+
+## Comparison with Arcade.dev
+
+| Feature | OpenTool | Arcade.dev |
+|---------|----------|------------|
+| Open Source | ✅ MIT Licensed | ❌ Proprietary |
+| Self-Hosted | ✅ Docker | ❌ Cloud only |
+| Data Privacy | ✅ Tokens stay on your server | ❌ Third-party hosted |
+| Cost | ✅ Free forever | ❌ Paid plans |
+| Protocol | MCP (Anthropic standard) | Custom API |
+| Providers | 10 | 50+ |
