@@ -146,7 +146,7 @@ export default function KeysPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[420px] bg-[#111111] border border-[#1f1f1f] rounded-2xl p-6 shadow-2xl"
+              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[calc(100%-2rem)] max-w-[420px] bg-[#111111] border border-[#1f1f1f] rounded-2xl p-6 shadow-2xl"
             >
               <h3 className="text-[17px] font-semibold text-[#ededed]">Create API Key</h3>
               <p className="text-[13px] text-[#525252] mt-1">Give your key a name to identify where it&apos;s used.</p>

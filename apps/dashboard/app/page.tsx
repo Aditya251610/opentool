@@ -281,7 +281,9 @@ function Navbar() {
           target="_blank"
           className="hidden sm:flex items-center gap-1.5 h-[34px] px-3.5 rounded-lg border border-white/[0.08] text-[13px] text-white/50 hover:text-white hover:border-white/[0.18] hover:bg-white/[0.03] transition-all duration-200"
         >
-          <GitHubIcon size={14} /> Star
+          <GitHubIcon size={14} />
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-[#e3b341]"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            Star
         </Link>
         <Link
           href={apiKey ? '/dashboard' : '/signup'}

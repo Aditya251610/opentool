@@ -67,7 +67,7 @@ export function Sidebar() {
               }}
             >
               <Link href={item.href} onClick={() => setMobileOpen(false)}>
-                <div className="relative flex items-center gap-2.5 h-8 px-2 rounded-md">
+                <div className="relative flex items-center gap-2.5 h-10 md:h-8 px-2 rounded-md">
                   {isActive && (
                     <motion.div
                       layoutId="activeNav"
@@ -117,11 +117,11 @@ export function Sidebar() {
   return (
     <>
       {/* Mobile header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-[#0a0a0a] border-b border-[#1f1f1f] flex items-center justify-between px-4 z-50">
+      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-[#0a0a0a] border-b border-[#1f1f1f] flex items-center justify-between px-4 z-50" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <OpenToolLogo className="h-4 w-auto" />
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="p-2 rounded-md hover:bg-[#1a1a1a] transition-colors text-[#a1a1aa] cursor-pointer"
+          className="p-2.5 -mr-1 rounded-md hover:bg-[#1a1a1a] transition-colors text-[#a1a1aa] cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
         >
           {mobileOpen ? <X size={20} /> : <Menu size={20} />}
         </button>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Loader2 } from 'lucide-react'
 import { PROVIDERS, type ProviderMeta } from '@/lib/providers'
@@ -79,17 +79,17 @@ export default function ToolsPage() {
     }
   }, [searchParams])
 
-  const filtered = Object.entries(PROVIDERS).filter(([key, p]) => {
+  const filtered = useMemo(() => Object.entries(PROVIDERS).filter(([key, p]) => {
     const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.description.toLowerCase().includes(search.toLowerCase())
     const isConnected = connectedProviders.has(key)
     if (filter === 'connected') return matchesSearch && isConnected
     if (filter === 'available') return matchesSearch && !isConnected
     return matchesSearch
-  })
+  }), [search, filter, connectedProviders])
 
-  const connected = Object.keys(PROVIDERS).filter(k => connectedProviders.has(k))
-  const available = Object.keys(PROVIDERS).filter(k => !connectedProviders.has(k))
+  const connected = useMemo(() => Object.keys(PROVIDERS).filter(k => connectedProviders.has(k)), [connectedProviders])
+  const available = useMemo(() => Object.keys(PROVIDERS).filter(k => !connectedProviders.has(k)), [connectedProviders])
 
   async function handleConnect(provider: string) {
     if (!apiKey) return
@@ -173,7 +173,7 @@ export default function ToolsPage() {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors cursor-pointer ${
+              className={`px-3 py-2 rounded-md text-[12px] font-medium transition-colors cursor-pointer min-h-[36px] ${
                 filter === f
                   ? 'bg-[#1a1a1a] text-[#ededed] border border-[#2e2e2e]'
                   : 'text-[#525252] hover:text-[#a1a1aa] border border-transparent'
