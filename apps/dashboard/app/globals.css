@@ -2,37 +2,158 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Geist via Next.js local font or Google Fonts CDN */
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400&display=swap');
-
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-html { color-scheme: dark; }
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 
 body {
-  font-family: 'Geist', system-ui, -apple-system, sans-serif;
-  background: #0a0a0a;
+  font-family: var(--font-geist), system-ui, -apple-system, sans-serif;
+  background: #000000;
   color: #ededed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 ::selection { background: #0070F3; color: #ffffff; }
 
-::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #1f1f1f; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #2e2e2e; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
 
-/* Noise overlay */
+/* Noise overlay — static, GPU-composited */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
-  opacity: 0.02;
+  opacity: 0.018;
   pointer-events: none;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   z-index: 9999;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Hide noise on mobile for perf */
+@media (max-width: 768px) {
+  body::before { display: none; }
+}
+
+/* ─── Below-fold sections paint faster ─── */
+.section-lazy {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 600px;
+}
+
+/* ─── Grid background ─── */
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+.bg-grid-fade {
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 20%, transparent 70%);
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 20%, transparent 70%);
+}
+
+/* ─── Glass card ─── */
+.glass-card {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  backdrop-filter: blur(12px);
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.glass-card:hover {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 20px 60px -15px rgba(0,0,0,0.5), 0 0 30px rgba(0,112,243,0.05);
+}
+
+/* ─── Spotlight card ─── */
+.spotlight-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.spotlight-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(0,112,243,0.06), transparent 60%);
+  pointer-events: none;
+}
+
+.spotlight-card:hover::before {
+  opacity: 1;
+}
+
+/* ─── Gradient text ─── */
+.text-gradient {
+  background: linear-gradient(135deg, #FFFFFF 0%, rgba(255,255,255,0.55) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-brand {
+  background: linear-gradient(135deg, #0070F3, #00C6FF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Glow effects ─── */
+.glow-brand {
+  box-shadow: 0 0 40px rgba(0,112,243,0.15), 0 0 80px rgba(0,112,243,0.05);
+}
+
+.glow-line {
+  background: linear-gradient(90deg, transparent, rgba(0,112,243,0.3), transparent);
+  height: 1px;
+}
+
+/* ─── Terminal typing cursor ─── */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.cursor-blink {
+  animation: blink 1s step-end infinite;
+}
+
+/* ─── Hero mesh gradient ─── */
+.hero-glow {
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 0%, rgba(0,112,243,0.12), transparent),
+    radial-gradient(ellipse 40% 30% at 20% 20%, rgba(0,198,255,0.04), transparent),
+    radial-gradient(ellipse 40% 30% at 80% 30%, rgba(139,92,246,0.04), transparent);
+}
+
+/* ─── Scroll progress bar ─── */
+.scroll-progress {
+  transform-origin: left;
+  background: linear-gradient(90deg, #0070F3, #00C6FF);
 }
 
 @keyframes pulse-glow {
