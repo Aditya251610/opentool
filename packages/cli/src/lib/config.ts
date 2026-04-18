@@ -11,7 +11,7 @@ export interface OpenToolConfig {
 const CONFIG_DIR = join(homedir(), '.opentool')
 const CONFIG_FILE = join(CONFIG_DIR, 'config.json')
 
-const DEFAULT_SERVER_URL = 'http://localhost:3001'
+const DEFAULT_SERVER_URL = 'https://opentool.onrender.com'
 
 export function loadConfig(): OpenToolConfig {
   if (!existsSync(CONFIG_FILE)) {
@@ -54,7 +54,7 @@ export function validateUrl(url: string): string | null {
     }
     return null
   } catch {
-    return 'Invalid URL format. Example: http://localhost:3001'
+    return 'Invalid URL format. Example: https://opentool.onrender.com'
   }
 }
 
