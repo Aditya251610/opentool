@@ -27,6 +27,25 @@ const AuthContext = createContext<AuthState>({
 const STORAGE_KEY = 'opentool_api_key'
 const STORAGE_USER = 'opentool_user'
 
+// XOR-based obfuscation for sessionStorage (not encryption, but prevents casual inspection)
+// True security requires httpOnly cookies; this mitigates casual XSS scraping
+const OBF_KEY = 'OpEnToOl_2026'
+function obfuscate(text: string): string {
+  const arr: number[] = []
+  for (let i = 0; i < text.length; i++) {
+    arr.push(text.charCodeAt(i) ^ OBF_KEY.charCodeAt(i % OBF_KEY.length))
+  }
+  return btoa(String.fromCharCode(...arr))
+}
+function deobfuscate(encoded: string): string {
+  const decoded = atob(encoded)
+  const arr: number[] = []
+  for (let i = 0; i < decoded.length; i++) {
+    arr.push(decoded.charCodeAt(i) ^ OBF_KEY.charCodeAt(i % OBF_KEY.length))
+  }
+  return String.fromCharCode(...arr)
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [apiKey, setApiKey] = useState<string | null>(null)
   const [user, setUser] = useState<User | null>(null)
@@ -36,15 +55,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const storedKey = sessionStorage.getItem(STORAGE_KEY)
       const storedUser = sessionStorage.getItem(STORAGE_USER)
-      if (storedKey) setApiKey(storedKey)
-      if (storedUser) setUser(JSON.parse(storedUser))
-    } catch {}
+      if (storedKey) setApiKey(deobfuscate(storedKey))
+      if (storedUser) setUser(JSON.parse(deobfuscate(storedUser)))
+    } catch {
+      // Corrupted storage — clear it
+      sessionStorage.removeItem(STORAGE_KEY)
+      sessionStorage.removeItem(STORAGE_USER)
+    }
     setIsLoading(false)
   }, [])
 
   const login = useCallback((key: string, userData: User) => {
-    sessionStorage.setItem(STORAGE_KEY, key)
-    sessionStorage.setItem(STORAGE_USER, JSON.stringify(userData))
+    sessionStorage.setItem(STORAGE_KEY, obfuscate(key))
+    sessionStorage.setItem(STORAGE_USER, obfuscate(JSON.stringify(userData)))
     setApiKey(key)
     setUser(userData)
   }, [])

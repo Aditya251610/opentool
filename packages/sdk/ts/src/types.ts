@@ -99,6 +99,8 @@ export interface OpenToolConfig {
   fetch?: typeof globalThis.fetch
   /** Request timeout in ms (default: 30000) */
   timeout?: number
+  /** Max retries for transient failures (default: 3) */
+  maxRetries?: number
 }
 
 // ─── Errors ───

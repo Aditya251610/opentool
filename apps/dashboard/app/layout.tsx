@@ -23,7 +23,8 @@ export const metadata: Metadata = {
     default: 'OpenTool — Open Source MCP Server for AI Agents',
     template: '%s | OpenTool',
   },
-  description: 'OpenTool is an open-source, self-hosted MCP server that gives AI agents secure access to GitHub, Notion, Slack, and 10+ tools. The free alternative to Arcade.dev. MIT licensed.',
+  description:
+    'OpenTool is an open-source, self-hosted MCP server that gives AI agents secure access to GitHub, Notion, Slack, and 10+ tools. The free alternative to Arcade.dev. MIT licensed.',
   metadataBase: new URL('https://opentool.dev'),
   alternates: {
     canonical: '/',
@@ -32,14 +33,26 @@ export const metadata: Metadata = {
     icon: '/icon.svg',
   },
   keywords: [
-    'MCP server', 'Model Context Protocol', 'AI agent tools', 'open source MCP',
-    'self-hosted MCP server', 'Arcade.dev alternative', 'AI tool integration',
-    'GitHub MCP', 'Notion MCP', 'Slack MCP', 'Claude tools', 'Cursor MCP',
-    'AI developer tools', 'MCP TypeScript', 'open source AI tools',
+    'MCP server',
+    'Model Context Protocol',
+    'AI agent tools',
+    'open source MCP',
+    'self-hosted MCP server',
+    'Arcade.dev alternative',
+    'AI tool integration',
+    'GitHub MCP',
+    'Notion MCP',
+    'Slack MCP',
+    'Claude tools',
+    'Cursor MCP',
+    'AI developer tools',
+    'MCP TypeScript',
+    'open source AI tools',
   ],
   openGraph: {
     title: 'OpenTool — Open Source MCP Server for AI Agents',
-    description: 'One MCP server. All your tools. 10 providers, 23 tools. Self-hosted, MIT licensed. The open-source alternative to Arcade.dev.',
+    description:
+      'One MCP server. All your tools. 10 providers, 23 tools. Self-hosted, MIT licensed. The open-source alternative to Arcade.dev.',
     type: 'website',
     siteName: 'OpenTool',
     url: 'https://opentool.dev',
@@ -48,7 +61,8 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'OpenTool — Open Source MCP Server for AI Agents',
-    description: 'Self-hosted MCP server with 10 providers & 23 tools. Free, open-source alternative to Arcade.dev.',
+    description:
+      'Self-hosted MCP server with 10 providers & 23 tools. Free, open-source alternative to Arcade.dev.',
   },
   robots: { index: true, follow: true },
   other: {
@@ -63,7 +77,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     name: 'OpenTool',
     applicationCategory: 'DeveloperApplication',
     operatingSystem: 'Linux, macOS, Windows (Docker)',
-    description: 'Open-source, self-hosted MCP server that gives AI agents secure access to GitHub, Notion, Slack, and 10+ tools. The open-source alternative to Arcade.dev.',
+    description:
+      'Open-source, self-hosted MCP server that gives AI agents secure access to GitHub, Notion, Slack, and 10+ tools. The open-source alternative to Arcade.dev.',
     url: 'https://opentool.dev',
     license: 'https://opensource.org/licenses/MIT',
     isAccessibleForFree: true,
@@ -79,7 +94,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     },
     codeRepository: 'https://github.com/Aditya251610/opentool',
     programmingLanguage: ['TypeScript', 'JavaScript'],
-    keywords: 'MCP server, Model Context Protocol, AI tools, open source, self-hosted, GitHub integration, Notion integration, Slack integration, Arcade.dev alternative, AI agent tools',
+    keywords:
+      'MCP server, Model Context Protocol, AI tools, open source, self-hosted, GitHub integration, Notion integration, Slack integration, Arcade.dev alternative, AI agent tools',
   }
 
   const orgJsonLd = {
@@ -150,23 +166,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`dark ${geist.variable} ${geistMono.variable}`}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
-        />
+        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+        <script type="application/ld+json">{JSON.stringify(orgJsonLd)}</script>
+        <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
       </head>
       <body suppressHydrationWarning>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
         <Toaster
           position="bottom-right"
           gap={8}

@@ -29,14 +29,15 @@ const activeRequests = new Set<string>()
  */
 const createRateLimiter = (maxRequests: number, windowSeconds: number) => {
   return async (c: Context, next: Next) => {
-    const ip = c.req.header('x-forwarded-for')?.split(',')[0]?.trim() 
-      || c.req.header('cf-connecting-ip') 
-      || 'unknown'
+    const ip =
+      c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ||
+      c.req.header('cf-connecting-ip') ||
+      'unknown'
     const key = `ot:ratelimit:${ip}`
 
     try {
       const current = await rateLimitRedis.incr(key)
-      
+
       // Set expiration only on first request in window
       if (current === 1) {
         await rateLimitRedis.expire(key, windowSeconds)
@@ -97,11 +98,7 @@ app.use('*', metricsMiddleware)
 // CORS — restrict to dashboard origin in production
 app.use(
   '*',
-  cors(
-    config.nodeEnv === 'production'
-      ? { origin: config.dashboardUrl }
-      : { origin: '*' },
-  ),
+  cors(config.nodeEnv === 'production' ? { origin: config.dashboardUrl } : { origin: '*' }),
 )
 
 // Rate limiting for sensitive routes (20 requests per minute per IP)
@@ -178,15 +175,20 @@ app.all('/mcp', handleMcpStreamable)
 
 // Return 404 for OAuth discovery endpoints so MCP clients know OAuth is not required
 app.get('/.well-known/oauth-authorization-server', (c) =>
-  c.json({ error: 'OAuth is not supported. Use Bearer token authentication.' }, 404))
+  c.json({ error: 'OAuth is not supported. Use Bearer token authentication.' }, 404),
+)
 app.get('/.well-known/oauth-protected-resource', (c) =>
-  c.json({ error: 'OAuth is not supported. Use Bearer token authentication.' }, 404))
+  c.json({ error: 'OAuth is not supported. Use Bearer token authentication.' }, 404),
+)
 app.all('/authorize', (c) =>
-  c.json({ error: 'OAuth is not supported. Use Bearer token in Authorization header.' }, 404))
+  c.json({ error: 'OAuth is not supported. Use Bearer token in Authorization header.' }, 404),
+)
 app.all('/token', (c) =>
-  c.json({ error: 'OAuth is not supported. Use Bearer token in Authorization header.' }, 404))
+  c.json({ error: 'OAuth is not supported. Use Bearer token in Authorization header.' }, 404),
+)
 app.all('/register', (c) =>
-  c.json({ error: 'OAuth is not supported. Use Bearer token in Authorization header.' }, 404))
+  c.json({ error: 'OAuth is not supported. Use Bearer token in Authorization header.' }, 404),
+)
 
 // Global error handler — captures exceptions to error tracking service
 app.onError((err, c) => {
@@ -217,7 +219,7 @@ const shutdown = async (signal: string) => {
 
   while (activeRequests.size > 0 && waitTime < maxWait) {
     logger.info('Waiting for in-flight requests', { count: activeRequests.size, waitTime })
-    await new Promise(resolve => setTimeout(resolve, waitInterval))
+    await new Promise((resolve) => setTimeout(resolve, waitInterval))
     waitTime += waitInterval
   }
 
@@ -243,6 +245,29 @@ process.on('SIGTERM', () => shutdown('SIGTERM'))
 process.on('SIGINT', () => shutdown('SIGINT'))
 
 export { app }
+
+// Periodic audit log cleanup (runs once on startup, then every 24h)
+const AUDIT_CLEANUP_INTERVAL = 24 * 60 * 60 * 1000
+async function cleanupAuditLogs() {
+  try {
+    const { AUDIT_LOG_RETENTION_DAYS } = await import('./constants')
+    const cutoff = new Date(Date.now() - AUDIT_LOG_RETENTION_DAYS * 24 * 60 * 60 * 1000)
+    const result = await prisma.auditLog.deleteMany({ where: { createdAt: { lt: cutoff } } })
+    if (result.count > 0) {
+      logger.info('Audit log cleanup', { deleted: result.count, olderThan: cutoff.toISOString() })
+    }
+  } catch (err) {
+    logger.warn('Audit log cleanup failed', {
+      error: err instanceof Error ? err.message : 'unknown',
+    })
+  }
+}
+// Run cleanup on startup (delayed 30s) and then every 24h
+// Both timers are unref'd so they don't prevent graceful process exit
+const auditStartupTimer = setTimeout(cleanupAuditLogs, 30_000)
+auditStartupTimer.unref()
+const auditCleanupTimer = setInterval(cleanupAuditLogs, AUDIT_CLEANUP_INTERVAL)
+auditCleanupTimer.unref()
 
 serve({ fetch: app.fetch, port: config.port }, () => {
   logger.info('🚀 OpenTool server running', { port: config.port })

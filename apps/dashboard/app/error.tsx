@@ -12,10 +12,8 @@ export default function Error({
   reset: () => void
 }) {
   useEffect(() => {
-    // Only log digest in production — no stack traces
-    if (error.digest) {
-      console.error('Error digest:', error.digest)
-    }
+    // Error digest logged server-side only; no client-side logging in production
+    void error.digest
   }, [error])
 
   return (
@@ -27,7 +25,9 @@ export default function Error({
         <div className="w-12 h-12 rounded-full bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.15)] flex items-center justify-center mx-auto mb-5">
           <span className="text-[#ef4444] text-lg">!</span>
         </div>
-        <h2 className="text-xl font-semibold text-[#ededed] tracking-tight">Something went wrong</h2>
+        <h2 className="text-xl font-semibold text-[#ededed] tracking-tight">
+          Something went wrong
+        </h2>
         <p className="text-[14px] text-[#525252] mt-2 leading-relaxed">
           An unexpected error occurred. Please try again or go back to the dashboard.
         </p>

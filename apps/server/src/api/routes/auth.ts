@@ -13,7 +13,9 @@ import { authEvents } from '../../metrics'
 
 const signupSchema = z.object({
   email: z.string().email('Invalid email address'),
-  password: z.string().min(PASSWORD_MIN_LENGTH, `Password must be at least ${PASSWORD_MIN_LENGTH} characters`),
+  password: z
+    .string()
+    .min(PASSWORD_MIN_LENGTH, `Password must be at least ${PASSWORD_MIN_LENGTH} characters`),
   name: z.string().max(100).optional(),
 })
 
@@ -55,14 +57,20 @@ authRoutes.post('/signup', async (c) => {
     // Record signup event
     authEvents.inc({ event: 'signup' })
 
-    return c.json({
-      user: { id: user.id, email: user.email, name: user.name },
-      apiKey: fullKey,
-    }, 201)
+    return c.json(
+      {
+        user: { id: user.id, email: user.email, name: user.name },
+        apiKey: fullKey,
+      },
+      201,
+    )
   } catch (error) {
     logger.error('Signup error', error)
     if (error instanceof Error && error.message.includes("Can't reach database")) {
-      return c.json({ error: 'Unable to connect to database. Please check your DATABASE_URL.' }, 503)
+      return c.json(
+        { error: 'Unable to connect to database. Please check your DATABASE_URL.' },
+        503,
+      )
     }
     return c.json({ error: 'Something went wrong. Please try again.' }, 500)
   }
@@ -107,7 +115,10 @@ authRoutes.post('/login', async (c) => {
   } catch (error) {
     logger.error('Login error', error)
     if (error instanceof Error && error.message.includes("Can't reach database")) {
-      return c.json({ error: 'Unable to connect to database. Please check your DATABASE_URL.' }, 503)
+      return c.json(
+        { error: 'Unable to connect to database. Please check your DATABASE_URL.' },
+        503,
+      )
     }
     return c.json({ error: 'Something went wrong. Please try again.' }, 500)
   }
@@ -161,8 +172,8 @@ authRoutes.post('/connect-api-key/:provider', apiKeyMiddleware, async (c) => {
     // No body or invalid JSON — fall through
   }
 
-  // Use user-provided key, or fall back to server env var
-  const apiKey = userApiKey || getApiKeyForProvider(provider)
+  // User MUST provide their own API key — never fall back to server env vars
+  const apiKey = userApiKey
   if (!apiKey) {
     return c.json({ error: `Please provide your own API key for ${provider}` }, 400)
   }
@@ -225,14 +236,10 @@ authRoutes.get('/callback/:provider', async (c) => {
     await exchangeCode(provider, code, state)
     // Record OAuth connection event
     authEvents.inc({ event: 'connect', provider })
-    return c.redirect(
-      `${config.dashboardUrl}/dashboard/tools?connected=${provider}`
-    )
+    return c.redirect(`${config.dashboardUrl}/dashboard/tools?connected=${provider}`)
   } catch (error) {
     logger.error('OAuth callback error', error, { provider })
-    return c.redirect(
-      `${config.dashboardUrl}/dashboard/tools?error=${provider}`
-    )
+    return c.redirect(`${config.dashboardUrl}/dashboard/tools?error=${provider}`)
   }
 })
 

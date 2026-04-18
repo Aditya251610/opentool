@@ -4,11 +4,18 @@
 
 // ─── Supported Providers ──────────────────
 export const PROVIDERS = [
-  'github', 'notion', 'slack', 'linear',
-  'gmail', 'gcal', 'stripe', 'vercel',
-  'resend', 'postgres',
+  'github',
+  'notion',
+  'slack',
+  'linear',
+  'gmail',
+  'gcal',
+  'stripe',
+  'vercel',
+  'resend',
+  'postgres',
 ] as const
-export type Provider = typeof PROVIDERS[number]
+export type Provider = (typeof PROVIDERS)[number]
 
 // ─── Cache ────────────────────────────────
 export const CACHE_KEY_PREFIX = 'ot:token'
@@ -48,3 +55,6 @@ export const MAX_RESPONSE_BYTES = 1_048_576 // 1MB
 
 // ─── Tool Execution ───────────────────────
 export const TOOL_TIMEOUT_MS = 30000 // 30 seconds
+
+// ─── Audit Log Retention ──────────────────
+export const AUDIT_LOG_RETENTION_DAYS = 90

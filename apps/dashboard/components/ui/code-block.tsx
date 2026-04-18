@@ -21,9 +21,12 @@ export function CodeBlock({ children, title }: CodeBlockProps) {
     <div className="rounded-lg bg-[#0a0a0a] border border-[#1f1f1f] overflow-hidden">
       {title && (
         <div className="flex items-center justify-between px-4 py-2 border-b border-[#1f1f1f]">
-          <span className="text-[11px] uppercase tracking-wider text-[#525252] font-medium">{title}</span>
+          <span className="text-[11px] uppercase tracking-wider text-[#525252] font-medium">
+            {title}
+          </span>
           <button
             onClick={handleCopy}
+            aria-label={copied ? 'Copied to clipboard' : 'Copy code to clipboard'}
             className="flex items-center gap-1.5 text-[11px] text-[#525252] hover:text-[#a1a1aa] transition-colors cursor-pointer"
           >
             {copied ? <Check size={12} className="text-[#22c55e]" /> : <Copy size={12} />}

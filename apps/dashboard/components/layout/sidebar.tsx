@@ -57,7 +57,9 @@ export function Sidebar() {
         className="flex flex-col gap-0.5"
       >
         {NAV_ITEMS.map((item) => {
-          const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'))
+          const isActive =
+            pathname === item.href ||
+            (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'))
           return (
             <motion.div
               key={item.href}
@@ -80,9 +82,11 @@ export function Sidebar() {
                     className={`relative z-10 ${isActive ? 'text-[#0070F3]' : 'text-[#525252]'}`}
                     strokeWidth={isActive ? 2 : 1.5}
                   />
-                  <span className={`text-[13px] relative z-10 ${
-                    isActive ? 'text-[#ededed] font-medium' : 'text-[#a1a1aa]'
-                  }`}>
+                  <span
+                    className={`text-[13px] relative z-10 ${
+                      isActive ? 'text-[#ededed] font-medium' : 'text-[#a1a1aa]'
+                    }`}
+                  >
                     {item.label}
                   </span>
                 </div>
@@ -99,13 +103,15 @@ export function Sidebar() {
             {initial}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-[12px] font-medium text-[#ededed] truncate">{user?.name || user?.email || 'User'}</div>
+            <div className="text-[12px] font-medium text-[#ededed] truncate">
+              {user?.name || user?.email || 'User'}
+            </div>
             <div className="text-[10px] text-[#525252] truncate">Self-hosted</div>
           </div>
           <button
             onClick={handleLogout}
             className="p-1 rounded-md hover:bg-[#1a1a1a] transition-colors text-[#525252] hover:text-[#a1a1aa] cursor-pointer"
-            title="Sign out"
+            aria-label="Sign out"
           >
             <LogOut size={14} />
           </button>
@@ -117,10 +123,15 @@ export function Sidebar() {
   return (
     <>
       {/* Mobile header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-[#0a0a0a] border-b border-[#1f1f1f] flex items-center justify-between px-4 z-50" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+      <div
+        className="md:hidden fixed top-0 left-0 right-0 h-14 bg-[#0a0a0a] border-b border-[#1f1f1f] flex items-center justify-between px-4 z-50"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      >
         <OpenToolLogo className="h-4 w-auto" />
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
+          aria-label={mobileOpen ? 'Close navigation menu' : 'Open navigation menu'}
+          aria-expanded={mobileOpen}
           className="p-2.5 -mr-1 rounded-md hover:bg-[#1a1a1a] transition-colors text-[#a1a1aa] cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
         >
           {mobileOpen ? <X size={20} /> : <Menu size={20} />}
@@ -137,6 +148,7 @@ export function Sidebar() {
               exit={{ opacity: 0 }}
               className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
               onClick={() => setMobileOpen(false)}
+              aria-hidden="true"
             />
             <motion.nav
               initial={{ x: -240 }}
@@ -144,6 +156,8 @@ export function Sidebar() {
               exit={{ x: -240 }}
               transition={{ type: 'spring', stiffness: 400, damping: 35 }}
               className="md:hidden w-60 h-screen fixed left-0 top-0 flex flex-col border-r border-[#1f1f1f] bg-[#0a0a0a] px-3 py-4 z-50"
+              role="navigation"
+              aria-label="Main navigation"
             >
               {navContent}
             </motion.nav>
@@ -152,7 +166,11 @@ export function Sidebar() {
       </AnimatePresence>
 
       {/* Desktop sidebar */}
-      <nav className="hidden md:flex w-60 h-screen fixed left-0 top-0 flex-col border-r border-[#1f1f1f] bg-[#0a0a0a] px-3 py-4 z-50">
+      <nav
+        className="hidden md:flex w-60 h-screen fixed left-0 top-0 flex-col border-r border-[#1f1f1f] bg-[#0a0a0a] px-3 py-4 z-50"
+        role="navigation"
+        aria-label="Main navigation"
+      >
         {navContent}
       </nav>
     </>
