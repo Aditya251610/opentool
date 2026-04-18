@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 
 // Fresh Metrics instance per test — import the class logic directly
 // We test via the exported singleton + pre-defined metrics

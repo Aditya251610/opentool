@@ -1,8 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { app } from '../../index'
 import * as prisma from '../../db/client'
 import * as broker from '../../auth/broker'
-import * as oauth from '../../auth/oauth'
 
 // Mock Prisma
 vi.mock('../../db/client', () => ({
@@ -62,7 +61,7 @@ vi.mock('../../auth/encryption', () => ({
     prefix: 'ot_test',
     fullKey: 'ot_test-api-key-raw-value',
   })),
-  stripApiKeyPrefix: vi.fn((key: string) => key.startsWith('ot_') ? key.slice(3) : key),
+  stripApiKeyPrefix: vi.fn((key: string) => (key.startsWith('ot_') ? key.slice(3) : key)),
 }))
 
 // Mock logger
@@ -113,7 +112,7 @@ describe('Health endpoints', () => {
   it('GET /health/live should return 200 with ok status', async () => {
     const res = await app.request('/health/live')
     expect(res.status).toBe(200)
-    const body = await res.json() as Record<string, unknown>
+    const body = (await res.json()) as Record<string, unknown>
     expect(body).toEqual({ status: 'ok' })
   })
 
@@ -138,7 +137,7 @@ describe('Auth routes - Signup validation', () => {
       body: JSON.stringify({ password: 'validpass123' }),
     })
     expect(res.status).toBe(400)
-    const body = await res.json() as Record<string, unknown>
+    const body = (await res.json()) as Record<string, unknown>
     expect(body.error).toBeDefined()
   })
 
@@ -201,7 +200,7 @@ describe('Auth routes - Signup validation', () => {
       }),
     })
     expect(res.status).toBe(201)
-    const body = await res.json() as Record<string, unknown>
+    const body = (await res.json()) as Record<string, unknown>
     expect(body.user).toBeDefined()
     expect(body.apiKey).toBe('ot_test-api-key-raw-value')
   })
@@ -323,7 +322,7 @@ describe('Tool routes', () => {
   it('GET /api/tools should return tools list', async () => {
     const res = await app.request('/api/tools')
     expect(res.status).toBe(200)
-    const body = await res.json() as Record<string, unknown>
+    const body = (await res.json()) as Record<string, unknown>
     expect(body.count).toBe(2)
     expect(body.tools).toHaveLength(2)
     expect((body.tools as unknown[])[0]).toHaveProperty('id')
@@ -333,7 +332,7 @@ describe('Tool routes', () => {
   it('GET /api/tools/:provider should return tools by provider', async () => {
     const res = await app.request('/api/tools/slack')
     expect(res.status).toBe(200)
-    const body = await res.json() as Record<string, unknown>
+    const body = (await res.json()) as Record<string, unknown>
     expect(body.tools).toBeDefined()
     expect(Array.isArray(body.tools)).toBe(true)
   })
@@ -355,7 +354,7 @@ describe('MCP routes', () => {
   it('GET /mcp without auth should return 401', async () => {
     const res = await app.request('/mcp', { method: 'GET' })
     expect(res.status).toBe(401)
-    const body = await res.json() as Record<string, unknown>
+    const body = (await res.json()) as Record<string, unknown>
     expect(body.error).toBeDefined()
   })
 

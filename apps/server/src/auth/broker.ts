@@ -61,10 +61,7 @@ export async function resolveApiKey(rawKey: string): Promise<ResolvedUser | null
 
   let isValid = false
   try {
-    isValid = crypto.timingSafeEqual(
-      Buffer.from(apiKey.keyHash),
-      Buffer.from(computedHash)
-    )
+    isValid = crypto.timingSafeEqual(Buffer.from(apiKey.keyHash), Buffer.from(computedHash))
   } catch {
     // timingSafeEqual throws if buffers are different lengths, treat as invalid
     isValid = false
@@ -76,10 +73,12 @@ export async function resolveApiKey(rawKey: string): Promise<ResolvedUser | null
   if (apiKey.expiresAt && apiKey.expiresAt < new Date()) return null
 
   // update lastUsedAt — fire and forget, don't block the response
-  prisma.apiKey.update({
-    where: { keyHash: computedHash },
-    data: { lastUsedAt: new Date() },
-  }).catch(() => {})
+  prisma.apiKey
+    .update({
+      where: { keyHash: computedHash },
+      data: { lastUsedAt: new Date() },
+    })
+    .catch(() => {})
 
   return {
     id: apiKey.user.id,
@@ -89,10 +88,7 @@ export async function resolveApiKey(rawKey: string): Promise<ResolvedUser | null
 }
 
 /** Retrieves the decrypted token for a user + provider, checking Redis cache then DB. */
-export async function getTokenForUser(
-  userId: string,
-  provider: string
-): Promise<TokenData | null> {
+export async function getTokenForUser(userId: string, provider: string): Promise<TokenData | null> {
   // check Redis cache first
   try {
     const cached = await redis.get(cacheKey(userId, provider))
@@ -105,17 +101,17 @@ export async function getTokenForUser(
           ...parsed,
           expiresAt: parsed.expiresAt ? new Date(parsed.expiresAt) : null,
         }
-      } catch (decryptErr) {
+      } catch (_decryptErr) {
         // Cache is corrupted or tampered with, delete it and fall through to DB
         logger.warn('Redis cache decryption failed, invalidating entry', { provider })
         try {
           await redis.del(cacheKey(userId, provider))
-        } catch (delErr) {
+        } catch (_delErr) {
           logger.warn('Failed to delete corrupted cache entry', { provider })
         }
       }
     }
-  } catch (err) {
+  } catch (_err) {
     logger.warn('Redis cache unavailable, falling through to DB', { provider })
   }
 
@@ -136,9 +132,7 @@ export async function getTokenForUser(
   const tokenStore = connection.tokenStore
 
   const accessToken = decrypt(tokenStore.accessTokenEnc)
-  const refreshToken = tokenStore.refreshTokenEnc
-    ? decrypt(tokenStore.refreshTokenEnc)
-    : null
+  const refreshToken = tokenStore.refreshTokenEnc ? decrypt(tokenStore.refreshTokenEnc) : null
 
   const tokenData: TokenData = {
     accessToken,
@@ -157,7 +151,7 @@ export async function getTokenForUser(
       // Encrypt the token data before caching
       const encryptedCache = encrypt(JSON.stringify(tokenData))
       await redis.set(cacheKey(userId, provider), encryptedCache, 'EX', ttl)
-    } catch (err) {
+    } catch (_err) {
       logger.warn('Redis cache write failed', { provider })
     }
   }
@@ -221,7 +215,7 @@ export async function storeToken(params: StoreTokenParams): Promise<void> {
   // invalidate cache
   try {
     await redis.del(cacheKey(params.userId, params.provider))
-  } catch (err) {
+  } catch (_err) {
     logger.warn('Redis cache invalidation failed', { provider: params.provider })
   }
 }
@@ -229,7 +223,7 @@ export async function storeToken(params: StoreTokenParams): Promise<void> {
 /** Refreshes the token if expired, returning the fresh token or null if re-auth is needed. */
 export async function refreshTokenIfExpired(
   userId: string,
-  provider: string
+  provider: string,
 ): Promise<TokenData | null> {
   const providerId = await getProviderIdBySlug(provider)
 
@@ -277,15 +271,13 @@ export async function refreshTokenIfExpired(
     return null
   }
 
-  const data = await res.json() as {
+  const data = (await res.json()) as {
     access_token: string
     refresh_token?: string
     expires_in?: number
   }
 
-  const expiresAt = data.expires_in
-    ? new Date(Date.now() + data.expires_in * 1000)
-    : undefined
+  const expiresAt = data.expires_in ? new Date(Date.now() + data.expires_in * 1000) : undefined
 
   await storeToken({
     userId,
@@ -320,7 +312,7 @@ export async function revokeToken(userId: string, provider: string): Promise<voi
 
   try {
     await redis.del(cacheKey(userId, provider))
-  } catch (err) {
+  } catch (_err) {
     logger.warn('Redis cache invalidation failed', { provider })
   }
 }

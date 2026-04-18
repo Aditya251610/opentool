@@ -7,7 +7,7 @@
     "lint": "turbo lint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "dependencies": {
     "typescript": "^5.0.0"

@@ -10,7 +10,9 @@ export const postgresExecuteQuery = defineTool({
   authType: 'api_key',
   requiredScopes: [],
   inputSchema: z.object({
-    connection_string: z.string().describe('PostgreSQL connection string (e.g. "postgresql://user:pass@host:5432/db")'),
+    connection_string: z
+      .string()
+      .describe('PostgreSQL connection string (e.g. "postgresql://user:pass@host:5432/db")'),
     query: z.string().describe('SQL query to execute'),
     params: z.array(z.string()).optional().describe('Query parameters for parameterized queries'),
   }),
@@ -24,7 +26,7 @@ export const postgresExecuteQuery = defineTool({
     let connectionUrl: URL
     try {
       connectionUrl = new URL(input.connection_string)
-    } catch (error) {
+    } catch (_error) {
       throw new Error('Invalid connection string format')
     }
 
@@ -37,17 +39,17 @@ export const postgresExecuteQuery = defineTool({
     if (config.postgresAllowedHosts.length === 0) {
       throw new Error(
         'PostgreSQL connections are not configured. ' +
-        'Administrator must set POSTGRES_ALLOWED_HOSTS environment variable with comma-separated list of allowed hostnames'
+          'Administrator must set POSTGRES_ALLOWED_HOSTS environment variable with comma-separated list of allowed hostnames',
       )
     }
 
     const isAllowed = config.postgresAllowedHosts.some(
-      (allowed) => hostname.toLowerCase() === allowed.toLowerCase()
+      (allowed) => hostname.toLowerCase() === allowed.toLowerCase(),
     )
 
     if (!isAllowed) {
       throw new Error(
-        `PostgreSQL connection to "${hostname}" is not allowed. Allowed hosts: ${config.postgresAllowedHosts.join(', ')}`
+        `PostgreSQL connection to "${hostname}" is not allowed. Allowed hosts: ${config.postgresAllowedHosts.join(', ')}`,
       )
     }
 
@@ -59,7 +61,7 @@ export const postgresExecuteQuery = defineTool({
       pg = await import(/* webpackIgnore: true */ moduleName)
     } catch {
       throw new Error(
-        'PostgreSQL client (pg) is not installed. Run: pnpm add pg -F @opentool/server'
+        'PostgreSQL client (pg) is not installed. Run: pnpm add pg -F @opentool/server',
       )
     }
 
@@ -84,10 +86,11 @@ export const postgresExecuteQuery = defineTool({
           name: f.name,
           dataTypeID: f.dataTypeID,
         })),
-        ...(truncated && { _warning: `Results truncated: returned 1000 of ${result.rows.length} rows` }),
+        ...(truncated && {
+          _warning: `Results truncated: returned 1000 of ${result.rows.length} rows`,
+        }),
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Query execution failed'
       throw safeToolError(error, 'PostgreSQL', 'execute')
     } finally {
       await client.end()

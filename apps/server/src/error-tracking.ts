@@ -1,5 +1,4 @@
 import { logger } from './logger'
-import { config } from './config'
 
 /**
  * Lightweight error tracking that reports to Sentry via HTTP API when configured.

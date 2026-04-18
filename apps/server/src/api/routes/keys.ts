@@ -23,7 +23,7 @@ keyRoutes.post('/', apiKeyMiddleware, async (c) => {
     }
 
     const { name } = parsed.data
-    const { raw, hash, prefix, fullKey } = generateApiKey()
+    const { hash, prefix, fullKey } = generateApiKey()
 
     await prisma.apiKey.create({
       data: {

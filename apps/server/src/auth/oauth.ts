@@ -3,7 +3,6 @@ import { prisma } from '../db/client'
 import { decrypt } from './encryption'
 import { storeToken, getTokenForUser, revokeToken } from './broker'
 import { config } from '../config'
-import { logger } from '../logger'
 import { OAUTH_STATE_TTL_MS, COMMA_SCOPE_PROVIDERS } from '../constants'
 import { ProviderNotFoundError } from '../errors'
 
@@ -29,7 +28,7 @@ export interface OAuthState {
   userId: string
   provider: string
   createdAt: number
-  codeVerifier: string  // PKCE code verifier for secure token exchange
+  codeVerifier: string // PKCE code verifier for secure token exchange
 }
 
 export interface OAuthTokenResponse {
@@ -38,9 +37,9 @@ export interface OAuthTokenResponse {
   expires_in?: number
   token_type?: string
   scope?: string
-  team_id?: string            // Vercel integration
-  installation_id?: string    // Vercel integration
-  [key: string]: unknown      // other provider-specific fields
+  team_id?: string // Vercel integration
+  installation_id?: string // Vercel integration
+  [key: string]: unknown // other provider-specific fields
 }
 
 // ─────────────────────────────────────────
@@ -77,17 +76,18 @@ export function parseState(state: string): OAuthState | null {
 }
 
 /** Builds the full OAuth authorization URL for a provider, including state, PKCE parameters, and scopes. */
-export async function generateAuthUrl(
-  provider: string,
-  userId: string
-): Promise<string> {
+export async function generateAuthUrl(provider: string, userId: string): Promise<string> {
   const oauthProvider = await prisma.oAuthProvider.findUnique({
     where: { provider },
   })
 
   if (!oauthProvider) throw new ProviderNotFoundError(provider)
-  if (!oauthProvider.isEnabled) throw new Error(`Provider "${provider}" is not enabled — set ${provider.toUpperCase()}_CLIENT_ID and ${provider.toUpperCase()}_CLIENT_SECRET in .env, then re-run the seed.`)
-  if (!oauthProvider.clientId) throw new Error(`Provider "${provider}" is not configured — missing OAuth credentials`)
+  if (!oauthProvider.isEnabled)
+    throw new Error(
+      `Provider "${provider}" is not enabled — set ${provider.toUpperCase()}_CLIENT_ID and ${provider.toUpperCase()}_CLIENT_SECRET in .env, then re-run the seed.`,
+    )
+  if (!oauthProvider.clientId)
+    throw new Error(`Provider "${provider}" is not configured — missing OAuth credentials`)
 
   const serverUrl = config.serverUrl
   const state = generateState(userId, provider)
@@ -121,7 +121,7 @@ export async function generateAuthUrl(
 export async function exchangeCode(
   provider: string,
   code: string,
-  state: string
+  state: string,
 ): Promise<{ userId: string }> {
   const parsedState = parseState(state)
   if (!parsedState) throw new Error('Invalid or expired state')
@@ -143,12 +143,13 @@ export async function exchangeCode(
   const bodyParams: Record<string, string> = {
     grant_type: 'authorization_code',
     code,
-    code_verifier: parsedState.codeVerifier,  // Include PKCE code verifier
+    code_verifier: parsedState.codeVerifier, // Include PKCE code verifier
   }
 
   if (provider === 'notion') {
     // Notion: Basic Auth with client_id:client_secret, include redirect_uri in body
-    headers['Authorization'] = `Basic ${Buffer.from(`${oauthProvider.clientId}:${clientSecret}`).toString('base64')}`
+    headers['Authorization'] =
+      `Basic ${Buffer.from(`${oauthProvider.clientId}:${clientSecret}`).toString('base64')}`
     bodyParams['redirect_uri'] = redirectUri
   } else if (provider === 'stripe') {
     // Stripe: Basic Auth with secret_key as username (empty password), no redirect_uri
@@ -171,11 +172,9 @@ export async function exchangeCode(
     throw new Error(`Token exchange failed: ${res.status} ${errBody}`)
   }
 
-  const data = await res.json() as OAuthTokenResponse
+  const data = (await res.json()) as OAuthTokenResponse
 
-  const expiresAt = data.expires_in
-    ? new Date(Date.now() + data.expires_in * 1000)
-    : undefined
+  const expiresAt = data.expires_in ? new Date(Date.now() + data.expires_in * 1000) : undefined
 
   const scopes = data.scope?.split(' ') ?? oauthProvider.defaultScopes
 
@@ -198,10 +197,7 @@ export async function exchangeCode(
 }
 
 /** Revokes an OAuth token, calling the provider's revoke endpoint if available. */
-export async function revokeOAuthToken(
-  provider: string,
-  userId: string
-): Promise<void> {
+export async function revokeOAuthToken(provider: string, userId: string): Promise<void> {
   const oauthProvider = await prisma.oAuthProvider.findUnique({
     where: { provider },
   })

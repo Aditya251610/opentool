@@ -16,7 +16,7 @@ export default [
     },
     rules: {
       'no-console': ['error', { allow: ['warn', 'error'] }],
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }],
       '@typescript-eslint/no-explicit-any': 'warn',
       'no-debugger': 'error',
       'no-eval': 'error',
@@ -27,6 +27,12 @@ export default [
       'no-var': 'error',
       'eqeqeq': ['error', 'always'],
       'complexity': ['warn', 20],
+    },
+  },
+  {
+    files: ['src/logger.ts'],
+    rules: {
+      'no-console': 'off',
     },
   },
   {

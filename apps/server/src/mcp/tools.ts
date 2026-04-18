@@ -8,7 +8,7 @@ import { config } from '../config'
 import { logger } from '../logger'
 import { captureException } from '../error-tracking'
 import { AuthRequiredError, ToolNotFoundError } from '../errors'
-import { MAX_RESPONSE_ROWS, MAX_RESPONSE_BYTES, TOOL_TIMEOUT_MS } from '../constants'
+import { TOOL_TIMEOUT_MS } from '../constants'
 import { toolExecutions, toolErrors, toolDuration } from '../metrics'
 
 // ─── Types ────────────────────────────────
@@ -95,14 +95,11 @@ export function sanitizeOutput(output: unknown): unknown {
 }
 
 /** Executes a function with a timeout, rejecting if it takes too long. */
-async function executeWithTimeout<T>(
-  fn: () => Promise<T>,
-  timeoutMs: number
-): Promise<T> {
+async function executeWithTimeout<T>(fn: () => Promise<T>, timeoutMs: number): Promise<T> {
   return Promise.race([
     fn(),
     new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Tool execution timed out')), timeoutMs)
+      setTimeout(() => reject(new Error('Tool execution timed out')), timeoutMs),
     ),
   ])
 }
@@ -149,7 +146,7 @@ export async function getConnectedTools(userId: string): Promise<ConnectedTool[]
 export async function executeTool(
   toolId: string,
   input: unknown,
-  userId: string
+  userId: string,
 ): Promise<unknown> {
   const tool: ToolDefinition<any> | undefined = getToolById(toolId)
   if (!tool) throw new ToolNotFoundError(toolId)
@@ -186,7 +183,7 @@ export async function executeTool(
       throw new AuthRequiredError(
         tool.provider,
         `${config.dashboardUrl}/dashboard/tools`,
-        'api_key'
+        'api_key',
       )
     }
     auth.apiKey = tokenData.accessToken
@@ -202,21 +199,18 @@ export async function executeTool(
   let result: unknown
 
   try {
-    result = await executeWithTimeout(
-      () => tool.execute({ input, auth }),
-      TOOL_TIMEOUT_MS
-    )
-    
+    result = await executeWithTimeout(() => tool.execute({ input, auth }), TOOL_TIMEOUT_MS)
+
     // Record successful execution
     const durationSecs = (Date.now() - startTime) / 1000
     toolExecutions.inc({ provider: tool.provider, tool: toolId })
     toolDuration.observe(durationSecs)
   } catch (error) {
     const durationMs = Date.now() - startTime
-    
+
     // Record tool error
     toolErrors.inc({ provider: tool.provider, tool: toolId })
-    
+
     // Capture exception for error tracking
     if (error instanceof Error) {
       captureException(error, {
@@ -226,32 +220,36 @@ export async function executeTool(
         operation: 'tool_execute',
       })
     }
-    
-    void prisma.auditLog.create({
-      data: {
-        userId,
-        toolDefinitionId: toolDef?.id,
-        action: AuditAction.TOOL_EXECUTE,
-        status: AuditStatus.FAILURE,
-        inputSnapshot: sanitizeInput(input) as any,
-        errorMessage: error instanceof Error ? error.message : 'Unknown error',
-        durationMs,
-      },
-    }).catch(err => logger.error('Audit log write failed', err))
+
+    void prisma.auditLog
+      .create({
+        data: {
+          userId,
+          toolDefinitionId: toolDef?.id,
+          action: AuditAction.TOOL_EXECUTE,
+          status: AuditStatus.FAILURE,
+          inputSnapshot: sanitizeInput(input) as any,
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+          durationMs,
+        },
+      })
+      .catch((err) => logger.error('Audit log write failed', err))
     throw error
   }
 
   const durationMs = Date.now() - startTime
-  void prisma.auditLog.create({
-    data: {
-      userId,
-      toolDefinitionId: toolDef?.id,
-      action: AuditAction.TOOL_EXECUTE,
-      status: AuditStatus.SUCCESS,
-      inputSnapshot: sanitizeInput(input) as any,
-      durationMs,
-    },
-  }).catch(err => logger.error('Audit log write failed', err))
+  void prisma.auditLog
+    .create({
+      data: {
+        userId,
+        toolDefinitionId: toolDef?.id,
+        action: AuditAction.TOOL_EXECUTE,
+        status: AuditStatus.SUCCESS,
+        inputSnapshot: sanitizeInput(input) as any,
+        durationMs,
+      },
+    })
+    .catch((err) => logger.error('Audit log write failed', err))
 
   return result
 }

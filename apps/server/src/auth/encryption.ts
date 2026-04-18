@@ -1,6 +1,6 @@
 import crypto from 'crypto'
 import { config } from '../config'
-import { AES_ALGORITHM, IV_LENGTH, TAG_LENGTH, API_KEY_PREFIX } from '../constants'
+import { AES_ALGORITHM, IV_LENGTH, API_KEY_PREFIX } from '../constants'
 
 function getKey(): Buffer {
   return Buffer.from(config.encryptionKey, 'hex')

@@ -8,10 +8,13 @@ import type { JSONRPCMessage } from '@modelcontextprotocol/sdk/types.js'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 
 // Session store: maps session IDs to their transport + server
-const sessions = new Map<string, {
-  transport: WebStandardStreamableHTTPServerTransport
-  server: McpServer
-}>()
+const sessions = new Map<
+  string,
+  {
+    transport: WebStandardStreamableHTTPServerTransport
+    server: McpServer
+  }
+>()
 
 // Clean up stale sessions after 30 minutes of inactivity
 const SESSION_TTL_MS = 30 * 60 * 1000
@@ -58,11 +61,14 @@ function extractBearerToken(c: Context): string | null {
 export async function handleMcpStreamable(c: Context): Promise<Response> {
   const apiKey = extractBearerToken(c)
   if (!apiKey) {
-    return new Response(JSON.stringify({
-      jsonrpc: '2.0',
-      error: { code: -32001, message: 'Missing or invalid Bearer token' },
-      id: null,
-    }), { status: 401, headers: { 'Content-Type': 'application/json' } })
+    return new Response(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        error: { code: -32001, message: 'Missing or invalid Bearer token' },
+        id: null,
+      }),
+      { status: 401, headers: { 'Content-Type': 'application/json' } },
+    )
   }
 
   const sessionId = c.req.header('mcp-session-id')
@@ -111,11 +117,17 @@ export async function handleMcpStreamable(c: Context): Promise<Response> {
 
       // POST but not an initialize request and no valid session
       if (sessionId) {
-        return new Response(JSON.stringify({
-          jsonrpc: '2.0',
-          error: { code: -32000, message: 'Session not found. Send an initialize request first.' },
-          id: null,
-        }), { status: 404, headers: { 'Content-Type': 'application/json' } })
+        return new Response(
+          JSON.stringify({
+            jsonrpc: '2.0',
+            error: {
+              code: -32000,
+              message: 'Session not found. Send an initialize request first.',
+            },
+            id: null,
+          }),
+          { status: 404, headers: { 'Content-Type': 'application/json' } },
+        )
       }
 
       // POST without session ID and not initialize — use stateless single-shot mode
@@ -123,27 +135,36 @@ export async function handleMcpStreamable(c: Context): Promise<Response> {
     }
 
     // GET/DELETE without valid session
-    return new Response(JSON.stringify({
-      jsonrpc: '2.0',
-      error: { code: -32000, message: 'No valid session. POST an initialize request first.' },
-      id: null,
-    }), { status: 400, headers: { 'Content-Type': 'application/json' } })
+    return new Response(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        error: { code: -32000, message: 'No valid session. POST an initialize request first.' },
+        id: null,
+      }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
+    )
   } catch (error) {
     // Return 401 for invalid API keys so MCP clients handle it gracefully
     if (error instanceof Error && error.message === 'Invalid API key') {
-      return new Response(JSON.stringify({
-        jsonrpc: '2.0',
-        error: { code: -32001, message: 'Invalid API key' },
-        id: null,
-      }), { status: 401, headers: { 'Content-Type': 'application/json' } })
+      return new Response(
+        JSON.stringify({
+          jsonrpc: '2.0',
+          error: { code: -32001, message: 'Invalid API key' },
+          id: null,
+        }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } },
+      )
     }
     logger.error('MCP transport error', error)
     const message = error instanceof Error ? error.message : 'Unknown error'
-    return new Response(JSON.stringify({
-      jsonrpc: '2.0',
-      error: { code: -32603, message },
-      id: null,
-    }), { status: 500, headers: { 'Content-Type': 'application/json' } })
+    return new Response(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        error: { code: -32603, message },
+        id: null,
+      }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } },
+    )
   }
 }
 
@@ -151,7 +172,7 @@ export async function handleMcpStreamable(c: Context): Promise<Response> {
  * Stateless single-shot POST handler (backward compat for simple curl/SDK usage).
  * Creates an ephemeral in-memory transport, auto-initializes, sends one request, returns one response.
  */
-async function handleStatelessPost(apiKey: string, body: unknown, c: Context): Promise<Response> {
+async function handleStatelessPost(apiKey: string, body: unknown, _c: Context): Promise<Response> {
   const mcpServer = await createMcpServer(apiKey)
   const { InMemoryTransport } = await import('@modelcontextprotocol/sdk/inMemory.js')
 
@@ -184,10 +205,12 @@ async function handleStatelessPost(apiKey: string, body: unknown, c: Context): P
 
   return new Promise((resolve) => {
     clientTransport.onmessage = (message) => {
-      resolve(new Response(JSON.stringify(message), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }))
+      resolve(
+        new Response(JSON.stringify(message), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
     }
     clientTransport.send(jsonBody)
   })

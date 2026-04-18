@@ -50,10 +50,9 @@ describe('extractBearerToken', () => {
     expect(extractBearerToken('Bearer ')).toBeNull()
   })
 
-  it('handles long JWT-style tokens', () => {
-    const jwt =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U'
-    expect(extractBearerToken(`Bearer ${jwt}`)).toBe(jwt)
+  it('handles long tokens', () => {
+    const longToken = 'a'.repeat(128) + '.' + 'b'.repeat(64) + '.' + 'c'.repeat(64)
+    expect(extractBearerToken(`Bearer ${longToken}`)).toBe(longToken)
   })
 })
 
