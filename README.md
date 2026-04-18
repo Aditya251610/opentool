@@ -10,12 +10,12 @@ Built for solo developers building with AI agents.
 
 ## Why OpenTool
 
-| | Arcade | Composio | OpenTool |
-|---|---|---|---|
-| Open source | Partial | Partial | ✅ Full |
-| Self-hostable | ❌ | ❌ | ✅ |
-| MCP native | ✅ | ✅ | ✅ |
-| Free forever (self-hosted) | ❌ | ❌ | ✅ |
+|                            | Arcade  | Composio | OpenTool |
+| -------------------------- | ------- | -------- | -------- |
+| Open source                | Partial | Partial  | ✅ Full  |
+| Self-hostable              | ❌      | ❌       | ✅       |
+| MCP native                 | ✅      | ✅       | ✅       |
+| Free forever (self-hosted) | ❌      | ❌       | ✅       |
 
 ---
 
@@ -30,18 +30,19 @@ Go to the dashboard → Tools → Connect GitHub, Notion, Slack etc.
 **3. Connect your agent**
 
 For VS Code, add to `mcp.json`:
+
 ```json
 {
-   "servers": {
-     "opentool": {
-       "type": "http",
-       "url": "https://opentool.onrender.com/mcp",
-       "headers": {
-         "Authorization": "Bearer <TOKEN>"
-       }
-     }
-   }
- }
+  "servers": {
+    "opentool": {
+      "type": "http",
+      "url": "https://opentool.onrender.com/mcp",
+      "headers": {
+        "Authorization": "Bearer <TOKEN>"
+      }
+    }
+  }
+}
 ```
 
 That's it. Your agent now has access to all your connected tools.
@@ -51,6 +52,7 @@ That's it. Your agent now has access to all your connected tools.
 ## Self-Hosting
 
 **Prerequisites:** Docker + Docker Compose
+
 ```bash
 git clone https://github.com/Aditya251610/opentool
 cd opentool
@@ -70,6 +72,7 @@ For complete self-hosting and production deployment guides, see:
 - **[Security Guide](docs/security.md)** — Encryption, authentication, threat model, data handling, and vulnerability reporting
 
 Key production checklist:
+
 - Use HTTPS with valid SSL certificates
 - Set a strong `TOKEN_ENCRYPTION_KEY` (64 hex characters)
 - Configure `SERVER_URL` and `DASHBOARD_URL` for your domain
@@ -80,24 +83,25 @@ Key production checklist:
 
 ## Supported Tools
 
-| Tool | Status | Actions |
-|---|---|---|
-| GitHub | ✅ | Create issue, create PR, comment, read repo |
-| Notion | ✅ | Create page, query database, update block |
-| Slack | ✅ | Send message, read channel |
-| Linear | ✅ | Create issue, update status |
-| Gmail | ✅ | Send, read, search |
-| Google Calendar | ✅ | Create event, list events |
-| Stripe | ✅ | Create payment link, read customer |
-| Vercel | ✅ | Trigger deploy, read status |
-| Postgres | ✅ | Execute query |
-| Resend | ✅ | Send email |
+| Tool            | Status | Actions                                                      |
+| --------------- | ------ | ------------------------------------------------------------ |
+| GitHub          | ✅     | Create issue, create PR, comment, read repo                  |
+| Notion          | ✅     | Create page, query database, update block                    |
+| Slack           | ✅     | Send message, read channel                                   |
+| Linear          | ✅     | Create issue, update status                                  |
+| Gmail           | ✅     | Send, read, search                                           |
+| Google Calendar | ✅     | Create event, list events                                    |
+| Stripe          | ✅     | Create payment link, read customer                           |
+| Vercel          | ✅     | Trigger deploy, read status                                  |
+| Postgres        | ✅     | Execute query, List tables, Describe schema, Run transaction |
+| Resend          | ✅     | Send email                                                   |
 
 Want a tool added? [Open an issue](https://github.com/Aditya251610/opentool/issues) or [contribute a tool](#contributing-a-tool).
 
 ---
 
 ## Project Structure
+
 ```
 opentool/
 ├── apps/
@@ -116,6 +120,7 @@ opentool/
 ## Contributing a Tool
 
 Tools are self-contained modules in `apps/server/tools/`. Each tool exports:
+
 ```typescript
 import { defineTool } from '@opentool/tool-schema'
 
@@ -125,12 +130,12 @@ export const myTool = defineTool({
   description: 'What this tool does',
   authType: 'oauth2',
   inputSchema: z.object({
-    param: z.string().describe('What this param does')
+    param: z.string().describe('What this param does'),
   }),
   execute: async ({ input, auth }) => {
     // auth.accessToken available here
     // return result
-  }
+  },
 })
 ```
 
