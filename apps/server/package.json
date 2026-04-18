@@ -12,26 +12,29 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@hono/node-server": "^1.19.12",
+    "@hono/node-server": "^1.19.14",
     "@modelcontextprotocol/sdk": "^1.0.0",
     "@opentool/tool-schema": "workspace:*",
     "@prisma/client": "^5.0.0",
     "@types/bcryptjs": "^3.0.0",
     "@types/node": "^20.0.0",
     "bcryptjs": "^3.0.3",
-    "hono": "^4.0.0",
+    "hono": "^4.12.14",
     "ioredis": "^5.0.0",
+    "pg": "^8.13.0",
     "prisma": "^5.0.0",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0",
     "zod": "^3.0.0"
   },
   "devDependencies": {
+    "@types/pg": "^8.11.0",
     "@typescript-eslint/eslint-plugin": "^8.58.1",
     "@typescript-eslint/parser": "^8.58.1",
-    "@vitest/coverage-v8": "^2.1.9",
+    "@vitest/coverage-v8": "^3.2.4",
     "dotenv-cli": "^11.0.0",
     "eslint": "^10.2.0",
-    "vitest": "2.1.9"
+    "vite": "^6.4.2",
+    "vitest": "3.2.4"
   }
 }

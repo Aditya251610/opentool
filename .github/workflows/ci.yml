@@ -18,9 +18,26 @@ jobs:
           node-version: 20
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
+
+      # Build shared packages first
       - run: cd packages/tool-schema && pnpm build
+
+      # Server typecheck
       - run: cd apps/server && npx prisma generate
       - run: cd apps/server && npx tsc --noEmit
+
+      # CLI typecheck
+      - run: cd packages/cli && npx tsc --noEmit
+
+      # SDK typecheck + build
+      - run: cd packages/sdk/ts && pnpm build
+
+      # Dashboard build (includes type check)
+      - run: cd apps/dashboard && npx next build
+        env:
+          NEXTAUTH_SECRET: ci-dummy-secret
+          NEXTAUTH_URL: http://localhost:3000
+          NEXT_PUBLIC_SERVER_URL: http://localhost:3001
 
   lint:
     name: Lint
@@ -49,3 +66,5 @@ jobs:
       - run: cd packages/tool-schema && pnpm build
       - run: cd apps/server && npx prisma generate
       - run: cd apps/server && pnpm test
+      - run: cd packages/cli && pnpm test
+      - run: cd packages/sdk/ts && pnpm test

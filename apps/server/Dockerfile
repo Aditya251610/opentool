@@ -28,12 +28,21 @@ FROM node:20-alpine AS runner
 RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 WORKDIR /app
 
-COPY --from=build-server /app/node_modules ./node_modules
-COPY --from=build-server /app/packages/tool-schema ./packages/tool-schema
+# Copy package manifests for production install
+COPY --from=build-server /app/package.json ./package.json
+COPY --from=build-server /app/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --from=build-server /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
+COPY --from=build-server /app/packages/tool-schema/package.json ./packages/tool-schema/
+COPY --from=build-server /app/apps/server/package.json ./apps/server/
+
+# Production-only install (no devDependencies)
+RUN pnpm install --frozen-lockfile --prod
+
+# Copy built artifacts
+COPY --from=build-server /app/packages/tool-schema/dist ./packages/tool-schema/dist
 COPY --from=build-server /app/apps/server/dist ./apps/server/dist
 COPY --from=build-server /app/apps/server/prisma ./apps/server/prisma
-COPY --from=build-server /app/apps/server/node_modules ./apps/server/node_modules
-COPY --from=build-server /app/apps/server/package.json ./apps/server/package.json
+COPY --from=build-server /app/apps/server/node_modules/.prisma ./apps/server/node_modules/.prisma
 
 ENV NODE_ENV=production
 EXPOSE 3001
