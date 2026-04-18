@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Text } from 'ink';
-import Spinner from 'ink-spinner';
-import { loadConfig } from '../lib/config.js';
-
-interface Tool {
-  id: string;
-  name: string;
-  provider: string;
-  connected: boolean;
-}
+import React, { useState, useEffect } from 'react'
+import { Box, Text } from 'ink'
+import Spinner from 'ink-spinner'
+import { loadConfig } from '../lib/config.js'
+import {
+  endpoints,
+  unwrapConnections,
+  unwrapTools,
+  type Tool,
+  type Connection,
+} from '../lib/api.js'
 
 const PROVIDER_ICONS: Record<string, string> = {
   github: '  ',
@@ -18,81 +18,61 @@ const PROVIDER_ICONS: Record<string, string> = {
   gmail: '  ',
   gcal: '  ',
   stripe: '  ',
-  vercel: '▲  ',
+  vercel: '▲ ',
   resend: '  ',
   postgres: '  ',
-};
+}
+
+interface ToolWithStatus extends Tool {
+  connected: boolean
+}
 
 export default function ToolsList() {
-  const [tools, setTools] = useState<Tool[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const config = loadConfig();
+  const [tools, setTools] = useState<ToolWithStatus[] | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const config = loadConfig()
 
   useEffect(() => {
-    fetchTools();
-  }, []);
+    fetchTools()
+  }, [])
 
   async function fetchTools() {
     try {
-      // Fetch all tools and connected tools in parallel
-      const headers = config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {};
       const [toolsRes, connectedRes] = await Promise.all([
-        fetch(`${config.serverUrl}/api/tools`, {
-          headers,
-          signal: AbortSignal.timeout(10000),
-        }),
+        endpoints.tools(),
         config.apiKey
-          ? fetch(`${config.serverUrl}/api/tools/connected`, {
-              headers,
-              signal: AbortSignal.timeout(10000),
-            }).catch(() => null)
-          : Promise.resolve(null),
-      ]);
-
-      if (!toolsRes.ok) throw new Error(`HTTP ${toolsRes.status}`);
-      const toolsData = await toolsRes.json();
-      const allTools: Tool[] = (toolsData.tools ?? toolsData).map((t: any) => ({
-        ...t,
-        connected: false,
-      }));
-
-      // Merge connected status from /api/tools/connected
-      if (connectedRes && connectedRes.ok) {
-        const connectedData = await connectedRes.json();
-        const connectedProviders = new Set(
-          (connectedData.connections ?? connectedData).map((c: any) => c.provider)
-        );
-        for (const tool of allTools) {
-          if (connectedProviders.has(tool.provider)) {
-            tool.connected = true;
-          }
-        }
-      }
-
-      setTools(allTools);
-    } catch {
-      setTools([]);
-      setError('Server unreachable — run: status');
+          ? endpoints.connections().catch((): Connection[] => [])
+          : Promise.resolve([] as Connection[]),
+      ])
+      const allTools = unwrapTools(toolsRes)
+      const connList = Array.isArray(connectedRes) ? connectedRes : unwrapConnections(connectedRes)
+      const connectedSet = new Set(connList.map((c) => c.provider))
+      setTools(allTools.map((t) => ({ ...t, connected: connectedSet.has(t.provider) })))
+    } catch (err) {
+      setTools([])
+      setError(`Server unreachable — ${err instanceof Error ? err.message : 'unknown error'}`)
     }
   }
 
   if (tools === null) {
     return (
       <Box paddingX={2}>
-        <Text color="yellow"><Spinner type="dots" /></Text>
+        <Text color="yellow">
+          <Spinner type="dots" />
+        </Text>
         <Text dimColor> Loading tools…</Text>
       </Box>
-    );
+    )
   }
 
-  const connectedCount = tools.filter(t => t.connected).length;
+  const connectedCount = new Set(tools.filter((t) => t.connected).map((t) => t.provider)).size
 
   // Group by provider
-  const grouped = new Map<string, Tool[]>();
+  const grouped = new Map<string, ToolWithStatus[]>()
   for (const t of tools) {
-    const arr = grouped.get(t.provider) ?? [];
-    arr.push(t);
-    grouped.set(t.provider, arr);
+    const arr = grouped.get(t.provider) ?? []
+    arr.push(t)
+    grouped.set(t.provider, arr)
   }
 
   return (
@@ -104,38 +84,44 @@ export default function ToolsList() {
       )}
 
       <Box marginBottom={1}>
-        <Text bold color="white">Available Tools</Text>
-        <Text dimColor> ({tools.length} total, </Text>
+        <Text bold color="white">
+          Available Tools
+        </Text>
+        <Text dimColor> ({tools.length} total · </Text>
         <Text color="green">{connectedCount} connected</Text>
         <Text dimColor>)</Text>
       </Box>
 
       {[...grouped.entries()].map(([provider, providerTools]) => {
-        const anyConnected = providerTools.some(t => t.connected);
+        const anyConnected = providerTools.some((t) => t.connected)
         return (
           <Box key={provider} flexDirection="column" marginBottom={1}>
             <Box>
-              <Text color={anyConnected ? 'green' : 'cyan'}>{PROVIDER_ICONS[provider] ?? '◆  '}</Text>
-              <Text bold color="white">{provider.charAt(0).toUpperCase() + provider.slice(1)}</Text>
+              <Text color={anyConnected ? 'green' : 'cyan'}>
+                {PROVIDER_ICONS[provider] ?? '◆ '}
+              </Text>
+              <Text bold color="white">
+                {provider.charAt(0).toUpperCase() + provider.slice(1)}
+              </Text>
               {anyConnected && <Text color="green"> ✓</Text>}
+              <Text dimColor> ({providerTools.length})</Text>
             </Box>
-            {providerTools.map(t => (
+            {providerTools.map((t) => (
               <Box key={t.id} paddingLeft={4}>
-                <Text color={t.connected ? 'green' : 'gray'}>
-                  {t.connected ? '●' : '○'}
-                </Text>
+                <Text color={t.connected ? 'green' : 'gray'}>{t.connected ? '●' : '○'}</Text>
                 <Text color={t.connected ? 'white' : 'gray'}> {t.name}</Text>
+                <Text dimColor> {t.id}</Text>
               </Box>
             ))}
           </Box>
-        );
+        )
       })}
 
       {!config.apiKey && (
         <Box marginTop={1}>
-          <Text color="yellow">⚠ Not logged in — run: login {'<email>'} {'<password>'} or set-key {'<api-key>'}</Text>
+          <Text color="yellow">⚠ Not logged in — connection status hidden. Run: login</Text>
         </Box>
       )}
     </Box>
-  );
+  )
 }

@@ -2,7 +2,10 @@
 
 > Manage your tools without leaving the terminal. Because some of us live here.
 
-The OpenTool CLI (`@opentool-ts/cli`) is an interactive terminal application built with Ink (React for terminals). It lets you manage tools, execute actions, and configure your OpenTool instance — all from the command line.
+The OpenTool CLI (`@opentool-ts/cli`) ships in **two modes**:
+
+- **Interactive REPL** (default when you run `opentool` with no args) — built with Ink (React for terminals). Command history (↑/↓), Tab autocomplete, slash aliases (`/tools`), live status bar.
+- **Non-interactive subcommands** (run `opentool <cmd>` directly) — scriptable, supports `--json` for machine-readable output, exits with non-zero on error. Pipe-friendly (`opentool tools --json | jq`).
 
 ---
 
@@ -21,17 +24,11 @@ npx @opentool-ts/cli
 ## First Run
 
 ```bash
-opentool
+opentool init      # guided setup wizard (server URL + health check)
+opentool login     # log in via browser, then save the API key
 ```
 
-This starts the interactive CLI. On first run, you'll need to configure your server URL and API key:
-
-```bash
-opentool> set-url http://localhost:3001
-opentool> set-key ot_your_api_key_here
-```
-
-Configuration is saved to `~/.opentool/config.json` and persists across sessions.
+Configuration is saved to `~/.opentool/config.json` and persists across sessions. Command history is stored in `~/.opentool/history`.
 
 ---
 
@@ -39,36 +36,36 @@ Configuration is saved to `~/.opentool/config.json` and persists across sessions
 
 ### Authentication
 
-| Command | Description |
-|---------|-------------|
-| `login` | Open browser to login (interactive) |
-| `login <email> <password>` | Login directly from terminal |
-| `set-key <api-key>` | Store your API key |
-| `set-url <server-url>` | Set the server URL |
+| Command                    | Description                         |
+| -------------------------- | ----------------------------------- |
+| `login`                    | Open browser to login (interactive) |
+| `login <email> <password>` | Login directly from terminal        |
+| `set-key <api-key>`        | Store your API key                  |
+| `set-url <server-url>`     | Set the server URL                  |
 
 ### Tool Management
 
-| Command | Description |
-|---------|-------------|
-| `tools` or `ls` | List your connected tools |
-| `connect <provider>` | Get the OAuth URL for a provider |
-| `disconnect <provider>` | Revoke a provider connection |
+| Command                    | Description                        |
+| -------------------------- | ---------------------------------- |
+| `tools` or `ls`            | List your connected tools          |
+| `connect <provider>`       | Get the OAuth URL for a provider   |
+| `disconnect <provider>`    | Revoke a provider connection       |
 | `execute <tool-id> [json]` | Execute a tool with JSON arguments |
 
 ### API Keys
 
-| Command | Description |
-|---------|-------------|
-| `keys` | List your active API keys |
+| Command | Description               |
+| ------- | ------------------------- |
+| `keys`  | List your active API keys |
 
 ### System
 
-| Command | Description |
-|---------|-------------|
-| `status` | Check server health |
-| `config` | Show current configuration |
-| `help` or `?` | Show available commands |
-| `exit` or `quit` or `q` | Exit the CLI |
+| Command                 | Description                |
+| ----------------------- | -------------------------- |
+| `status`                | Check server health        |
+| `config`                | Show current configuration |
+| `help` or `?`           | Show available commands    |
+| `exit` or `quit` or `q` | Exit the CLI               |
 
 ---
 
@@ -153,9 +150,9 @@ You can edit this file directly or use the `set-url` and `set-key` commands.
 
 ## Environment Variables
 
-| Variable | Description | Overrides |
-|----------|-------------|-----------|
-| `OPENTOOL_API_KEY` | API key for authentication | Config file `apiKey` |
-| `OPENTOOL_SERVER_URL` | Server URL | Config file `serverUrl` |
+| Variable              | Description                | Overrides               |
+| --------------------- | -------------------------- | ----------------------- |
+| `OPENTOOL_API_KEY`    | API key for authentication | Config file `apiKey`    |
+| `OPENTOOL_SERVER_URL` | Server URL                 | Config file `serverUrl` |
 
 Environment variables take precedence over the config file.

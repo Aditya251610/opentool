@@ -1,0 +1,7 @@
+src/
+tsconfig.json
+*.tsx
+*.ts
+!dist/**
+node_modules/
+.turbo/

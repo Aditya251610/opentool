@@ -1,13 +1,40 @@
 {
-  "name": "@opentool-ts/cli",
-  "version": "0.0.1",
+  "name": "opentool-cli",
+  "version": "0.1.0",
+  "description": "CLI for OpenTool — the open-source MCP tool server. Connect, manage, and execute tools from your terminal.",
   "type": "module",
+  "license": "MIT",
+  "author": "Aditya251610",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Aditya251610/opentool",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/Aditya251610/opentool#readme",
+  "keywords": [
+    "opentool",
+    "mcp",
+    "cli",
+    "tools",
+    "ai",
+    "llm",
+    "model-context-protocol"
+  ],
   "bin": {
     "opentool": "dist/index.js"
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "build": "tsc",
-    "dev": "tsx src/index.tsx"
+    "dev": "tsx src/index.tsx",
+    "start": "node dist/index.js",
+    "prepublishOnly": "pnpm build"
   },
   "dependencies": {
     "commander": "^12.0.0",
@@ -20,6 +47,7 @@
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/react": "^18.3.23",
-    "tsx": "^4.21.0"
+    "tsx": "^4.21.0",
+    "typescript": "^5.4.0"
   }
 }
