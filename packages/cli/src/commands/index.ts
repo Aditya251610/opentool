@@ -500,7 +500,7 @@ export function setUrlCmd(url: string) {
   }
   const err = validateUrl(url)
   if (err) {
-    emitErr(err, 'Example: opentool set-url http://localhost:3001')
+    emitErr(err, 'Example: opentool set-url https://opentool.onrender.com')
     process.exit(EXIT.GENERAL)
   }
   const config = loadConfig()
