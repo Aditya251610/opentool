@@ -16,10 +16,9 @@ import Link from 'next/link'
 const CONFIG_SNIPPET = `{
   "mcpServers": {
     "opentool": {
-      "command": "npx",
-      "args": ["@opentool-ts/cli", "mcp", "start"],
-      "env": {
-        "OPENTOOL_API_KEY": "ot_your-key-here"
+      "url": "http://localhost:3001/mcp",
+      "headers": {
+        "Authorization": "Bearer ot_your-key-here"
       }
     }
   }

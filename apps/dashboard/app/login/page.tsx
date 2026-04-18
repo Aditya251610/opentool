@@ -13,16 +13,16 @@ import { Input } from '@/components/ui/input'
 const ease: [number, number, number, number] = [0.23, 1, 0.32, 1]
 
 const TERMINAL_LINES = [
-  { text: '$ npx @opentool-ts/cli mcp start', color: '#22c55e', delay: 0.3 },
+  { text: '$ npx opentool-cli', color: '#22c55e', delay: 0.3 },
   { text: '→ Loading tools...', color: 'rgba(255,255,255,0.3)', delay: 0.8 },
   { text: '✓ github       (5 tools)', color: 'rgba(255,255,255,0.55)', delay: 1.3 },
   { text: '✓ notion        (3 tools)', color: 'rgba(255,255,255,0.55)', delay: 1.6 },
   { text: '✓ slack         (2 tools)', color: 'rgba(255,255,255,0.55)', delay: 1.9 },
-  { text: '✓ linear        (2 tools)', color: 'rgba(255,255,255,0.55)', delay: 2.2 },
+  { text: '✓ neon          (4 tools)', color: 'rgba(255,255,255,0.55)', delay: 2.2 },
   { text: '✓ gmail         (3 tools)', color: 'rgba(255,255,255,0.55)', delay: 2.5 },
-  { text: '→ 15 tools loaded', color: 'rgba(255,255,255,0.3)', delay: 3.0 },
+  { text: '→ 26 tools loaded across 10 providers', color: 'rgba(255,255,255,0.3)', delay: 3.0 },
   { text: '✓ OpenTool MCP server running', color: '#22c55e', delay: 3.4 },
-  { text: '→ Listening at https://opentool.space/mcp', color: 'rgba(255,255,255,0.4)', delay: 3.8 },
+  { text: '→ Listening at http://localhost:3001/mcp', color: 'rgba(255,255,255,0.4)', delay: 3.8 },
 ]
 
 function TerminalLine({ text, color, delay }: { text: string; color: string; delay: number }) {
@@ -41,8 +41,10 @@ function FloatingGrid() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
       {/* Radial glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(0,112,243,0.08) 0%, transparent 70%)' }} />
+      <div
+        className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full"
+        style={{ background: 'radial-gradient(circle, rgba(0,112,243,0.08) 0%, transparent 70%)' }}
+      />
       {/* Grid pattern */}
       <svg className="absolute inset-0 w-full h-full opacity-[0.03]">
         <defs>
@@ -55,7 +57,9 @@ function FloatingGrid() {
       {/* Animated scan line */}
       <motion.div
         className="absolute left-0 right-0 h-px"
-        style={{ background: 'linear-gradient(90deg, transparent, rgba(0,112,243,0.15), transparent)' }}
+        style={{
+          background: 'linear-gradient(90deg, transparent, rgba(0,112,243,0.15), transparent)',
+        }}
         animate={{ top: ['0%', '100%'] }}
         transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
       />
@@ -115,8 +119,10 @@ export default function LoginPage() {
             className="w-full max-w-[520px]"
           >
             {/* Terminal window */}
-            <div className="rounded-xl border border-[rgba(255,255,255,0.08)] overflow-hidden"
-              style={{ boxShadow: '0 32px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04)' }}>
+            <div
+              className="rounded-xl border border-[rgba(255,255,255,0.08)] overflow-hidden"
+              style={{ boxShadow: '0 32px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04)' }}
+            >
               {/* Title bar */}
               <div className="h-10 bg-[#111111] border-b border-[rgba(255,255,255,0.06)] flex items-center justify-between px-4">
                 <div className="flex gap-2">
@@ -124,7 +130,9 @@ export default function LoginPage() {
                   <div className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
                   <div className="w-3 h-3 rounded-full bg-[#27C93F]" />
                 </div>
-                <span className="text-[11px] text-[rgba(255,255,255,0.25)] font-mono">opentool — mcp server</span>
+                <span className="text-[11px] text-[rgba(255,255,255,0.25)] font-mono">
+                  opentool — mcp server
+                </span>
                 <div className="w-12" />
               </div>
               {/* Body */}
@@ -158,7 +166,8 @@ export default function LoginPage() {
           className="relative z-10"
         >
           <p className="text-[13px] text-[rgba(255,255,255,0.25)] max-w-[320px] leading-relaxed">
-            One MCP server. All your tools.<br />
+            One MCP server. All your tools.
+            <br />
             Open source. Self-hosted. MIT licensed.
           </p>
         </motion.div>
@@ -167,8 +176,13 @@ export default function LoginPage() {
       {/* Right — Login Form */}
       <div className="flex-1 flex items-center justify-center relative bg-[#0A0A0A] border-l border-[rgba(255,255,255,0.06)]">
         {/* Subtle top glow */}
-        <div className="absolute top-0 left-0 right-0 h-[300px] pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(0,112,243,0.06), transparent)' }} />
+        <div
+          className="absolute top-0 left-0 right-0 h-[300px] pointer-events-none"
+          style={{
+            background:
+              'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(0,112,243,0.06), transparent)',
+          }}
+        />
 
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -227,7 +241,9 @@ export default function LoginPage() {
           {/* Divider */}
           <div className="flex items-center gap-3 my-6">
             <div className="flex-1 h-px bg-[rgba(255,255,255,0.06)]" />
-            <span className="text-[11px] text-[rgba(255,255,255,0.2)] uppercase tracking-widest">or</span>
+            <span className="text-[11px] text-[rgba(255,255,255,0.2)] uppercase tracking-widest">
+              or
+            </span>
             <div className="flex-1 h-px bg-[rgba(255,255,255,0.06)]" />
           </div>
 
@@ -240,7 +256,10 @@ export default function LoginPage() {
 
           <p className="text-center text-[13px] text-[rgba(255,255,255,0.35)] mt-6">
             Don&apos;t have an account?{' '}
-            <Link href="/signup" className="text-[#0070F3] hover:text-[#3b82f6] transition-colors font-medium">
+            <Link
+              href="/signup"
+              className="text-[#0070F3] hover:text-[#3b82f6] transition-colors font-medium"
+            >
               Create one
             </Link>
           </p>

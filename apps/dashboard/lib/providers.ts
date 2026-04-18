@@ -1,6 +1,14 @@
 import {
-  GitHubIcon, NotionIcon, SlackIcon, LinearIcon, GmailIcon,
-  GoogleCalendarIcon, StripeIcon, VercelIcon, ResendIcon, NeonIcon,
+  GitHubIcon,
+  NotionIcon,
+  SlackIcon,
+  LinearIcon,
+  GmailIcon,
+  GoogleCalendarIcon,
+  StripeIcon,
+  VercelIcon,
+  ResendIcon,
+  NeonIcon,
 } from '@/components/icons'
 import type { ComponentType, CSSProperties } from 'react'
 
@@ -102,7 +110,7 @@ export const PROVIDERS: Record<string, ProviderMeta> = {
     color: '#00e599',
     bg: '#0a1a14',
     description: 'Serverless PostgreSQL queries',
-    tools: ['execute_query'],
+    tools: ['execute_query', 'list_tables', 'describe_table', 'run_transaction'],
     authType: 'api_key',
   },
 }
