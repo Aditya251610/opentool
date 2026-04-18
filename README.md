@@ -6,6 +6,11 @@ OpenTool gives AI agents secure, authenticated access to your tools via a single
 
 Built for solo developers building with AI agents.
 
+[![npm](https://img.shields.io/npm/v/opentool-cli?label=CLI&color=blue)](https://www.npmjs.com/package/opentool-cli)
+[![npm](https://img.shields.io/npm/v/@opentool-ts/sdk?label=SDK&color=blue)](https://www.npmjs.com/package/@opentool-ts/sdk)
+[![PyPI](https://img.shields.io/pypi/v/opentool?label=Python%20SDK&color=blue)](https://pypi.org/project/opentool/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 ---
 
 ## Why OpenTool
@@ -16,6 +21,35 @@ Built for solo developers building with AI agents.
 | Self-hostable              | ❌      | ❌       | ✅       |
 | MCP native                 | ✅      | ✅       | ✅       |
 | Free forever (self-hosted) | ❌      | ❌       | ✅       |
+| CLI with REPL              | ❌      | ❌       | ✅       |
+| TypeScript + Python SDKs   | ✅      | ✅       | ✅       |
+
+---
+
+## Install
+
+### CLI
+
+```bash
+# npm (recommended)
+npm i -g opentool-cli
+
+# or run without installing
+npx opentool-cli
+
+# or curl installer
+curl -fsSL https://raw.githubusercontent.com/Aditya251610/opentool/main/install.sh | bash
+```
+
+### SDKs
+
+```bash
+# TypeScript
+npm i @opentool-ts/sdk
+
+# Python
+pip install opentool
+```
 
 ---
 
@@ -29,7 +63,7 @@ Go to the dashboard → Tools → Connect GitHub, Notion, Slack etc.
 
 **3. Connect your agent**
 
-For VS Code, add to `mcp.json`:
+For VS Code / Copilot / Claude Code, add to `mcp.json`:
 
 ```json
 {
@@ -43,6 +77,15 @@ For VS Code, add to `mcp.json`:
     }
   }
 }
+```
+
+**Or use the CLI:**
+
+```bash
+opentool init       # guided setup
+opentool login      # authenticate
+opentool tools      # see your connected tools
+opentool            # launch interactive REPL
 ```
 
 That's it. Your agent now has access to all your connected tools.
@@ -66,10 +109,8 @@ MCP server available at `http://localhost:3001`
 
 ### Production Deployment
 
-For complete self-hosting and production deployment guides, see:
-
-- **[Self-Hosting Guide](docs/self-hosting.md)** — Docker Compose, manual setup, reverse proxy configuration, health checks, and backups
-- **[Security Guide](docs/security.md)** — Encryption, authentication, threat model, data handling, and vulnerability reporting
+- **[Self-Hosting Guide](docs/self-hosting.md)** — Docker Compose, manual setup, reverse proxy, health checks, backups
+- **[Security Guide](docs/security.md)** — Encryption, authentication, threat model, data handling
 
 Key production checklist:
 
@@ -77,26 +118,46 @@ Key production checklist:
 - Set a strong `TOKEN_ENCRYPTION_KEY` (64 hex characters)
 - Configure `SERVER_URL` and `DASHBOARD_URL` for your domain
 - Back up your encryption key separately from database backups
-- Monitor audit logs for unexpected activity
+- CSP and HSTS headers are enabled by default
 
 ---
 
 ## Supported Tools
 
+10 providers, 26 actions — and growing.
+
 | Tool            | Status | Actions                                                      |
 | --------------- | ------ | ------------------------------------------------------------ |
-| GitHub          | ✅     | Create issue, create PR, comment, read repo                  |
+| GitHub          | ✅     | Create issue, list issues, create PR, comment, read repo     |
 | Notion          | ✅     | Create page, query database, update block                    |
 | Slack           | ✅     | Send message, read channel                                   |
 | Linear          | ✅     | Create issue, update status                                  |
 | Gmail           | ✅     | Send, read, search                                           |
 | Google Calendar | ✅     | Create event, list events                                    |
-| Stripe          | ✅     | Create payment link, read customer                           |
-| Vercel          | ✅     | Trigger deploy, read status                                  |
-| Postgres        | ✅     | Execute query, List tables, Describe schema, Run transaction |
+| Stripe          | ✅     | Create payment link, list customers                          |
+| Vercel          | ✅     | List deployments, get deployment                             |
+| Postgres        | ✅     | Execute query, list tables, describe schema, run transaction |
 | Resend          | ✅     | Send email                                                   |
 
 Want a tool added? [Open an issue](https://github.com/Aditya251610/opentool/issues) or [contribute a tool](#contributing-a-tool).
+
+---
+
+## CLI
+
+The CLI ships with an interactive REPL and scriptable subcommands:
+
+```bash
+opentool                    # Launch interactive REPL
+opentool tools --json       # List tools (machine-readable)
+opentool exec github.list_issues --args '{"owner":"me","repo":"myrepo"}'
+opentool doctor             # Run 9-point diagnostics
+opentool completion --install  # Shell completions (bash/zsh/fish)
+```
+
+**REPL features:** Tab completion, ghost-text suggestions, Ctrl+R history search, fuzzy "did you mean?", readline keybindings, update notifications.
+
+Full reference: [docs/cli-reference.md](docs/cli-reference.md)
 
 ---
 
@@ -106,12 +167,14 @@ Want a tool added? [Open an issue](https://github.com/Aditya251610/opentool/issu
 opentool/
 ├── apps/
 │   ├── server/          # MCP server + Auth broker + REST API (Hono)
-│   │   └── tools/       # Tool definitions
+│   │   └── tools/       # Tool definitions (10 providers, 26 actions)
 │   └── dashboard/       # Next.js dashboard
 ├── packages/
-│   ├── sdk/             # @opentool-ts/sdk — TypeScript SDK
-│   ├── tool-schema/     # Shared tool definition types
-│   └── cli/             # @opentool-ts/cli
+│   ├── cli/             # opentool-cli — interactive CLI + REPL
+│   ├── sdk/ts/          # @opentool-ts/sdk — TypeScript SDK
+│   ├── sdk/python/      # opentool — Python SDK
+│   └── tool-schema/     # Shared tool definition types
+├── install.sh           # curl | sh installer
 └── docker-compose.yml
 ```
 
@@ -153,9 +216,11 @@ Full guide: [docs/contributing-a-tool.md](docs/contributing-a-tool.md)
 
 - **Server** — Hono, TypeScript, Prisma, Postgres, Redis
 - **Dashboard** — Next.js 14, Auth.js
+- **CLI** — TypeScript, Ink (React for terminals), Commander
 - **Protocol** — MCP (Model Context Protocol) TypeScript SDK
-- **SDKs** — TypeScript + Python
+- **SDKs** — TypeScript ([npm](https://www.npmjs.com/package/@opentool-ts/sdk)) + Python ([PyPI](https://pypi.org/project/opentool/))
 - **Monorepo** — Turborepo + pnpm
+- **Security** — AES-256-GCM encryption, CSP/HSTS headers, session obfuscation
 
 ---
 
@@ -168,7 +233,7 @@ Full docs at [`docs/`](docs/README.md):
 - [Configuration](docs/configuration.md) — Every env var and OAuth setup
 - [Architecture](docs/architecture.md) — How it all fits together
 - [Authentication](docs/authentication.md) — OAuth flows and token management
-- [Tools](docs/tools.md) — All 10 providers, 23 actions
+- [Tools](docs/tools.md) — All 10 providers, 26 actions
 - [MCP Integration](docs/mcp-integration.md) — Claude, Cursor, any MCP client
 - [SDK Reference](docs/sdk-reference.md) — TypeScript and Python
 - [CLI Reference](docs/cli-reference.md) — Terminal tool management
@@ -181,16 +246,20 @@ Full docs at [`docs/`](docs/README.md):
 
 ## Roadmap
 
-- [x] Core MCP server
-- [x] OAuth auth broker
-- [x] Dashboard
-- [x] CLI
-- [x] TypeScript SDK
-- [x] Python SDK
+- [x] Core MCP server with 10 providers, 26 actions
+- [x] OAuth auth broker with token encryption
+- [x] Dashboard (Next.js)
+- [x] CLI with interactive REPL (`opentool-cli` on [npm](https://www.npmjs.com/package/opentool-cli))
+- [x] TypeScript SDK (`@opentool-ts/sdk` on [npm](https://www.npmjs.com/package/@opentool-ts/sdk))
+- [x] Python SDK (`opentool` on [PyPI](https://pypi.org/project/opentool/))
+- [x] Production hardening (CSP, HSTS, retry logic, 211 tests)
+- [x] CI/CD with automated releases
+- [x] curl installer (`install.sh`)
 - [ ] Team/org support
 - [ ] Tool marketplace
 - [ ] Usage analytics
 - [ ] Webhook support
+- [ ] Plugin system for custom tools
 
 ---
 

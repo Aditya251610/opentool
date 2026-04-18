@@ -140,7 +140,16 @@ Go to **Dashboard → Tools → GitHub → Connect**. Authorize the OAuth app. D
 
 ## 7. Connect Your AI Agent
 
-### Claude Desktop
+### Option A: Use the CLI
+
+```bash
+npm i -g opentool-cli
+opentool init         # guided setup
+opentool login        # authenticate
+opentool tools        # verify your connected tools
+```
+
+### Option B: Claude Desktop
 
 Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
 
@@ -149,7 +158,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
   "mcpServers": {
     "opentool": {
       "command": "npx",
-      "args": ["@opentool-ts/cli", "mcp", "start"],
+      "args": ["opentool-cli", "mcp", "start"],
       "env": {
         "OPENTOOL_API_KEY": "your-api-key-here"
       }
@@ -158,16 +167,16 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 }
 ```
 
-### Claude Code
+### Option C: Claude Code
 
 ```bash
-npx @opentool-ts/cli init
+npx opentool-cli init
 claude mcp add opentool
 ```
 
-### Any MCP Client
+### Option D: Any MCP Client (VS Code, Cursor, etc.)
 
-Point it at `http://localhost:3001/mcp` with your API key as a Bearer token.
+Point it at `http://localhost:3001/mcp` with your API key as a Bearer token. See [MCP Integration](./mcp-integration.md) for specific client configs.
 
 ---
 
@@ -185,5 +194,6 @@ If it works, congratulations — you just killed a bunch of glue code.
 
 - [Connect more tools](./tools.md) — Notion, Slack, Linear, Gmail, Google Calendar, Vercel, Resend, PostgreSQL
 - [Self-host with Docker](./self-hosting.md) — Production-ready deployment
-- [Use the SDK](./sdk-reference.md) — Build your own integrations
-- [Use the CLI](./cli-reference.md) — Manage tools from the terminal
+- [Use the CLI](./cli-reference.md) — Interactive REPL, tab completion, ghost-text, shell completions
+- [Use the SDK](./sdk-reference.md) — TypeScript (`@opentool-ts/sdk`) and Python (`opentool`)
+- [API Reference](./api-reference.md) — Every REST endpoint documented
