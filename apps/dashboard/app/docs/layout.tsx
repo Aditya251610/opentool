@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Documentation',
-  description: 'Complete documentation for OpenTool — setup guides, MCP configuration, API reference, and tool integration docs for the open-source MCP server.',
+  description:
+    'Complete documentation for OpenTool — setup guides, MCP configuration, API reference, and tool integration docs for the open-source MCP server.',
   alternates: { canonical: '/docs' },
   openGraph: {
     title: 'OpenTool Documentation',

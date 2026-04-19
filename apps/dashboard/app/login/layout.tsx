@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Sign In',
-  description: 'Sign in to your OpenTool dashboard to manage tool connections, API keys, and MCP server settings.',
+  description:
+    'Sign in to your OpenTool dashboard to manage tool connections, API keys, and MCP server settings.',
   robots: { index: false, follow: false },
 }
 
