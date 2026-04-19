@@ -77,9 +77,17 @@ export default function OverviewPage() {
     }
 
     fetchStats()
-    // Poll every 15s to pick up changes from CLI or other sessions
-    const interval = setInterval(fetchStats, 15000)
-    return () => clearInterval(interval)
+    // Poll every 30s — pause when tab is hidden
+    let interval = setInterval(fetchStats, 30000)
+    function handleVisibility() {
+      clearInterval(interval)
+      if (!document.hidden) interval = setInterval(fetchStats, 30000)
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
   }, [apiKey])
 
   return (

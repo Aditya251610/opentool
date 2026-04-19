@@ -14,7 +14,6 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useAuth } from '@/lib/auth-context'
 import { Navbar } from '@/components/layout/navbar'
-import { Footer } from '@/components/layout/footer'
 import {
   GitHubIcon,
   NotionIcon,
@@ -29,8 +28,11 @@ import {
 } from '@/components/icons'
 
 const ParallaxStars = dynamic(() => import('@/components/landing/parallax-stars'), { ssr: false })
-import TextScramble from '@/components/landing/text-scramble'
-import MagneticButton from '@/components/landing/magnetic-button'
+const TextScramble = dynamic(() => import('@/components/landing/text-scramble'))
+const MagneticButton = dynamic(() => import('@/components/landing/magnetic-button'))
+const Footer = dynamic(() =>
+  import('@/components/layout/footer').then((m) => ({ default: m.Footer })),
+)
 
 /* ─── Constants ─── */
 const ease: [number, number, number, number] = [0.23, 1, 0.32, 1]
@@ -126,12 +128,21 @@ function SpotlightCard({
   className?: string
 }) {
   const ref = useRef<HTMLDivElement>(null)
+  const ticking = useRef(false)
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const el = ref.current
-    if (!el) return
-    const rect = el.getBoundingClientRect()
-    el.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`)
-    el.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`)
+    if (ticking.current) return
+    ticking.current = true
+    const cx = e.clientX,
+      cy = e.clientY
+    requestAnimationFrame(() => {
+      const el = ref.current
+      if (el) {
+        const rect = el.getBoundingClientRect()
+        el.style.setProperty('--mouse-x', `${cx - rect.left}px`)
+        el.style.setProperty('--mouse-y', `${cy - rect.top}px`)
+      }
+      ticking.current = false
+    })
   }, [])
 
   return (
@@ -152,14 +163,23 @@ function TiltCard({ children, className = '' }: { children: React.ReactNode; cla
   const y = useMotionValue(0)
   const rotateX = useSpring(useTransform(y, [-0.5, 0.5], [8, -8]), { stiffness: 200, damping: 20 })
   const rotateY = useSpring(useTransform(x, [-0.5, 0.5], [-8, 8]), { stiffness: 200, damping: 20 })
+  const ticking = useRef(false)
 
   const handleMouse = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      const el = ref.current
-      if (!el) return
-      const rect = el.getBoundingClientRect()
-      x.set((e.clientX - rect.left) / rect.width - 0.5)
-      y.set((e.clientY - rect.top) / rect.height - 0.5)
+      if (ticking.current) return
+      ticking.current = true
+      const cx = e.clientX,
+        cy = e.clientY
+      requestAnimationFrame(() => {
+        const el = ref.current
+        if (el) {
+          const rect = el.getBoundingClientRect()
+          x.set((cx - rect.left) / rect.width - 0.5)
+          y.set((cy - rect.top) / rect.height - 0.5)
+        }
+        ticking.current = false
+      })
     },
     [x, y],
   )
@@ -342,10 +362,18 @@ export default function LandingPage() {
   const heroScale = useTransform(globalProgress, [0, 0.15], [1, 0.95])
 
   useEffect(() => {
+    const cached = sessionStorage.getItem('gh-stars')
+    if (cached) {
+      setStars(Number(cached))
+      return
+    }
     fetch('https://api.github.com/repos/Aditya251610/opentool')
       .then((r) => r.json())
       .then((d) => {
-        if (d.stargazers_count != null) setStars(d.stargazers_count)
+        if (d.stargazers_count != null) {
+          setStars(d.stargazers_count)
+          sessionStorage.setItem('gh-stars', String(d.stargazers_count))
+        }
       })
       .catch(() => {})
   }, [])
@@ -1676,7 +1704,7 @@ claude mcp add opentool \\
       </section>
 
       {/* ═══════════════════ FINAL CTA ═══════════════════ */}
-      <section className="relative py-32 md:py-52 px-6 section-divider overflow-hidden section-glow-cta">
+      <section className="relative py-32 md:py-52 px-6 section-divider overflow-hidden section-glow-cta section-lazy">
         <div className="absolute inset-0 cta-glow pointer-events-none" />
         <div
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] pointer-events-none rounded-full"

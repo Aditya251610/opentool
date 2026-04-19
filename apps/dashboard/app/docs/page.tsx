@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useAuth } from '@/lib/auth-context'
 import { GitHubIcon } from '@/components/icons'
 import { Navbar } from '@/components/layout/navbar'
@@ -216,11 +217,14 @@ export default function DocsPage() {
 
               {/* Architecture diagram */}
               <div className="mt-8 rounded-xl border border-[rgba(255,255,255,0.08)] overflow-hidden bg-[#f5f5f5]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src="/architecture-origin.png"
                   alt="Original architecture diagram — hand-drawn system design showing User, AI Agent, MCP Runtime, Tool Registry, Auth Broker, Execution Layer, and External Services"
-                  className="w-full"
+                  width={1088}
+                  height={558}
+                  className="w-full h-auto"
+                  loading="lazy"
+                  sizes="(max-width: 768px) 100vw, 720px"
                 />
               </div>
               <p className="mt-3 text-xs text-[rgba(255,255,255,0.25)] italic">

@@ -29,16 +29,20 @@ export default function ParallaxStars() {
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
-    let raf: number
-    const tick = () => {
-      const y = window.scrollY
-      if (slowRef.current) slowRef.current.style.transform = `translateY(${y * 0.02}px)`
-      if (medRef.current) medRef.current.style.transform = `translateY(${y * 0.06}px)`
-      if (fastRef.current) fastRef.current.style.transform = `translateY(${y * 0.12}px)`
-      raf = requestAnimationFrame(tick)
+    let ticking = false
+    const onScroll = () => {
+      if (ticking) return
+      ticking = true
+      requestAnimationFrame(() => {
+        const y = window.scrollY
+        if (slowRef.current) slowRef.current.style.transform = `translateY(${y * 0.02}px)`
+        if (medRef.current) medRef.current.style.transform = `translateY(${y * 0.06}px)`
+        if (fastRef.current) fastRef.current.style.transform = `translateY(${y * 0.12}px)`
+        ticking = false
+      })
     }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
   const base = 'fixed inset-0 pointer-events-none'

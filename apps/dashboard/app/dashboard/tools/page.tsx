@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Loader2 } from 'lucide-react'
 import { PROVIDERS, type ProviderMeta } from '@/lib/providers'
@@ -58,9 +58,16 @@ export default function ToolsPage() {
     }
 
     fetchConnected()
-    // Poll every 10s so CLI-connected tools show up without manual refresh
-    const interval = setInterval(fetchConnected, 10000)
-    return () => clearInterval(interval)
+    let interval = setInterval(fetchConnected, 30000)
+    function handleVisibility() {
+      clearInterval(interval)
+      if (!document.hidden) interval = setInterval(fetchConnected, 30000)
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
   }, [apiKey])
 
   // Handle OAuth callback redirect (e.g. ?connected=github)
@@ -356,7 +363,7 @@ export default function ToolsPage() {
   )
 }
 
-function ToolCard({
+const ToolCard = memo(function ToolCard({
   id,
   provider,
   connected,
@@ -376,7 +383,7 @@ function ToolCard({
   return (
     <motion.div
       className="relative border rounded-xl p-5 bg-[#0d0d24] overflow-hidden group"
-      style={{ borderColor: connected ? 'rgba(34,197,94,0.2)' : '#1f1f1f' }}
+      style={{ borderColor: connected ? 'rgba(34,197,94,0.2)' : 'rgba(139,92,246,0.12)' }}
       whileHover={{
         y: -2,
         boxShadow: '0 12px 32px rgba(0,0,0,0.15)',
@@ -468,4 +475,4 @@ function ToolCard({
       </div>
     </motion.div>
   )
-}
+})

@@ -9,6 +9,9 @@ const nextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   productionBrowserSourceMaps: false,
+  experimental: {
+    optimizePackageImports: ['framer-motion', 'lucide-react', 'sonner'],
+  },
   images: {
     formats: ['image/avif', 'image/webp'],
   },

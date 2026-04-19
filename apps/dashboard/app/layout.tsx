@@ -169,6 +169,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
         <script type="application/ld+json">{JSON.stringify(orgJsonLd)}</script>
         <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
+        <link rel="dns-prefetch" href="https://api.github.com" />
+        <link rel="preconnect" href="https://api.github.com" crossOrigin="anonymous" />
       </head>
       <body suppressHydrationWarning>
         <a href="#main-content" className="skip-to-content">
