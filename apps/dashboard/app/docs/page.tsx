@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useEffect, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
-import { OpenToolLogo, GitHubIcon } from '@/components/icons'
+import { GitHubIcon } from '@/components/icons'
+import { Navbar } from '@/components/layout/navbar'
+import { Footer } from '@/components/layout/footer'
 
 const ease: [number, number, number, number] = [0.23, 1, 0.32, 1]
 
@@ -22,71 +24,10 @@ const SECTIONS = [
   { id: 'changelog', label: 'Changelog' },
 ]
 
-function Navbar() {
-  const { apiKey } = useAuth()
-  const [scrolled, setScrolled] = useState(false)
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20)
-    window.addEventListener('scroll', onScroll)
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
-  return (
-    <nav
-      className="fixed top-0 left-0 right-0 z-50 h-[60px] flex items-center justify-between px-6 md:px-8 transition-all duration-200"
-      style={{
-        background: scrolled ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.6)',
-        backdropFilter: 'blur(12px)',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-      }}
-    >
-      <Link href="/" className="flex items-center gap-3">
-        <OpenToolLogo className="h-5" />
-      </Link>
-
-      <div className="hidden md:flex items-center gap-8">
-        <Link
-          href="/#features"
-          className="text-[14px] text-[rgba(255,255,255,0.5)] hover:text-white transition-colors"
-        >
-          Features
-        </Link>
-        <Link
-          href="/#tools"
-          className="text-[14px] text-[rgba(255,255,255,0.5)] hover:text-white transition-colors"
-        >
-          Tools
-        </Link>
-        <Link href="/docs" className="text-[14px] text-white font-medium">
-          Docs
-        </Link>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <Link
-          href="https://github.com/Aditya251610/opentool"
-          target="_blank"
-          className="hidden sm:flex items-center gap-2 h-8 px-3 rounded-lg border border-[rgba(255,255,255,0.1)] text-[13px] text-[rgba(255,255,255,0.6)] hover:text-white hover:border-[rgba(255,255,255,0.2)] transition-all"
-        >
-          <GitHubIcon size={14} />
-          GitHub
-        </Link>
-        <Link
-          href={apiKey ? '/dashboard' : '/login'}
-          className="h-8 px-4 rounded-lg bg-[#0070F3] text-white text-[13px] font-medium flex items-center hover:bg-[#2884FF] transition-colors"
-        >
-          {apiKey ? 'Dashboard' : 'Get Started'} →
-        </Link>
-      </div>
-    </nav>
-  )
-}
-
 function Code({ children, className = '' }: { children: string; className?: string }) {
   return (
     <div
-      className={`rounded-lg bg-[#0A0A0A] border border-[rgba(255,255,255,0.06)] p-4 font-mono text-[13px] text-[rgba(255,255,255,0.6)] leading-relaxed overflow-x-auto ${className}`}
+      className={`rounded-lg bg-[#0A0A0A] border border-[rgba(255,255,255,0.06)] p-4 font-mono text-xs text-white/60 leading-relaxed overflow-x-auto ${className}`}
     >
       <pre>{children}</pre>
     </div>
@@ -95,7 +36,7 @@ function Code({ children, className = '' }: { children: string; className?: stri
 
 function InlineCode({ children }: { children: string }) {
   return (
-    <code className="text-[#0070F3] bg-[rgba(0,112,243,0.08)] px-1.5 py-0.5 rounded text-[13px] font-mono">
+    <code className="text-[#00d4ff] bg-[rgba(0,212,255,0.08)] px-1.5 py-0.5 rounded text-xs font-mono">
       {children}
     </code>
   )
@@ -103,6 +44,31 @@ function InlineCode({ children }: { children: string }) {
 
 export default function DocsPage() {
   const [activeSection, setActiveSection] = useState('overview')
+  const [tocOpen, setTocOpen] = useState(false)
+  const [showBackToTop, setShowBackToTop] = useState(false)
+
+  // Track scroll for back-to-top visibility
+  useEffect(() => {
+    const onScroll = () => setShowBackToTop(window.scrollY > 400)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  // Lock body scroll when drawer is open
+  useEffect(() => {
+    if (tocOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [tocOpen])
+
+  const scrollToTop = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [])
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -122,13 +88,13 @@ export default function DocsPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <Navbar />
+    <div className="min-h-screen text-white">
+      <Navbar activePage="/docs" />
 
       <div className="flex max-w-[1200px] mx-auto pt-[80px]">
         {/* Sidebar TOC */}
         <aside className="hidden lg:block w-[220px] shrink-0 sticky top-[80px] h-[calc(100vh-80px)] overflow-y-auto pr-6 pl-6 py-8">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[rgba(255,255,255,0.3)] mb-4">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/30 mb-4">
             Documentation
           </div>
           <nav className="flex flex-col gap-1">
@@ -136,9 +102,9 @@ export default function DocsPage() {
               <a
                 key={id}
                 href={`#${id}`}
-                className={`text-[13px] px-2.5 py-1.5 rounded-md transition-all ${
+                className={`text-xs px-2.5 py-1.5 rounded-md transition-all ${
                   activeSection === id
-                    ? 'text-white bg-[rgba(0,112,243,0.08)] border-l-2 border-[#0070F3]'
+                    ? 'text-white bg-[rgba(0,212,255,0.08)] font-medium shadow-[inset_2px_0_0_#00d4ff]'
                     : 'text-[rgba(255,255,255,0.4)] hover:text-white'
                 }`}
               >
@@ -149,7 +115,7 @@ export default function DocsPage() {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 min-w-0 px-6 md:px-8 py-8 pb-24">
+        <main id="main-content" className="flex-1 min-w-0 px-6 md:px-8 py-8 pb-24">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -157,13 +123,13 @@ export default function DocsPage() {
           >
             {/* Header */}
             <div className="mb-16">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[#0070F3]">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[#00d4ff]">
                 Documentation
               </span>
               <h1 className="text-[40px] md:text-[48px] font-bold text-white mt-3 tracking-[-0.02em] leading-[1.1]">
                 OpenTool Docs
               </h1>
-              <p className="text-[18px] text-[rgba(255,255,255,0.45)] mt-4 max-w-[560px] leading-relaxed">
+              <p className="text-lg text-[rgba(255,255,255,0.45)] mt-4 max-w-[560px] leading-relaxed">
                 No fluff. No &quot;getting started in 47 easy steps.&quot; Just the stuff you
                 actually need to wire your agent to real tools.
               </p>
@@ -172,7 +138,7 @@ export default function DocsPage() {
             {/* ═══ OVERVIEW ═══ */}
             <section id="overview" className="mb-20 scroll-mt-24">
               <h2 className="text-[28px] font-bold text-white tracking-[-0.01em]">Overview</h2>
-              <div className="mt-4 text-[15px] text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
+              <div className="mt-4 text-sm text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
                 <p>
                   You&apos;re building an agent. It needs to create GitHub issues, send Slack
                   messages, read Notion pages. So now you&apos;re writing OAuth flows, managing
@@ -208,8 +174,8 @@ export default function DocsPage() {
                     key={card.title}
                     className="bg-[#0A0A0A] border border-[rgba(255,255,255,0.06)] rounded-xl p-5"
                   >
-                    <h3 className="text-[15px] font-semibold text-white">{card.title}</h3>
-                    <p className="text-[13px] text-[rgba(255,255,255,0.4)] mt-1.5 leading-relaxed">
+                    <h3 className="text-sm font-semibold text-white">{card.title}</h3>
+                    <p className="text-xs text-[rgba(255,255,255,0.4)] mt-1.5 leading-relaxed">
                       {card.desc}
                     </p>
                   </div>
@@ -220,7 +186,7 @@ export default function DocsPage() {
             {/* ═══ THE STORY ═══ */}
             <section id="the-story" className="mb-20 scroll-mt-24">
               <h2 className="text-[28px] font-bold text-white tracking-[-0.01em]">The Story</h2>
-              <div className="mt-4 text-[15px] text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
+              <div className="mt-4 text-sm text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
                 <p>
                   This started the way most side projects do — sitting around, looking for something
                   new to build, something worth learning from.
@@ -230,7 +196,7 @@ export default function DocsPage() {
                   <Link
                     href="https://arcade.dev"
                     target="_blank"
-                    className="text-[#0070F3] hover:underline"
+                    className="text-[#00d4ff] hover:underline"
                   >
                     Arcade.dev
                   </Link>
@@ -249,7 +215,7 @@ export default function DocsPage() {
               </div>
 
               {/* Architecture diagram */}
-              <div className="mt-8 rounded-xl border border-[rgba(255,255,255,0.08)] overflow-hidden bg-white">
+              <div className="mt-8 rounded-xl border border-[rgba(255,255,255,0.08)] overflow-hidden bg-[#f5f5f5]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/architecture-origin.png"
@@ -257,12 +223,12 @@ export default function DocsPage() {
                   className="w-full"
                 />
               </div>
-              <p className="mt-3 text-[12px] text-[rgba(255,255,255,0.25)] italic">
+              <p className="mt-3 text-xs text-[rgba(255,255,255,0.25)] italic">
                 The original sketch. Hours of research distilled into one diagram. This is what the
                 entire project was built from.
               </p>
 
-              <div className="mt-8 text-[15px] text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
+              <div className="mt-8 text-sm text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
                 <p>
                   Then added my own quirks. Encrypted token storage with AES-256-GCM instead of
                   plain-text. A full interactive CLI because I live in the terminal. A dashboard
@@ -285,7 +251,7 @@ export default function DocsPage() {
             {/* ═══ SELF-HOSTING ═══ */}
             <section id="self-hosting" className="mb-20 scroll-mt-24">
               <h2 className="text-[28px] font-bold text-white tracking-[-0.01em]">Self-hosting</h2>
-              <div className="mt-4 text-[15px] text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
+              <div className="mt-4 text-sm text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
                 <p>
                   Your tokens should not live in some SaaS dashboard you can&apos;t audit. OpenTool
                   runs on your machine. Your tokens stay with you. Everything is inspectable. One
@@ -303,20 +269,20 @@ cp .env.example .env
 # Start everything
 docker compose up -d`}</Code>
 
-              <div className="mt-6 text-[15px] text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
+              <div className="mt-6 text-sm text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
                 <p>That spins up four containers. The whole stack:</p>
                 <ul className="list-none space-y-2 ml-2">
                   <li className="flex items-start gap-2">
-                    <span className="text-[#0070F3] mt-0.5">→</span> PostgreSQL database
+                    <span className="text-[#00d4ff] mt-0.5">→</span> PostgreSQL database
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-[#0070F3] mt-0.5">→</span> Redis for token caching
+                    <span className="text-[#00d4ff] mt-0.5">→</span> Redis for token caching
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-[#0070F3] mt-0.5">→</span> OpenTool server (port 3001)
+                    <span className="text-[#00d4ff] mt-0.5">→</span> OpenTool server (port 3001)
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-[#0070F3] mt-0.5">→</span> Dashboard (port 3000)
+                    <span className="text-[#00d4ff] mt-0.5">→</span> Dashboard (port 3000)
                   </li>
                 </ul>
                 <p>
@@ -325,8 +291,8 @@ docker compose up -d`}</Code>
                 </p>
               </div>
 
-              <h3 className="text-[20px] font-semibold text-white mt-10">Without Docker</h3>
-              <div className="mt-3 text-[15px] text-[rgba(255,255,255,0.55)] leading-[1.8]">
+              <h3 className="text-xl font-semibold text-white mt-10">Without Docker</h3>
+              <div className="mt-3 text-sm text-[rgba(255,255,255,0.55)] leading-[1.8]">
                 <p>Don&apos;t like Docker? Fine. Bring your own Postgres and run it bare:</p>
               </div>
               <Code className="mt-4">{`# Install dependencies
@@ -345,7 +311,7 @@ pnpm dev`}</Code>
             {/* ═══ CONFIGURATION ═══ */}
             <section id="configuration" className="mb-20 scroll-mt-24">
               <h2 className="text-[28px] font-bold text-white tracking-[-0.01em]">Configuration</h2>
-              <div className="mt-4 text-[15px] text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
+              <div className="mt-4 text-sm text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
                 <p>
                   One <InlineCode>.env</InlineCode> file. That&apos;s the entire config surface. No
                   YAML nesting hell, no scattered config files across four directories, no
@@ -353,7 +319,7 @@ pnpm dev`}</Code>
                 </p>
               </div>
 
-              <h3 className="text-[20px] font-semibold text-white mt-8">Required</h3>
+              <h3 className="text-xl font-semibold text-white mt-8">Required</h3>
               <Code className="mt-4">{`# Database — any PostgreSQL instance
 DATABASE_URL="postgresql://user:pass@localhost:5432/opentool"
 DIRECT_URL="postgresql://user:pass@localhost:5432/opentool"
@@ -365,8 +331,8 @@ TOKEN_ENCRYPTION_KEY="your-64-char-hex-key"
 SERVER_URL="http://localhost:3001"
 DASHBOARD_URL="http://localhost:3000"`}</Code>
 
-              <h3 className="text-[20px] font-semibold text-white mt-8">OAuth Providers</h3>
-              <div className="mt-3 text-[15px] text-[rgba(255,255,255,0.55)] leading-[1.8]">
+              <h3 className="text-xl font-semibold text-white mt-8">OAuth Providers</h3>
+              <div className="mt-3 text-sm text-[rgba(255,255,255,0.55)] leading-[1.8]">
                 <p>
                   Add credentials for providers you actually use. No credentials = provider
                   doesn&apos;t exist. You don&apos;t configure what you don&apos;t need. Simple.
@@ -395,7 +361,7 @@ GOOGLE_CLIENT_SECRET=""
             {/* ═══ DASHBOARD ═══ */}
             <section id="dashboard" className="mb-20 scroll-mt-24">
               <h2 className="text-[28px] font-bold text-white tracking-[-0.01em]">Dashboard</h2>
-              <div className="mt-4 text-[15px] text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
+              <div className="mt-4 text-sm text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
                 <p>
                   <InlineCode>localhost:3000</InlineCode>. Four pages. No settings buried in
                   settings. No dashboard that needs a dashboard to manage it.
@@ -437,7 +403,7 @@ GOOGLE_CLIENT_SECRET=""
             {/* ═══ CLI ═══ */}
             <section id="cli" className="mb-20 scroll-mt-24">
               <h2 className="text-[28px] font-bold text-white tracking-[-0.01em]">CLI</h2>
-              <div className="mt-4 text-[15px] text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
+              <div className="mt-4 text-sm text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
                 <p>
                   Not everyone wants to context-switch to a browser to connect a tool. The CLI is a
                   full interactive TUI — login, connect providers, check status, execute tools. All
@@ -456,7 +422,7 @@ opentool
 # Or from the monorepo
 cd packages/cli && pnpm dev`}</Code>
 
-              <h3 className="text-[20px] font-semibold text-white mt-8">Commands</h3>
+              <h3 className="text-xl font-semibold text-white mt-8">Commands</h3>
               <div className="mt-4 space-y-3">
                 {[
                   { cmd: 'login <email> <pass>', desc: 'Log in and save API key locally' },
@@ -476,10 +442,10 @@ cd packages/cli && pnpm dev`}</Code>
                   { cmd: 'status', desc: 'Check server connection health' },
                 ].map(({ cmd, desc }) => (
                   <div key={cmd} className="flex items-start gap-4">
-                    <code className="text-[13px] font-mono text-[#0070F3] bg-[rgba(0,112,243,0.06)] px-2 py-1 rounded shrink-0">
+                    <code className="text-xs font-mono text-[#00d4ff] bg-[rgba(0,212,255,0.06)] px-2 py-1 rounded shrink-0">
                       {cmd}
                     </code>
-                    <span className="text-[14px] text-[rgba(255,255,255,0.45)] pt-0.5">{desc}</span>
+                    <span className="text-sm text-[rgba(255,255,255,0.45)] pt-0.5">{desc}</span>
                   </div>
                 ))}
               </div>
@@ -488,7 +454,7 @@ cd packages/cli && pnpm dev`}</Code>
             {/* ═══ MCP SETUP ═══ */}
             <section id="mcp-setup" className="mb-20 scroll-mt-24">
               <h2 className="text-[28px] font-bold text-white tracking-[-0.01em]">MCP Setup</h2>
-              <div className="mt-4 text-[15px] text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
+              <div className="mt-4 text-sm text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
                 <p>
                   This is the part that actually matters. Most people have 5+ MCP servers in their
                   config — scattered, duplicated, half-broken. OpenTool replaces all of them. One
@@ -496,7 +462,7 @@ cd packages/cli && pnpm dev`}</Code>
                 </p>
               </div>
 
-              <h3 className="text-[20px] font-semibold text-white mt-8">Claude Desktop</h3>
+              <h3 className="text-xl font-semibold text-white mt-8">Claude Desktop</h3>
               <Code className="mt-4">{`{
   "mcpServers": {
     "opentool": {
@@ -508,12 +474,12 @@ cd packages/cli && pnpm dev`}</Code>
   }
 }`}</Code>
 
-              <h3 className="text-[20px] font-semibold text-white mt-8">Claude Code</h3>
+              <h3 className="text-xl font-semibold text-white mt-8">Claude Code</h3>
               <Code className="mt-4">{`# Add OpenTool as an MCP server
 claude mcp add opentool \\
   --url http://localhost:3001/mcp`}</Code>
 
-              <h3 className="text-[20px] font-semibold text-white mt-8">Cursor</h3>
+              <h3 className="text-xl font-semibold text-white mt-8">Cursor</h3>
               <Code className="mt-4">{`// .cursor/mcp.json
 {
   "mcpServers": {
@@ -526,7 +492,7 @@ claude mcp add opentool \\
   }
 }`}</Code>
 
-              <div className="mt-6 text-[15px] text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
+              <div className="mt-6 text-sm text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
                 <p>
                   Once configured, your agent sees every connected tool. Connect a new provider in
                   the dashboard or CLI → agent picks it up instantly. No config edit. No restart. No
@@ -544,7 +510,7 @@ claude mcp add opentool \\
               <h2 className="text-[28px] font-bold text-white tracking-[-0.01em]">
                 Tool Reference
               </h2>
-              <div className="mt-4 text-[15px] text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
+              <div className="mt-4 text-sm text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
                 <p>
                   26 tools. 10 providers. These aren&apos;t wrappers around wrappers — they&apos;re
                   direct API calls with proper auth. You can read every line of execution code.
@@ -604,11 +570,11 @@ claude mcp add opentool \\
                     className="bg-[#0A0A0A] border border-[rgba(255,255,255,0.06)] rounded-xl p-5"
                   >
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-[16px] font-semibold text-white">{provider}</h3>
+                      <h3 className="text-base font-semibold text-white">{provider}</h3>
                       <span
                         className={`text-[11px] px-2 py-0.5 rounded-full ${
                           auth === 'OAuth2'
-                            ? 'bg-[rgba(0,112,243,0.1)] text-[#0070F3] border border-[rgba(0,112,243,0.2)]'
+                            ? 'bg-[rgba(0,212,255,0.1)] text-[#00d4ff] border border-[rgba(0,212,255,0.2)]'
                             : 'bg-[rgba(255,255,255,0.04)] text-[rgba(255,255,255,0.4)] border border-[rgba(255,255,255,0.06)]'
                         }`}
                       >
@@ -619,7 +585,7 @@ claude mcp add opentool \\
                       {tools.map((t) => (
                         <span
                           key={t}
-                          className="px-2.5 py-1 rounded-md bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)] text-[12px] font-mono text-[rgba(255,255,255,0.5)]"
+                          className="px-2.5 py-1 rounded-md bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)] text-xs font-mono text-[rgba(255,255,255,0.5)]"
                         >
                           {provider.toLowerCase().replace(/ /g, '')}.{t}
                         </span>
@@ -633,7 +599,7 @@ claude mcp add opentool \\
             {/* ═══ ADDING TOOLS ═══ */}
             <section id="adding-tools" className="mb-20 scroll-mt-24">
               <h2 className="text-[28px] font-bold text-white tracking-[-0.01em]">Adding Tools</h2>
-              <div className="mt-4 text-[15px] text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
+              <div className="mt-4 text-sm text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
                 <p>
                   Most tool frameworks want you to learn their DSL, their config format, their
                   plugin lifecycle. OpenTool doesn&apos;t have any of that. A tool is a single
@@ -667,7 +633,7 @@ export const myTool = defineTool({
   },
 })`}</Code>
 
-              <div className="mt-6 text-[15px] text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
+              <div className="mt-6 text-sm text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
                 <p>
                   Import it in the registry, run the seed script. Your agent can use it immediately.
                   No build step. No plugin manifest. No restart dance.
@@ -683,7 +649,7 @@ export const myTool = defineTool({
             {/* ═══ CONTRIBUTING ═══ */}
             <section id="contributing" className="mb-20 scroll-mt-24">
               <h2 className="text-[28px] font-bold text-white tracking-[-0.01em]">Contributing</h2>
-              <div className="mt-4 text-[15px] text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
+              <div className="mt-4 text-sm text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
                 <p>
                   This isn&apos;t a corporation asking for free labor. It&apos;s a tool that exists
                   because someone got tired of rewriting the same integrations. If you&apos;ve felt
@@ -692,22 +658,22 @@ export const myTool = defineTool({
                 <p>Highest-impact contributions:</p>
                 <ul className="list-none space-y-2 ml-2">
                   <li className="flex items-start gap-2">
-                    <span className="text-[#0070F3]">1.</span> Add a new tool provider — see Adding
+                    <span className="text-[#00d4ff]">1.</span> Add a new tool provider — see Adding
                     Tools above. Most providers take under an hour.
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-[#0070F3]">2.</span> Fix a bug — check{' '}
+                    <span className="text-[#00d4ff]">2.</span> Fix a bug — check{' '}
                     <Link
                       href="https://github.com/Aditya251610/opentool/issues"
                       target="_blank"
-                      className="text-[#0070F3] hover:underline"
+                      className="text-[#00d4ff] hover:underline"
                     >
                       open issues
                     </Link>
                     . Some are one-liners.
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-[#0070F3]">3.</span> Improve these docs — you&apos;re
+                    <span className="text-[#00d4ff]">3.</span> Improve these docs — you&apos;re
                     reading them right now. You know what&apos;s confusing.
                   </li>
                 </ul>
@@ -767,23 +733,23 @@ export const myTool = defineTool({
                   },
                 ].map((entry) => (
                   <div key={entry.version} className="relative pl-8 pb-8">
-                    <div className="absolute left-0 top-[6px] w-[7px] h-[7px] rounded-full bg-[#0070F3]" />
+                    <div className="absolute left-0 top-[6px] w-[7px] h-[7px] rounded-full bg-[#00d4ff]" />
                     <div className="flex items-center gap-3 mb-3">
-                      <span className="text-[12px] px-2.5 py-1 rounded-full bg-[rgba(0,112,243,0.1)] border border-[rgba(0,112,243,0.2)] text-[#0070F3] font-mono">
+                      <span className="text-xs px-2.5 py-1 rounded-full bg-[rgba(0,212,255,0.1)] border border-[rgba(0,212,255,0.2)] text-[#00d4ff] font-mono">
                         {entry.version}
                       </span>
-                      <span className="text-[13px] text-[rgba(255,255,255,0.3)]">{entry.date}</span>
+                      <span className="text-xs text-white/30">{entry.date}</span>
                     </div>
-                    <h3 className="text-[18px] font-semibold text-white">{entry.title}</h3>
+                    <h3 className="text-lg font-semibold text-white">{entry.title}</h3>
                     <div className="mt-3 space-y-1.5">
                       {entry.changes.map((change, i) => (
-                        <div key={i} className="text-[14px] leading-relaxed flex items-start gap-2">
+                        <div key={i} className="text-sm leading-relaxed flex items-start gap-2">
                           <span
                             className={`mt-0.5 font-mono ${
                               change.type === '+'
                                 ? 'text-[#22c55e]'
                                 : change.type === '↗'
-                                  ? 'text-[#0070F3]'
+                                  ? 'text-[#00d4ff]'
                                   : 'text-[#f59e0b]'
                             }`}
                           >
@@ -800,20 +766,20 @@ export const myTool = defineTool({
 
             {/* Bottom CTA */}
             <div className="mt-8 pt-12 border-t border-[rgba(255,255,255,0.06)] text-center">
-              <p className="text-[16px] text-[rgba(255,255,255,0.45)]">
+              <p className="text-base text-[rgba(255,255,255,0.45)]">
                 This is not a demo project. This is the layer agents should have had from the start.
               </p>
               <div className="flex items-center justify-center gap-3 mt-6">
                 <Link
                   href="/signup"
-                  className="h-10 px-5 rounded-lg bg-[#0070F3] text-white text-[14px] font-medium flex items-center hover:bg-[#2884FF] transition-colors"
+                  className="h-10 px-5 rounded-lg bg-[#00d4ff] text-black text-sm font-medium flex items-center hover:bg-[#38e0ff] transition-colors"
                 >
                   Get Started →
                 </Link>
                 <Link
                   href="https://github.com/Aditya251610/opentool"
                   target="_blank"
-                  className="h-10 px-5 rounded-lg border border-[rgba(255,255,255,0.12)] text-[rgba(255,255,255,0.6)] text-[14px] flex items-center gap-2 hover:text-white hover:border-[rgba(255,255,255,0.25)] transition-all"
+                  className="h-10 px-5 rounded-lg border border-[rgba(255,255,255,0.12)] text-white/60 text-sm flex items-center gap-2 hover:text-white hover:border-[rgba(255,255,255,0.25)] transition-all"
                 >
                   <GitHubIcon size={14} /> Source on GitHub
                 </Link>
@@ -822,6 +788,120 @@ export const myTool = defineTool({
           </motion.div>
         </main>
       </div>
+
+      {/* ─── Mobile TOC Drawer (lg:hidden) ─── */}
+      <AnimatePresence>
+        {tocOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[80]"
+              onClick={() => setTocOpen(false)}
+            />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+              className="lg:hidden fixed bottom-0 left-0 right-0 z-[81] rounded-t-2xl border-t border-white/[0.08] bg-[#0f0f0f] max-h-[70vh] overflow-hidden"
+            >
+              {/* Handle */}
+              <div className="flex justify-center py-3">
+                <div className="w-10 h-1 rounded-full bg-white/[0.15]" />
+              </div>
+
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 pb-3 border-b border-white/[0.06]">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/30">
+                  On this page
+                </span>
+                <button
+                  onClick={() => setTocOpen(false)}
+                  className="text-xs text-white/30 hover:text-white/60 transition-colors px-2 py-1 rounded-md hover:bg-white/[0.04]"
+                >
+                  Done
+                </button>
+              </div>
+
+              {/* Section links */}
+              <nav className="overflow-y-auto max-h-[calc(70vh-80px)] py-2 px-3">
+                {SECTIONS.map(({ id, label }) => (
+                  <a
+                    key={id}
+                    href={`#${id}`}
+                    onClick={() => setTocOpen(false)}
+                    className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-colors min-h-[44px] ${
+                      activeSection === id
+                        ? 'bg-[rgba(0,212,255,0.08)] text-white'
+                        : 'text-white/45 active:bg-white/[0.04]'
+                    }`}
+                  >
+                    <div
+                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                        activeSection === id ? 'bg-brand' : 'bg-white/[0.1]'
+                      }`}
+                    />
+                    <span className="text-sm">{label}</span>
+                  </a>
+                ))}
+              </nav>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ─── Floating buttons ─── */}
+      {/* Back to top — all screen sizes */}
+      <div className="fixed bottom-5 right-5 z-[70] flex flex-col items-end gap-3">
+        <AnimatePresence>
+          {showBackToTop && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              onClick={scrollToTop}
+              className="w-11 h-11 rounded-full bg-white/[0.06] border border-white/[0.1] backdrop-blur-sm flex items-center justify-center text-white/40 hover:text-white/70 hover:bg-white/[0.1] transition-colors shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
+              aria-label="Back to top"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M8 13V3m0 0L3 8m5-5l5 5"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </motion.button>
+          )}
+        </AnimatePresence>
+
+        {/* TOC trigger — mobile/tablet only */}
+        <motion.button
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, type: 'spring', stiffness: 400, damping: 25 }}
+          onClick={() => setTocOpen(true)}
+          className="lg:hidden h-11 px-4 rounded-full bg-brand text-black text-xs font-medium flex items-center gap-2 shadow-[0_4px_24px_rgba(0,212,255,0.25)] hover:shadow-[0_6px_32px_rgba(0,212,255,0.35)] active:scale-95 transition-all"
+          aria-label="Open table of contents"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path
+              d="M2 4h12M2 8h8M2 12h10"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+          </svg>
+          Contents
+        </motion.button>
+      </div>
+
+      <Footer />
     </div>
   )
 }

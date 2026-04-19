@@ -1,9 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: [
-    './app/**/*.{ts,tsx}',
-    './components/**/*.{ts,tsx}',
-  ],
+  content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}'],
   darkMode: 'class',
   theme: {
     extend: {
@@ -13,25 +10,32 @@ module.exports = {
       },
       colors: {
         surface: {
-          main: '#000000',
-          subtle: '#0A0A0A',
-          card: '#0F0F0F',
-          hover: '#1A1A1A',
+          main: '#030014',
+          subtle: '#0a0a1a',
+          card: '#0d0d24',
+          hover: '#15153a',
         },
         brand: {
-          DEFAULT: '#0070F3',
-          hover: '#338EF7',
-          muted: 'rgba(0,112,243,0.08)',
+          DEFAULT: '#00d4ff',
+          hover: '#38e0ff',
+          muted: 'rgba(0,212,255,0.08)',
+        },
+        accent: {
+          violet: '#8b5cf6',
+          pink: '#ec4899',
+          cyan: '#00d4ff',
         },
       },
       animation: {
-        'float': 'float 6s ease-in-out infinite',
+        float: 'float 6s ease-in-out infinite',
         'float-delayed': 'float 6s ease-in-out 3s infinite',
         'pulse-slow': 'pulse-glow 3s ease-in-out infinite',
-        'shimmer': 'shimmer 2s linear infinite',
-        'glow': 'glow 4s ease-in-out infinite',
+        shimmer: 'shimmer 2s linear infinite',
+        glow: 'glow 4s ease-in-out infinite',
         'spin-slow': 'spin 20s linear infinite',
         'spin-slower': 'spin 30s linear infinite',
+        orbit: 'orbit 25s linear infinite',
+        'orbit-reverse': 'orbit 30s linear infinite reverse',
       },
       keyframes: {
         float: {
@@ -49,6 +53,10 @@ module.exports = {
         glow: {
           '0%, 100%': { opacity: '0.4' },
           '50%': { opacity: '0.8' },
+        },
+        orbit: {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' },
         },
       },
     },

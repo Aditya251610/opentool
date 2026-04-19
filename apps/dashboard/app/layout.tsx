@@ -171,14 +171,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
       </head>
       <body suppressHydrationWarning>
+        <a href="#main-content" className="skip-to-content">
+          Skip to content
+        </a>
         <AuthProvider>{children}</AuthProvider>
         <Toaster
           position="bottom-right"
           gap={8}
           toastOptions={{
             style: {
-              background: '#111111',
-              border: '1px solid #1f1f1f',
+              background: '#0d0d24',
+              border: '1px solid rgba(139,92,246,0.12)',
               borderRadius: '12px',
               color: '#ededed',
               fontSize: '14px',

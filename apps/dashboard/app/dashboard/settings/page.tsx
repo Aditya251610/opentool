@@ -30,7 +30,10 @@ export default function SettingsPage() {
     if (!apiKey) return
     setSaving(true)
     try {
-      const updated = await api.users.update(apiKey, { name: name || undefined, email: email || undefined })
+      const updated = await api.users.update(apiKey, {
+        name: name || undefined,
+        email: email || undefined,
+      })
       login(apiKey, updated)
       toast.success('Profile updated')
     } catch (err) {
@@ -45,7 +48,7 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 size={24} className="animate-spin text-[#525252]" />
+        <Loader2 size={24} className="animate-spin text-[#737373]" />
       </div>
     )
   }
@@ -54,20 +57,20 @@ export default function SettingsPage() {
     <div>
       <motion.div variants={fadeUp} initial="initial" animate="animate" className="mb-8">
         <h1 className="text-2xl font-semibold tracking-tight text-[#ededed]">Settings</h1>
-        <p className="text-[13px] text-[#525252] mt-1">Manage your account and preferences.</p>
+        <p className="text-xs text-[#737373] mt-1">Manage your account and preferences.</p>
       </motion.div>
 
       {/* Profile */}
       <motion.div variants={fadeUp} initial="initial" animate="animate">
         <Card>
-          <h2 className="text-[16px] font-semibold text-[#ededed] mb-5">Profile</h2>
+          <h2 className="text-base font-semibold text-[#ededed] mb-5">Profile</h2>
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-16 h-16 rounded-full bg-[#06b6d4] flex items-center justify-center text-xl font-semibold text-[#0a0a0a]">
+            <div className="w-16 h-16 rounded-full bg-[#00d4ff] flex items-center justify-center text-xl font-semibold text-[#0a0a0a]">
               {initial}
             </div>
             <div>
-              <p className="text-[13px] font-medium text-[#ededed]">{user?.name || 'No name set'}</p>
-              <p className="text-[12px] text-[#525252]">{user?.email}</p>
+              <p className="text-xs font-medium text-[#ededed]">{user?.name || 'No name set'}</p>
+              <p className="text-xs text-[#737373]">{user?.email}</p>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg">
@@ -84,7 +87,13 @@ export default function SettingsPage() {
               helper="Changing email requires re-login"
             />
           </div>
-          <Button variant="primary" size="sm" className="mt-5" loading={saving} onClick={handleSaveProfile}>
+          <Button
+            variant="primary"
+            size="sm"
+            className="mt-5"
+            loading={saving}
+            onClick={handleSaveProfile}
+          >
             Save Changes
           </Button>
         </Card>
@@ -94,10 +103,12 @@ export default function SettingsPage() {
       <motion.div variants={fadeUp} initial="initial" animate="animate" className="mt-6">
         <Card>
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-[16px] font-semibold text-[#ededed]">Security</h2>
+            <h2 className="text-base font-semibold text-[#ededed]">Security</h2>
             <Badge variant="purple">Coming Soon</Badge>
           </div>
-          <p className="text-[13px] text-[#525252]">Password change will be available in a future update.</p>
+          <p className="text-xs text-[#737373]">
+            Password change will be available in a future update.
+          </p>
         </Card>
       </motion.div>
 
@@ -106,8 +117,10 @@ export default function SettingsPage() {
         <Card>
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-[16px] font-semibold text-[#ededed]">Two-Factor Authentication</h2>
-              <p className="text-[13px] text-[#525252] mt-1">Add an extra layer of security to your account.</p>
+              <h2 className="text-base font-semibold text-[#ededed]">Two-Factor Authentication</h2>
+              <p className="text-xs text-[#737373] mt-1">
+                Add an extra layer of security to your account.
+              </p>
             </div>
             <Badge variant="purple">Coming Soon</Badge>
           </div>
@@ -119,12 +132,15 @@ export default function SettingsPage() {
         <Card danger>
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-[16px] font-semibold text-[#ef4444]">Sign Out</h2>
-              <p className="text-[13px] text-[#525252] mt-1">
-                Sign out of your dashboard session. Your API keys and tool connections remain active.
+              <h2 className="text-base font-semibold text-[#ef4444]">Sign Out</h2>
+              <p className="text-xs text-[#737373] mt-1">
+                Sign out of your dashboard session. Your API keys and tool connections remain
+                active.
               </p>
             </div>
-            <Button variant="destructive" size="sm" onClick={logout}>Sign Out</Button>
+            <Button variant="destructive" size="sm" onClick={logout}>
+              Sign Out
+            </Button>
           </div>
         </Card>
       </motion.div>

@@ -5,12 +5,12 @@ interface SkeletonProps {
 }
 
 export function Skeleton({ className = '' }: SkeletonProps) {
-  return <div className={`animate-pulse rounded-md bg-[#1a1a1a] ${className}`} aria-hidden="true" />
+  return <div className={`animate-pulse rounded-md bg-[#15153a] ${className}`} aria-hidden="true" />
 }
 
 export function CardSkeleton() {
   return (
-    <div className="rounded-xl border border-[#1f1f1f] bg-[#0a0a0a] p-5">
+    <div className="rounded-xl border border-[rgba(139,92,246,0.12)] bg-[#0a0a1a] p-5">
       <div className="flex items-center gap-3 mb-4">
         <Skeleton className="h-10 w-10 rounded-lg" />
         <div className="flex-1">
@@ -26,7 +26,7 @@ export function CardSkeleton() {
 
 export function StatSkeleton() {
   return (
-    <div className="rounded-xl border border-[#1f1f1f] bg-[#0a0a0a] p-5">
+    <div className="rounded-xl border border-[rgba(139,92,246,0.12)] bg-[#0a0a1a] p-5">
       <Skeleton className="h-3 w-20 mb-3" />
       <Skeleton className="h-8 w-16 mb-2" />
       <Skeleton className="h-3 w-24" />
@@ -36,7 +36,7 @@ export function StatSkeleton() {
 
 export function TableRowSkeleton() {
   return (
-    <div className="flex items-center gap-4 py-3 px-4 border-b border-[#1f1f1f]">
+    <div className="flex items-center gap-4 py-3 px-4 border-b border-[rgba(139,92,246,0.12)]">
       <Skeleton className="h-4 w-4 rounded" />
       <Skeleton className="h-4 w-32" />
       <Skeleton className="h-4 w-48 flex-1" />

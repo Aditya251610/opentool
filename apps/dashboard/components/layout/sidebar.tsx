@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { LayoutGrid, Wrench, Key, Settings, LogOut, Menu, X } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
+import { CommandPaletteHint } from '@/components/ui/command-palette'
 import { OpenToolLogo } from '@/components/icons'
 import { useRouter } from 'next/navigation'
 
@@ -39,13 +40,18 @@ export function Sidebar() {
         className="flex items-center gap-2.5 px-2 mb-6"
       >
         <OpenToolLogo className="h-4 w-auto" />
-        <span className="ml-auto text-[10px] font-mono text-[#525252] bg-[#111111] border border-[#1f1f1f] px-1.5 py-0.5 rounded">
+        <span className="ml-auto text-[10px] font-mono text-[#737373] bg-[#0d0d24] border border-[rgba(139,92,246,0.12)] px-1.5 py-0.5 rounded">
           v0.0.1
         </span>
       </motion.div>
 
+      {/* Command palette trigger */}
+      <div className="mb-4">
+        <CommandPaletteHint />
+      </div>
+
       {/* Section label */}
-      <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#525252] px-2 mb-2">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#737373] px-2 mb-2">
         Platform
       </div>
 
@@ -73,17 +79,17 @@ export function Sidebar() {
                   {isActive && (
                     <motion.div
                       layoutId="activeNav"
-                      className="absolute inset-0 bg-[rgba(0,112,243,0.08)] rounded-md border border-[rgba(0,112,243,0.15)]"
+                      className="absolute inset-0 bg-[rgba(0,212,255,0.08)] rounded-md border border-[rgba(0,212,255,0.15)]"
                       transition={{ type: 'spring', stiffness: 400, damping: 35 }}
                     />
                   )}
                   <item.icon
                     size={15}
-                    className={`relative z-10 ${isActive ? 'text-[#0070F3]' : 'text-[#525252]'}`}
+                    className={`relative z-10 ${isActive ? 'text-[#00d4ff]' : 'text-[#737373]'}`}
                     strokeWidth={isActive ? 2 : 1.5}
                   />
                   <span
-                    className={`text-[13px] relative z-10 ${
+                    className={`text-xs relative z-10 ${
                       isActive ? 'text-[#ededed] font-medium' : 'text-[#a1a1aa]'
                     }`}
                   >
@@ -97,20 +103,20 @@ export function Sidebar() {
       </motion.div>
 
       {/* Bottom — user info */}
-      <div className="mt-auto pt-4 border-t border-[#1f1f1f]">
+      <div className="mt-auto pt-4 border-t border-[rgba(139,92,246,0.12)]">
         <div className="flex items-center gap-2.5 px-2">
-          <div className="w-7 h-7 rounded-full bg-[#0070F3] flex items-center justify-center text-[11px] font-semibold text-white">
+          <div className="w-7 h-7 rounded-full bg-[#00d4ff] flex items-center justify-center text-[11px] font-semibold text-black">
             {initial}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-[12px] font-medium text-[#ededed] truncate">
+            <div className="text-xs font-medium text-[#ededed] truncate">
               {user?.name || user?.email || 'User'}
             </div>
-            <div className="text-[10px] text-[#525252] truncate">Self-hosted</div>
+            <div className="text-[10px] text-[#737373] truncate">Self-hosted</div>
           </div>
           <button
             onClick={handleLogout}
-            className="p-1 rounded-md hover:bg-[#1a1a1a] transition-colors text-[#525252] hover:text-[#a1a1aa] cursor-pointer"
+            className="p-1 rounded-md hover:bg-[#15153a] transition-colors text-[#737373] hover:text-[#a1a1aa] cursor-pointer"
             aria-label="Sign out"
           >
             <LogOut size={14} />
@@ -124,7 +130,7 @@ export function Sidebar() {
     <>
       {/* Mobile header */}
       <div
-        className="md:hidden fixed top-0 left-0 right-0 h-14 bg-[#0a0a0a] border-b border-[#1f1f1f] flex items-center justify-between px-4 z-50"
+        className="md:hidden fixed top-0 left-0 right-0 h-14 bg-[#0a0a1a] border-b border-[rgba(139,92,246,0.12)] flex items-center justify-between px-4 z-50"
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
         <OpenToolLogo className="h-4 w-auto" />
@@ -132,7 +138,7 @@ export function Sidebar() {
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label={mobileOpen ? 'Close navigation menu' : 'Open navigation menu'}
           aria-expanded={mobileOpen}
-          className="p-2.5 -mr-1 rounded-md hover:bg-[#1a1a1a] transition-colors text-[#a1a1aa] cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
+          className="p-2.5 -mr-1 rounded-md hover:bg-[#15153a] transition-colors text-[#a1a1aa] cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
         >
           {mobileOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
@@ -155,7 +161,7 @@ export function Sidebar() {
               animate={{ x: 0 }}
               exit={{ x: -240 }}
               transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-              className="md:hidden w-60 h-screen fixed left-0 top-0 flex flex-col border-r border-[#1f1f1f] bg-[#0a0a0a] px-3 py-4 z-50"
+              className="md:hidden w-60 h-screen fixed left-0 top-0 flex flex-col border-r border-[rgba(139,92,246,0.12)] bg-[#0a0a1a] px-3 py-4 z-50"
               role="navigation"
               aria-label="Main navigation"
             >
@@ -167,7 +173,7 @@ export function Sidebar() {
 
       {/* Desktop sidebar */}
       <nav
-        className="hidden md:flex w-60 h-screen fixed left-0 top-0 flex-col border-r border-[#1f1f1f] bg-[#0a0a0a] px-3 py-4 z-50"
+        className="hidden md:flex w-60 h-screen fixed left-0 top-0 flex-col border-r border-[rgba(139,92,246,0.12)] bg-[#0a0a1a] px-3 py-4 z-50"
         role="navigation"
         aria-label="Main navigation"
       >

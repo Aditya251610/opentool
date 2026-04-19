@@ -89,7 +89,7 @@ export default function OverviewPage() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-[#ededed]">Overview</h1>
-            <p className="text-[13px] text-[#525252] mt-1">Your OpenTool instance at a glance.</p>
+            <p className="text-xs text-[#737373] mt-1">Your OpenTool instance at a glance.</p>
           </div>
           <Link href="/docs" target="_blank">
             <Button variant="ghost" size="sm">
@@ -131,19 +131,19 @@ export default function OverviewPage() {
         ].map((stat) => (
           <motion.div key={stat.label} variants={fadeUp}>
             <Card className="p-5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#525252]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#737373]">
                 {stat.label}
               </p>
               {stats.loading ? (
                 <Skeleton className="h-9 w-16 mt-2" />
               ) : (
                 <p
-                  className={`text-3xl font-semibold tracking-tight mt-2 ${stat.accent ? 'text-[#06b6d4]' : 'text-[#ededed]'}`}
+                  className={`text-3xl font-semibold tracking-tight mt-2 ${stat.accent ? 'text-[#00d4ff]' : 'text-[#ededed]'}`}
                 >
                   {stat.value}
                 </p>
               )}
-              <p className="text-[12px] text-[#525252] mt-1">{stat.sub}</p>
+              <p className="text-xs text-[#737373] mt-1">{stat.sub}</p>
             </Card>
           </motion.div>
         ))}
@@ -154,9 +154,7 @@ export default function OverviewPage() {
         <motion.div variants={fadeUp} initial="initial" animate="animate" className="lg:col-span-2">
           <Card highlighted>
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-[15px] font-semibold text-[#ededed]">
-                Get started with OpenTool
-              </h2>
+              <h2 className="text-sm font-semibold text-[#ededed]">Get started with OpenTool</h2>
               <Badge variant="accent">Setup Guide</Badge>
             </div>
             <div className="space-y-2.5">
@@ -187,10 +185,10 @@ export default function OverviewPage() {
         <motion.div variants={fadeUp} initial="initial" animate="animate">
           <Card className="h-full flex flex-col">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-[15px] font-semibold text-[#ededed]">Server</h2>
+              <h2 className="text-sm font-semibold text-[#ededed]">Server</h2>
               <div className="flex items-center gap-1.5">
                 {stats.loading ? (
-                  <Loader2 size={12} className="animate-spin text-[#525252]" />
+                  <Loader2 size={12} className="animate-spin text-[#737373]" />
                 ) : (
                   <>
                     <span className="relative flex h-2 w-2">
@@ -216,7 +214,7 @@ export default function OverviewPage() {
               <InfoRow label="Providers" value={`${Object.keys(PROVIDERS).length} registered`} />
               <InfoRow label="Protocol" value="MCP v1.0" />
             </div>
-            <div className="pt-4 mt-4 border-t border-[#1f1f1f] flex items-center gap-2 text-[12px] text-[#525252]">
+            <div className="pt-4 mt-4 border-t border-[rgba(139,92,246,0.12)] flex items-center gap-2 text-xs text-[#737373]">
               <Activity size={12} />
               <span>Self-hosted instance</span>
             </div>
@@ -228,7 +226,7 @@ export default function OverviewPage() {
       <motion.div variants={fadeUp} initial="initial" animate="animate">
         <Card>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-[15px] font-semibold text-[#ededed]">Connect to Claude Desktop</h2>
+            <h2 className="text-sm font-semibold text-[#ededed]">Connect to Claude Desktop</h2>
             <Badge variant="accent">MCP</Badge>
           </div>
           <CodeBlock title="claude_desktop_config.json">{CONFIG_SNIPPET}</CodeBlock>
@@ -239,7 +237,7 @@ export default function OverviewPage() {
       <motion.div variants={fadeUp} initial="initial" animate="animate" className="mt-8">
         <Card>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-[15px] font-semibold text-[#ededed]">Tool Providers</h2>
+            <h2 className="text-sm font-semibold text-[#ededed]">Tool Providers</h2>
             <Link href="/dashboard/tools">
               <Button variant="ghost" size="sm">
                 Manage tools →
@@ -252,10 +250,10 @@ export default function OverviewPage() {
               return (
                 <div
                   key={key}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border bg-[#0a0a0a] ${isConnected ? 'border-[rgba(34,197,94,0.3)]' : 'border-[#1f1f1f]'}`}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border bg-[#0a0a1a] ${isConnected ? 'border-[rgba(34,197,94,0.3)]' : 'border-[rgba(139,92,246,0.12)]'}`}
                 >
                   <p.Icon size={16} className="shrink-0" style={{ color: p.color }} />
-                  <span className="text-[12px] font-medium text-[#a1a1aa] truncate">{p.name}</span>
+                  <span className="text-xs font-medium text-[#a1a1aa] truncate">{p.name}</span>
                   {isConnected && (
                     <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#22c55e] shrink-0" />
                   )}
@@ -284,22 +282,22 @@ function SetupStep({
 }) {
   return (
     <div
-      className={`flex items-start gap-3.5 p-3 rounded-lg border transition-all duration-150 ${done ? 'border-[rgba(34,197,94,0.2)] bg-[rgba(34,197,94,0.03)]' : 'border-[#1f1f1f] hover:border-[#2e2e2e] hover:bg-[#111113]'}`}
+      className={`flex items-start gap-3.5 p-3 rounded-lg border transition-all duration-150 ${done ? 'border-[rgba(34,197,94,0.2)] bg-[rgba(34,197,94,0.03)]' : 'border-[rgba(139,92,246,0.12)] hover:border-[rgba(139,92,246,0.2)] hover:bg-[#15153a]'}`}
     >
       <div
-        className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-mono shrink-0 mt-0.5 ${done ? 'bg-[#22c55e] text-[#0a0a0a] font-bold' : 'bg-[#111111] border border-[#2e2e2e] text-[#525252]'}`}
+        className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-mono shrink-0 mt-0.5 ${done ? 'bg-[#22c55e] text-[#0a0a0a] font-bold' : 'bg-[#0d0d24] border border-[rgba(139,92,246,0.2)] text-[#737373]'}`}
       >
         {done ? '✓' : step}
       </div>
       <div className="flex-1 min-w-0">
         <div
-          className={`text-[13px] font-medium ${done ? 'text-[#a1a1aa] line-through' : 'text-[#ededed]'}`}
+          className={`text-xs font-medium ${done ? 'text-[#a1a1aa] line-through' : 'text-[#ededed]'}`}
         >
           {title}
         </div>
-        <div className="text-[12px] text-[#525252] mt-0.5">{desc}</div>
+        <div className="text-xs text-[#737373] mt-0.5">{desc}</div>
       </div>
-      <div className="text-[#525252] mt-1">{icon}</div>
+      <div className="text-[#737373] mt-1">{icon}</div>
     </div>
   )
 }
@@ -307,8 +305,8 @@ function SetupStep({
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-[12px] text-[#525252]">{label}</span>
-      <span className="text-[12px] font-mono text-[#a1a1aa]">{value}</span>
+      <span className="text-xs text-[#737373]">{label}</span>
+      <span className="text-xs font-mono text-[#a1a1aa]">{value}</span>
     </div>
   )
 }

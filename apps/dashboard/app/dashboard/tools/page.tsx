@@ -6,6 +6,7 @@ import { Search, Loader2 } from 'lucide-react'
 import { PROVIDERS, type ProviderMeta } from '@/lib/providers'
 import { Card, Badge } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { stagger, fadeUp } from '@/lib/animation'
 import { useAuth } from '@/lib/auth-context'
 import { api } from '@/lib/api'
@@ -35,6 +36,7 @@ export default function ToolsPage() {
   const [connectedProviders, setConnectedProviders] = useState<Set<string>>(new Set())
   const [connecting, setConnecting] = useState<string | null>(null)
   const [disconnecting, setDisconnecting] = useState<string | null>(null)
+  const [confirmDisconnect, setConfirmDisconnect] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [apiKeyModal, setApiKeyModal] = useState<string | null>(null)
   const [providerKeyInput, setProviderKeyInput] = useState('')
@@ -46,7 +48,7 @@ export default function ToolsPage() {
     async function fetchConnected() {
       try {
         const { tools } = await api.tools.connected(apiKey!)
-        const providers = new Set(tools.map(t => t.provider))
+        const providers = new Set(tools.map((t) => t.provider))
         setConnectedProviders(providers)
       } catch {
         // Server may be down — show all as disconnected
@@ -67,7 +69,7 @@ export default function ToolsPage() {
     const errorProvider = searchParams.get('error')
 
     if (justConnected) {
-      setConnectedProviders(prev => new Set([...prev, justConnected]))
+      setConnectedProviders((prev) => new Set([...prev, justConnected]))
       const name = PROVIDERS[justConnected]?.name || justConnected
       toast.success(`${name} connected successfully`)
       window.history.replaceState({}, '', '/dashboard/tools')
@@ -79,17 +81,28 @@ export default function ToolsPage() {
     }
   }, [searchParams])
 
-  const filtered = useMemo(() => Object.entries(PROVIDERS).filter(([key, p]) => {
-    const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.description.toLowerCase().includes(search.toLowerCase())
-    const isConnected = connectedProviders.has(key)
-    if (filter === 'connected') return matchesSearch && isConnected
-    if (filter === 'available') return matchesSearch && !isConnected
-    return matchesSearch
-  }), [search, filter, connectedProviders])
+  const filtered = useMemo(
+    () =>
+      Object.entries(PROVIDERS).filter(([key, p]) => {
+        const matchesSearch =
+          p.name.toLowerCase().includes(search.toLowerCase()) ||
+          p.description.toLowerCase().includes(search.toLowerCase())
+        const isConnected = connectedProviders.has(key)
+        if (filter === 'connected') return matchesSearch && isConnected
+        if (filter === 'available') return matchesSearch && !isConnected
+        return matchesSearch
+      }),
+    [search, filter, connectedProviders],
+  )
 
-  const connected = useMemo(() => Object.keys(PROVIDERS).filter(k => connectedProviders.has(k)), [connectedProviders])
-  const available = useMemo(() => Object.keys(PROVIDERS).filter(k => !connectedProviders.has(k)), [connectedProviders])
+  const connected = useMemo(
+    () => Object.keys(PROVIDERS).filter((k) => connectedProviders.has(k)),
+    [connectedProviders],
+  )
+  const available = useMemo(
+    () => Object.keys(PROVIDERS).filter((k) => !connectedProviders.has(k)),
+    [connectedProviders],
+  )
 
   async function handleConnect(provider: string) {
     if (!apiKey) return
@@ -106,7 +119,9 @@ export default function ToolsPage() {
         window.location.href = res.url
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : `Failed to connect ${PROVIDERS[provider].name}`)
+      toast.error(
+        err instanceof Error ? err.message : `Failed to connect ${PROVIDERS[provider].name}`,
+      )
       setConnecting(null)
     }
   }
@@ -116,12 +131,14 @@ export default function ToolsPage() {
     setConnecting(apiKeyModal)
     try {
       await api.tools.connectApiKey(apiKeyModal, apiKey, providerKeyInput.trim())
-      setConnectedProviders(prev => new Set([...prev, apiKeyModal]))
+      setConnectedProviders((prev) => new Set([...prev, apiKeyModal]))
       toast.success(`${PROVIDERS[apiKeyModal].name} connected!`)
       setApiKeyModal(null)
       setProviderKeyInput('')
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : `Failed to connect ${PROVIDERS[apiKeyModal].name}`)
+      toast.error(
+        err instanceof Error ? err.message : `Failed to connect ${PROVIDERS[apiKeyModal].name}`,
+      )
     } finally {
       setConnecting(null)
     }
@@ -132,40 +149,53 @@ export default function ToolsPage() {
     setDisconnecting(provider)
     try {
       await api.tools.disconnect(provider, apiKey)
-      setConnectedProviders(prev => {
+      setConnectedProviders((prev) => {
         const next = new Set(prev)
         next.delete(provider)
         return next
       })
       toast.success(`${PROVIDERS[provider].name} disconnected`)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : `Failed to disconnect ${PROVIDERS[provider].name}`)
+      toast.error(
+        err instanceof Error ? err.message : `Failed to disconnect ${PROVIDERS[provider].name}`,
+      )
     } finally {
       setDisconnecting(null)
+      setConfirmDisconnect(null)
     }
   }
 
   return (
     <div>
       {/* Header */}
-      <motion.div variants={fadeUp} initial="initial" animate="animate" className="flex items-center justify-between mb-6">
+      <motion.div
+        variants={fadeUp}
+        initial="initial"
+        animate="animate"
+        className="flex items-center justify-between mb-6"
+      >
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-[#ededed]">Tools</h1>
-          <p className="text-[13px] text-[#525252] mt-1">Connect and manage your tool providers.</p>
+          <p className="text-xs text-[#737373] mt-1">Connect and manage your tool providers.</p>
         </div>
       </motion.div>
 
       {/* Search + Filter */}
-      <motion.div variants={fadeUp} initial="initial" animate="animate" className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
+      <motion.div
+        variants={fadeUp}
+        initial="initial"
+        animate="animate"
+        className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6"
+      >
         <div className="relative w-full sm:w-80">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#525252]" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#737373]" />
           <input
             type="text"
             placeholder="Search tools..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             autoComplete="off"
-            className="w-full h-9 pl-9 pr-3 rounded-lg bg-[#111111] border border-[#1f1f1f] text-sm text-[#ededed] placeholder-[#525252] outline-none focus:border-[#06b6d4] transition-colors"
+            className="w-full h-9 pl-9 pr-3 rounded-lg bg-[#0d0d24] border border-[rgba(139,92,246,0.12)] text-sm text-[#ededed] placeholder-[#737373] outline-none focus:border-[#00d4ff] transition-colors"
           />
         </div>
         <div className="flex gap-1">
@@ -173,10 +203,10 @@ export default function ToolsPage() {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-3 py-2 rounded-md text-[12px] font-medium transition-colors cursor-pointer min-h-[36px] ${
+              className={`px-3 py-2 rounded-md text-xs font-medium transition-colors cursor-pointer min-h-[36px] ${
                 filter === f
-                  ? 'bg-[#1a1a1a] text-[#ededed] border border-[#2e2e2e]'
-                  : 'text-[#525252] hover:text-[#a1a1aa] border border-transparent'
+                  ? 'bg-[#15153a] text-[#ededed] border border-[rgba(139,92,246,0.2)]'
+                  : 'text-[#737373] hover:text-[#a1a1aa] border border-transparent'
               }`}
             >
               {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -190,12 +220,17 @@ export default function ToolsPage() {
       {/* Loading */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 size={24} className="animate-spin text-[#525252]" />
+          <Loader2 size={24} className="animate-spin text-[#737373]" />
         </div>
       ) : (
         <>
           {/* Tool Grid */}
-          <motion.div variants={stagger} initial="initial" animate="animate" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <motion.div
+            variants={stagger}
+            initial="initial"
+            animate="animate"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+          >
             <AnimatePresence mode="popLayout">
               {filtered.map(([key, provider]) => (
                 <motion.div
@@ -211,7 +246,7 @@ export default function ToolsPage() {
                     connecting={connecting === key}
                     disconnecting={disconnecting === key}
                     onConnect={() => handleConnect(key)}
-                    onDisconnect={() => handleDisconnect(key)}
+                    onDisconnect={() => setConfirmDisconnect(key)}
                   />
                 </motion.div>
               ))}
@@ -219,10 +254,15 @@ export default function ToolsPage() {
           </motion.div>
 
           {filtered.length === 0 && (
-            <motion.div variants={fadeUp} initial="initial" animate="animate" className="text-center py-16">
+            <motion.div
+              variants={fadeUp}
+              initial="initial"
+              animate="animate"
+              className="text-center py-16"
+            >
               <div className="text-4xl mb-4">🔌</div>
-              <p className="text-[15px] font-medium text-[#a1a1aa]">No tools found</p>
-              <p className="text-[13px] text-[#525252] mt-1">Try a different search or filter.</p>
+              <p className="text-sm font-medium text-[#a1a1aa]">No tools found</p>
+              <p className="text-xs text-[#737373] mt-1">Try a different search or filter.</p>
             </motion.div>
           )}
         </>
@@ -236,23 +276,27 @@ export default function ToolsPage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-            onClick={() => { setApiKeyModal(null); setProviderKeyInput('') }}
+            onClick={() => {
+              setApiKeyModal(null)
+              setProviderKeyInput('')
+            }}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ duration: 0.2 }}
-              className="w-full max-w-md mx-4 p-6 rounded-xl bg-[#0a0a0a] border border-[#1f1f1f] shadow-2xl"
+              className="w-full max-w-md mx-4 p-6 rounded-xl bg-[#0a0a1a] border border-[rgba(139,92,246,0.12)] shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-[16px] font-semibold text-[#ededed] mb-1">
+              <h3 className="text-base font-semibold text-[#ededed] mb-1">
                 Connect {PROVIDERS[apiKeyModal]?.name}
               </h3>
-              <p className="text-[13px] text-[#525252] mb-5">
-                Enter your own {API_KEY_LABELS[apiKeyModal]?.label || 'API key'}. It will be encrypted and stored securely.
+              <p className="text-xs text-[#737373] mb-5">
+                Enter your own {API_KEY_LABELS[apiKeyModal]?.label || 'API key'}. It will be
+                encrypted and stored securely.
               </p>
-              <label className="block text-[12px] font-medium text-[#a1a1aa] mb-2">
+              <label className="block text-xs font-medium text-[#a1a1aa] mb-2">
                 {API_KEY_LABELS[apiKeyModal]?.label || 'API Key'}
               </label>
               <input
@@ -263,17 +307,23 @@ export default function ToolsPage() {
                 value={providerKeyInput}
                 onChange={(e) => setProviderKeyInput(e.target.value)}
                 placeholder={API_KEY_LABELS[apiKeyModal]?.placeholder || 'Enter your API key'}
-                className="w-full h-10 px-3 rounded-lg bg-[#111111] border border-[#1f1f1f] text-sm text-[#ededed] placeholder-[#525252] outline-none focus:border-[#06b6d4] transition-colors mb-2 [-webkit-text-security:disc]"
+                className="w-full h-10 px-3 rounded-lg bg-[#0d0d24] border border-[rgba(139,92,246,0.12)] text-sm text-[#ededed] placeholder-[#737373] outline-none focus:border-[#00d4ff] transition-colors mb-2 [-webkit-text-security:disc]"
                 autoFocus
-                onKeyDown={(e) => { if (e.key === 'Enter') handleApiKeySubmit() }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleApiKeySubmit()
+                }}
               />
-              <p className="text-[11px] text-[#525252] mb-5">
-                {API_KEY_LABELS[apiKeyModal]?.help || 'Your key is never shared and only used for your tool calls.'}
+              <p className="text-[11px] text-[#737373] mb-5">
+                {API_KEY_LABELS[apiKeyModal]?.help ||
+                  'Your key is never shared and only used for your tool calls.'}
               </p>
               <div className="flex gap-3 justify-end">
                 <button
-                  onClick={() => { setApiKeyModal(null); setProviderKeyInput('') }}
-                  className="px-4 py-2 rounded-lg text-[13px] text-[#a1a1aa] hover:text-white border border-[#1f1f1f] hover:border-[#333] transition-colors"
+                  onClick={() => {
+                    setApiKeyModal(null)
+                    setProviderKeyInput('')
+                  }}
+                  className="px-4 py-2 rounded-lg text-xs text-[#a1a1aa] hover:text-white border border-[rgba(139,92,246,0.12)] hover:border-[rgba(139,92,246,0.25)] transition-colors"
                 >
                   Cancel
                 </button>
@@ -291,22 +341,46 @@ export default function ToolsPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ConfirmDialog
+        open={!!confirmDisconnect}
+        title={`Disconnect ${confirmDisconnect ? PROVIDERS[confirmDisconnect]?.name : ''}?`}
+        description="This will remove the provider connection. Your agents will lose access to its tools until you reconnect."
+        confirmLabel="Disconnect"
+        variant="danger"
+        loading={!!disconnecting}
+        onConfirm={() => confirmDisconnect && handleDisconnect(confirmDisconnect)}
+        onCancel={() => setConfirmDisconnect(null)}
+      />
     </div>
   )
 }
 
-function ToolCard({ id, provider, connected, connecting, disconnecting, onConnect, onDisconnect }: {
-  id: string; provider: ProviderMeta; connected: boolean; connecting: boolean; disconnecting: boolean
-  onConnect: () => void; onDisconnect: () => void
+function ToolCard({
+  id,
+  provider,
+  connected,
+  connecting,
+  disconnecting,
+  onConnect,
+  onDisconnect,
+}: {
+  id: string
+  provider: ProviderMeta
+  connected: boolean
+  connecting: boolean
+  disconnecting: boolean
+  onConnect: () => void
+  onDisconnect: () => void
 }) {
   return (
     <motion.div
-      className="relative border rounded-xl p-5 bg-[#111111] overflow-hidden group"
+      className="relative border rounded-xl p-5 bg-[#0d0d24] overflow-hidden group"
       style={{ borderColor: connected ? 'rgba(34,197,94,0.2)' : '#1f1f1f' }}
       whileHover={{
         y: -2,
         boxShadow: '0 12px 32px rgba(0,0,0,0.15)',
-        borderColor: connected ? 'rgba(34,197,94,0.3)' : 'rgba(6,182,212,0.3)',
+        borderColor: connected ? 'rgba(34,197,94,0.3)' : 'rgba(0,212,255,0.3)',
         transition: { duration: 0.2, ease: [0.0, 0.0, 0.2, 1] },
       }}
     >
@@ -323,46 +397,71 @@ function ToolCard({ id, provider, connected, connecting, disconnecting, onConnec
 
       {/* Provider icon */}
       <div
-        className="w-10 h-10 rounded-xl border border-[#1f1f1f] flex items-center justify-center"
+        className="w-10 h-10 rounded-xl border border-[rgba(139,92,246,0.12)] flex items-center justify-center"
         style={{ background: provider.bg }}
       >
         <provider.Icon size={20} className="shrink-0" style={{ color: provider.color }} />
       </div>
 
-      <h3 className="text-[15px] font-semibold text-[#ededed] mt-3">{provider.name}</h3>
-      <p className="text-[13px] text-[#525252] mt-1">{provider.description}</p>
+      <h3 className="text-sm font-semibold text-[#ededed] mt-3">{provider.name}</h3>
+      <p className="text-xs text-[#737373] mt-1">{provider.description}</p>
 
       {/* Tools list */}
       <div className="mt-3">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[#525252] mb-1.5">Actions</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[#737373] mb-1.5">
+          Actions
+        </p>
         <div className="flex flex-wrap gap-1">
-          {provider.tools.slice(0, 3).map(t => (
-            <span key={t} className="text-[11px] font-mono text-[#a1a1aa] bg-[#0a0a0a] border border-[#1f1f1f] px-1.5 py-0.5 rounded">
+          {provider.tools.slice(0, 3).map((t) => (
+            <span
+              key={t}
+              className="text-[11px] font-mono text-[#a1a1aa] bg-[#0a0a1a] border border-[rgba(139,92,246,0.12)] px-1.5 py-0.5 rounded"
+            >
               {t}
             </span>
           ))}
           {provider.tools.length > 3 && (
-            <span className="text-[11px] text-[#525252]">+{provider.tools.length - 3} more</span>
+            <span className="text-[11px] text-[#737373]">+{provider.tools.length - 3} more</span>
           )}
         </div>
       </div>
 
       {/* Auth type badge */}
       <div className="mt-3">
-        <Badge variant={provider.authType === 'oauth2' ? 'accent' : provider.authType === 'api_key' ? 'purple' : 'default'}>
-          {provider.authType === 'oauth2' ? 'OAuth 2.0' : provider.authType === 'api_key' ? 'API Key' : 'No Auth'}
+        <Badge
+          variant={
+            provider.authType === 'oauth2'
+              ? 'accent'
+              : provider.authType === 'api_key'
+                ? 'purple'
+                : 'default'
+          }
+        >
+          {provider.authType === 'oauth2'
+            ? 'OAuth 2.0'
+            : provider.authType === 'api_key'
+              ? 'API Key'
+              : 'No Auth'}
         </Badge>
       </div>
 
       {/* Action */}
-      <div className="mt-4 pt-4 border-t border-[#1f1f1f]">
+      <div className="mt-4 pt-4 border-t border-[rgba(139,92,246,0.12)]">
         {connected ? (
           <div className="flex items-center justify-between">
-            <span className="text-[12px] text-[#525252]">Connected</span>
-            <Button variant="danger" size="sm" loading={disconnecting} onClick={onDisconnect}>Disconnect</Button>
+            <span className="text-xs text-[#737373]">Connected</span>
+            <Button variant="danger" size="sm" loading={disconnecting} onClick={onDisconnect}>
+              Disconnect
+            </Button>
           </div>
         ) : (
-          <Button variant="primary" size="sm" className="w-full" loading={connecting} onClick={onConnect}>
+          <Button
+            variant="primary"
+            size="sm"
+            className="w-full"
+            loading={connecting}
+            onClick={onConnect}
+          >
             {connecting ? 'Redirecting...' : `Connect ${provider.name}`}
           </Button>
         )}

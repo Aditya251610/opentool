@@ -17,7 +17,7 @@ export default function Error({
   }, [error])
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-black px-6">
+    <div className="min-h-screen flex flex-col items-center justify-center px-6">
       <Link href="/" className="mb-8">
         <OpenToolLogo className="h-6 w-auto" />
       </Link>
@@ -28,19 +28,19 @@ export default function Error({
         <h2 className="text-xl font-semibold text-[#ededed] tracking-tight">
           Something went wrong
         </h2>
-        <p className="text-[14px] text-[#525252] mt-2 leading-relaxed">
+        <p className="text-sm text-[#737373] mt-2 leading-relaxed">
           An unexpected error occurred. Please try again or go back to the dashboard.
         </p>
         <div className="flex items-center justify-center gap-3 mt-6">
           <button
             onClick={reset}
-            className="h-9 px-4 rounded-lg bg-[#0070F3] text-white text-sm font-medium hover:bg-[#2884FF] transition-colors"
+            className="h-9 px-4 rounded-lg bg-[#00d4ff] text-black text-sm font-medium hover:bg-[#38e0ff] transition-colors"
           >
             Try again
           </button>
           <Link
             href="/dashboard"
-            className="h-9 px-4 rounded-lg border border-[#1f1f1f] text-[#a1a1aa] text-sm font-medium hover:bg-[#111111] hover:text-white transition-colors flex items-center"
+            className="h-9 px-4 rounded-lg border border-[rgba(139,92,246,0.12)] text-[#a1a1aa] text-sm font-medium hover:bg-[#0d0d24] hover:text-white transition-colors flex items-center"
           >
             Dashboard
           </Link>
