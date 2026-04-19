@@ -30,6 +30,8 @@ import {
 const ParallaxStars = dynamic(() => import('@/components/landing/parallax-stars'), { ssr: false })
 const TextScramble = dynamic(() => import('@/components/landing/text-scramble'))
 const MagneticButton = dynamic(() => import('@/components/landing/magnetic-button'))
+const FloatingLogos = dynamic(() => import('@/components/landing/floating-logos'), { ssr: false })
+const CursorNebula = dynamic(() => import('@/components/landing/cursor-nebula'), { ssr: false })
 const Footer = dynamic(() =>
   import('@/components/layout/footer').then((m) => ({ default: m.Footer })),
 )
@@ -382,6 +384,7 @@ export default function LandingPage() {
     <div className="min-h-screen text-white overflow-x-hidden">
       <ScrollProgress />
       <ParallaxStars />
+      <CursorNebula />
       <Navbar animate />
 
       {/* ═══════════════════ HERO — Cinematic Reveal ═══════════════════ */}
@@ -392,6 +395,7 @@ export default function LandingPage() {
       >
         {/* Background layers */}
         <div className="absolute inset-0 bg-grid bg-grid-fade pointer-events-none opacity-30" />
+        <FloatingLogos />
 
         {/* Content — cinematic staggered reveal */}
         <div className="relative z-10 max-w-[900px] mx-auto">
