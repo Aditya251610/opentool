@@ -9,10 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **gRPC Transport**: Full gRPC server with ToolService, HealthService, and McpTransport RPCs
+- **gRPC Proto Package**: `@opentool/proto` with Protocol Buffer definitions, TypeScript + Python code generation
+- **gRPC-MCP Bridge**: Bidirectional streaming MCP-over-gRPC transport (Connect + Send RPCs)
+- **gRPC Auth**: Server interceptors for API key authentication and request logging
+- **gRPC Streaming**: Server-streaming ExecuteTool and BatchExecute with progress updates
+- **CLI gRPC Support**: `--transport grpc` flag for tools/exec/status commands, `set-grpc-url` command
+- **CLI gRPC Doctor**: Health check for gRPC endpoint in `doctor` command
+- **Multi-language Proto Gen**: Scripts for TypeScript and Python stub generation
 - Zero-vulnerability dependency baseline (hono 4.12.14, @hono/node-server 1.19.14, vitest 3.2, vite 6.4)
 - CLI smoke tests (30+ tests covering cache, fuzzy search, config, API helpers, debug)
 - SDK smoke tests (25+ tests covering HttpClient, OpenTool client, error classes, retries)
 - CHANGELOG.md for tracking releases
+- Automated changelog via release-please
 
 ## [0.1.1] - 2025-04-18
 

@@ -1,0 +1,27 @@
+{
+  ".": {
+    "releaseType": "node",
+    "component": "opentool",
+    "version": "0.1.1"
+  },
+  "apps/server": {
+    "releaseType": "node",
+    "component": "server",
+    "version": "0.0.1"
+  },
+  "packages/cli": {
+    "releaseType": "node",
+    "component": "cli",
+    "version": "0.1.1"
+  },
+  "packages/sdk/ts": {
+    "releaseType": "node",
+    "component": "sdk-ts",
+    "version": "0.1.1"
+  },
+  "packages/proto": {
+    "releaseType": "node",
+    "component": "proto",
+    "version": "0.1.0"
+  }
+}
