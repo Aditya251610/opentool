@@ -3,7 +3,6 @@ import * as fs from 'node:fs'
 import {
   getToolServiceDefinition,
   getHealthServiceDefinition,
-  getAuthServiceDefinition,
   getMcpTransportDefinition,
 } from '@opentool/proto'
 import { toolServiceImpl } from './services/tool-service'

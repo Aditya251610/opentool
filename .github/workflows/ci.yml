@@ -21,6 +21,7 @@ jobs:
 
       # Build shared packages first
       - run: cd packages/tool-schema && pnpm build
+      - run: cd packages/proto && pnpm build
 
       # Server typecheck
       - run: cd apps/server && npx prisma generate
@@ -50,6 +51,8 @@ jobs:
           node-version: 20
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
+      - run: cd packages/tool-schema && pnpm build
+      - run: cd packages/proto && pnpm build
       - run: cd apps/server && pnpm lint
 
   test:
@@ -64,6 +67,7 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: cd packages/tool-schema && pnpm build
+      - run: cd packages/proto && pnpm build
       - run: cd apps/server && npx prisma generate
       - run: cd apps/server && pnpm test
       - run: cd packages/cli && pnpm test

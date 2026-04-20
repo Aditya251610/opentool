@@ -1,9 +1,8 @@
 import * as grpc from '@grpc/grpc-js'
 import { getUserId } from '../interceptors/auth'
 import { getAllToolsForUser, executeTool } from '../../mcp/tools'
-import { getToolById, getAllTools } from '../../registry'
+import { getToolById } from '../../registry'
 import { logger } from '../../logger'
-import { TOOL_TIMEOUT_MS } from '../../constants'
 import type {
   ListToolsRequest,
   ListToolsResponse,
@@ -181,47 +180,49 @@ export const toolServiceImpl: grpc.UntypedServiceImplementation = {
 
       // Execute with concurrency control
       const semaphore = new Semaphore(maxConcurrency)
-      const promises = request.requests.map(async (req, index) => {
-        await semaphore.acquire()
-        const startTime = Date.now()
-        try {
-          const input = req.inputJson ? JSON.parse(req.inputJson) : {}
+      const promises = request.requests.map(
+        async (req: { toolId: string; inputJson?: string }, index: number) => {
+          await semaphore.acquire()
+          const startTime = Date.now()
+          try {
+            const input = req.inputJson ? JSON.parse(req.inputJson) : {}
 
-          // Send STARTED
-          call.write({
-            requestIndex: index,
-            toolId: req.toolId,
-            status: 'EXECUTION_STATUS_STARTED',
-            content: [],
-            error: null,
-            durationMs: 0,
-          } as BatchExecuteProgress)
+            // Send STARTED
+            call.write({
+              requestIndex: index,
+              toolId: req.toolId,
+              status: 'EXECUTION_STATUS_STARTED',
+              content: [],
+              error: null,
+              durationMs: 0,
+            } as BatchExecuteProgress)
 
-          const result = await executeTool(req.toolId, input, userId)
+            const result = await executeTool(req.toolId, input, userId)
 
-          // Send COMPLETED
-          call.write({
-            requestIndex: index,
-            toolId: req.toolId,
-            status: 'EXECUTION_STATUS_COMPLETED',
-            content: [{ type: 'text', text: JSON.stringify(result) }],
-            error: null,
-            durationMs: Date.now() - startTime,
-          } as BatchExecuteProgress)
-        } catch (error) {
-          const message = error instanceof Error ? error.message : 'Unknown error'
-          call.write({
-            requestIndex: index,
-            toolId: req.toolId,
-            status: 'EXECUTION_STATUS_ERROR',
-            content: [],
-            error: { code: grpc.status.INTERNAL, message, metadata: {} },
-            durationMs: Date.now() - startTime,
-          } as BatchExecuteProgress)
-        } finally {
-          semaphore.release()
-        }
-      })
+            // Send COMPLETED
+            call.write({
+              requestIndex: index,
+              toolId: req.toolId,
+              status: 'EXECUTION_STATUS_COMPLETED',
+              content: [{ type: 'text', text: JSON.stringify(result) }],
+              error: null,
+              durationMs: Date.now() - startTime,
+            } as BatchExecuteProgress)
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown error'
+            call.write({
+              requestIndex: index,
+              toolId: req.toolId,
+              status: 'EXECUTION_STATUS_ERROR',
+              content: [],
+              error: { code: grpc.status.INTERNAL, message, metadata: {} },
+              durationMs: Date.now() - startTime,
+            } as BatchExecuteProgress)
+          } finally {
+            semaphore.release()
+          }
+        },
+      )
 
       await Promise.all(promises)
       call.end()
@@ -267,7 +268,7 @@ export const toolServiceImpl: grpc.UntypedServiceImplementation = {
 
 // ─── Helpers ───
 
-function mapAuthType(tool: { connected: boolean; provider: string }): string {
+function mapAuthType(_tool: { connected: boolean; provider: string }): string {
   // We don't have direct access to authType from the UserTool, infer from description
   return 'AUTH_TYPE_UNSPECIFIED'
 }

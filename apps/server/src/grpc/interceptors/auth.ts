@@ -34,7 +34,6 @@ export function authInterceptor(
   call: grpc.ServerUnaryCall<any, any> | grpc.ServerWritableStream<any, any>,
 ): grpc.ServerInterceptingCall {
   const listener = new grpc.ServerListenerBuilder()
-  const responder = new grpc.ResponderBuilder()
 
   const interceptingCall = new grpc.ServerInterceptingCall(call as any)
 

@@ -48,28 +48,6 @@ function startSessionCleanup(): void {
   if (cleanupTimer.unref) cleanupTimer.unref()
 }
 
-function getOrCreateSession(
-  sessionId: string | undefined,
-  apiKey: string,
-): { session: McpGrpcSession; isNew: boolean } {
-  if (sessionId && sessions.has(sessionId)) {
-    const session = sessions.get(sessionId)!
-    session.lastSeenAt = Date.now()
-    return { session, isNew: false }
-  }
-  return {
-    session: {
-      id: '',
-      server: null as any,
-      clientTransport: null,
-      apiKey,
-      createdAt: Date.now(),
-      lastSeenAt: Date.now(),
-    },
-    isNew: true,
-  }
-}
-
 // ─── Connect RPC (Bidirectional Streaming) ─────────────────────────────────
 
 /**
