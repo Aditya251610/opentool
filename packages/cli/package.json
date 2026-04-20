@@ -1,6 +1,6 @@
 {
   "name": "opentool-cli",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "CLI for OpenTool — the open-source MCP tool server. Connect, manage, and execute tools from your terminal.",
   "type": "module",
   "license": "MIT",
