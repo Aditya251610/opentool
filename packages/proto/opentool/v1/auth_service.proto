@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package opentool.v1;
+
+option java_package = "dev.opentool.v1";
+option go_package = "github.com/opentool/proto/opentool/v1";
+
+import "opentool/v1/types.proto";
+
+// AuthService provides API key validation.
+// Used internally by gRPC interceptors; can also be called directly.
+service AuthService {
+  // Validate an API key and return associated user info.
+  rpc ValidateKey(ValidateKeyRequest) returns (ValidateKeyResponse);
+}
+
+message ValidateKeyRequest {
+  // The raw API key (e.g. "ot_abc123...")
+  string api_key = 1;
+}
+
+message ValidateKeyResponse {
+  bool valid = 1;
+  ApiKeyInfo key_info = 2;     // Present only if valid
+  string error_message = 3;    // Present only if invalid
+}

@@ -61,6 +61,52 @@ export interface ToolExecutionResult {
   isError?: boolean
 }
 
+// ─── gRPC types ───
+
+export interface ExecuteToolResponse {
+  content: Array<{ type: string; text: string }>
+  isError: boolean
+  durationMs: number
+}
+
+export interface ExecuteToolProgress {
+  status: string
+  content: Array<{ type: string; text: string }>
+  progressMessage: string
+  error: { code: number; message: string; metadata: Record<string, string> } | null
+  elapsedMs: number
+  progressPercent: number
+}
+
+export interface ListToolsResponse {
+  tools: Array<{
+    id: string
+    name: string
+    description: string
+    provider: string
+    authType: string
+    connected: boolean
+    requiredScopes: string[]
+  }>
+  totalCount: number
+}
+
+export interface ToolSchema {
+  toolId: string
+  inputJsonSchema: string
+  description: string
+}
+
+export interface HealthCheckResponse {
+  status: string
+  detail: {
+    databaseOk: boolean
+    redisOk: boolean
+    timestamp: string
+    serverVersion: string
+  } | null
+}
+
 // ─── Request types ───
 
 export interface SignupInput {

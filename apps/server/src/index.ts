@@ -11,6 +11,7 @@ import { captureException } from './error-tracking'
 import { prisma } from './db/client'
 import { api } from './api'
 import { handleMcpStreamable, closeAllMcpSessions } from './mcp/transport'
+import { startGrpcServer, shutdownGrpcServer, isGrpcServerRunning } from './grpc/server'
 import { metrics, httpRequests } from './metrics'
 
 const app = new Hono()
@@ -232,6 +233,9 @@ const shutdown = async (signal: string) => {
   // Disconnect from services
   logger.info('Closing MCP sessions and disconnecting from database and cache')
   await closeAllMcpSessions()
+  if (isGrpcServerRunning()) {
+    await shutdownGrpcServer()
+  }
   await prisma.$disconnect()
   redis.disconnect()
   rateLimitRedis.disconnect()
@@ -272,3 +276,17 @@ auditCleanupTimer.unref()
 serve({ fetch: app.fetch, port: config.port }, () => {
   logger.info('🚀 OpenTool server running', { port: config.port })
 })
+
+// Start gRPC server if enabled
+if (config.grpcEnabled) {
+  startGrpcServer({
+    port: config.grpcPort,
+    tlsCert: config.grpcTlsCert || undefined,
+    tlsKey: config.grpcTlsKey || undefined,
+    tlsCa: config.grpcTlsCa || undefined,
+    maxStreams: config.grpcMaxStreams,
+    reflection: config.grpcReflection,
+  }).catch((err) => {
+    logger.error('Failed to start gRPC server', err)
+  })
+}

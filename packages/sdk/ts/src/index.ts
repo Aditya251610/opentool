@@ -1,4 +1,5 @@
 export { OpenTool } from './client'
+export { GrpcTransport, type GrpcTransportConfig } from './grpc'
 
 export type {
   OpenToolConfig,
@@ -17,10 +18,12 @@ export type {
   CreateKeyInput,
   UpdateProfileInput,
   ExecuteToolInput,
+  // gRPC types
+  ExecuteToolResponse,
+  ExecuteToolProgress,
+  ListToolsResponse,
+  ToolSchema,
+  HealthCheckResponse,
 } from './types'
 
-export {
-  OpenToolError,
-  AuthenticationError,
-  NotFoundError,
-} from './types'
+export { OpenToolError, AuthenticationError, NotFoundError } from './types'

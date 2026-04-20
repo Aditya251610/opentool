@@ -24,7 +24,7 @@ import {
   unwrapKeys,
   unwrapTools,
 } from '../lib/api.js'
-import { loadConfig, saveConfig, validateUrl, configDir } from '../lib/config.js'
+import { loadConfig, saveConfig, validateUrl, configDir, deriveGrpcUrl } from '../lib/config.js'
 import { withSpinner } from '../lib/spinner.js'
 import { loadHistory, searchHistory, compactHistory } from '../lib/history.js'
 import { KNOWN_PROVIDERS } from '../lib/completion.js'
@@ -148,8 +148,74 @@ export function logoutCmd() {
 // ─── tools ────────────────────────────────────────────────────────────────
 
 export async function toolsCmd(
-  opts: { query?: string; json?: boolean; provider?: string; limit?: number } = {},
+  opts: {
+    query?: string
+    json?: boolean
+    provider?: string
+    limit?: number
+    transport?: string
+  } = {},
 ) {
+  // gRPC transport path
+  if (opts.transport === 'grpc') {
+    try {
+      const { getGrpcTransport, closeGrpcTransport } = await import('../lib/grpc-client.js')
+      const { result: data, elapsedMs } = await withSpinner('Loading tools via gRPC', async () => {
+        const transport = await getGrpcTransport()
+        const res = await transport.listTools({
+          provider: opts.provider || '',
+          connectedOnly: false,
+        })
+        return res
+      })
+
+      let tools = (data.tools ?? []) as {
+        id: string
+        name: string
+        provider: string
+        description?: string
+      }[]
+      if (opts.provider) tools = tools.filter((t) => t.provider === opts.provider)
+      if (opts.query) {
+        const q = opts.query.toLowerCase()
+        tools = tools.filter(
+          (t) =>
+            t.id.toLowerCase().includes(q) ||
+            t.name.toLowerCase().includes(q) ||
+            (t.description ?? '').toLowerCase().includes(q),
+        )
+      }
+      if (opts.limit && opts.limit > 0) tools = tools.slice(0, opts.limit)
+
+      if (opts.json) {
+        emitJson(tools)
+        closeGrpcTransport()
+        return
+      }
+
+      if (tools.length === 0) {
+        emitWarn('No tools match your filter')
+        closeGrpcTransport()
+        return
+      }
+
+      process.stdout.write(
+        sectionHeader('Tools (gRPC)', `${tools.length} total ${formatMs(elapsedMs)}`),
+      )
+      process.stdout.write(
+        table(tools, [
+          { header: 'id', get: (t) => t.id, color: (_, t) => formatToolId(t.id) },
+          { header: 'name', get: (t) => t.name, color: (s) => c.white(s) },
+          { header: 'provider', get: (t) => t.provider, color: (s) => c.cyan(s) },
+        ]) + '\n\n',
+      )
+      closeGrpcTransport()
+      return
+    } catch (err) {
+      handleApiError(err)
+    }
+  }
+
   try {
     const { result: data, elapsedMs } = await withSpinner('Loading tools', async () => {
       const [toolsRes, connRes] = await Promise.all([
@@ -325,7 +391,13 @@ export async function disconnectCmd(provider: string, opts: { yes?: boolean } = 
 
 export async function executeCmd(
   toolId: string,
-  opts: { args?: string; json?: boolean; timeout?: number } = {},
+  opts: {
+    args?: string
+    json?: boolean
+    timeout?: number
+    transport?: string
+    stream?: boolean
+  } = {},
 ) {
   let args: Record<string, unknown> = {}
 
@@ -342,6 +414,86 @@ export async function executeCmd(
         'Example: opentool exec github.list_repos --args \'{"per_page":5}\'',
       )
       process.exit(EXIT.GENERAL)
+    }
+  }
+
+  // gRPC transport path
+  if (opts.transport === 'grpc') {
+    try {
+      const { getGrpcTransport, closeGrpcTransport } = await import('../lib/grpc-client.js')
+      const timeoutMs = opts.timeout ?? 60_000
+
+      if (opts.stream) {
+        // Streaming execution — show progress events in real-time
+        const transport = await getGrpcTransport()
+        const start = Date.now()
+        process.stdout.write(`\n  ${c.gray('Streaming')} ${formatToolId(toolId)} via gRPC…\n`)
+
+        let finalResult: unknown = null
+        for await (const event of transport.executeStream(toolId, args, timeoutMs)) {
+          const status = event.status ?? event.executionStatus ?? 'UNKNOWN'
+          if (status === 'STARTED' || status === 1) {
+            process.stdout.write(`  ${c.yellow('▸')} Started\n`)
+          } else if (status === 'PROGRESS' || status === 2) {
+            const msg = event.progressMessage ?? event.progress_message ?? ''
+            process.stdout.write(`  ${c.blue('▸')} ${msg}\n`)
+          } else if (status === 'COMPLETED' || status === 3) {
+            finalResult = event.resultJson ? JSON.parse(event.resultJson) : event.result
+          } else if (status === 'ERROR' || status === 4) {
+            const errMsg = event.errorMessage ?? event.error_message ?? 'Unknown error'
+            emitErr(`Tool execution failed: ${errMsg}`)
+            closeGrpcTransport()
+            process.exit(EXIT.TOOL)
+          }
+        }
+
+        const elapsedMs = Date.now() - start
+        emitOk(`Executed ${formatToolId(toolId)} via gRPC stream ${formatMs(elapsedMs)}`)
+        if (finalResult !== null) {
+          if (opts.json) {
+            emitJson(finalResult)
+          } else {
+            process.stdout.write(c.gray(hr()) + '\n')
+            process.stdout.write(
+              typeof finalResult === 'string'
+                ? finalResult + '\n'
+                : truncateResult(finalResult) + '\n',
+            )
+          }
+        }
+        closeGrpcTransport()
+        return
+      }
+
+      // Unary gRPC execution
+      const { result: data, elapsedMs } = await withSpinner(
+        `Executing ${c.cyan(toolId)} via gRPC`,
+        async () => {
+          const transport = await getGrpcTransport()
+          return transport.executeTool(toolId, args, timeoutMs)
+        },
+      )
+
+      const result = data.resultJson ? JSON.parse(data.resultJson) : (data.result ?? data)
+      if (opts.json) {
+        emitJson(result)
+        closeGrpcTransport()
+        return
+      }
+
+      emitOk(`Executed ${formatToolId(toolId)} via gRPC ${formatMs(elapsedMs)}`)
+      process.stdout.write(c.gray(hr()) + '\n')
+      if (typeof result === 'string') {
+        process.stdout.write(result + '\n')
+      } else if (Array.isArray(result) && result.length === 0) {
+        process.stdout.write(c.gray('(empty result)') + '\n')
+      } else {
+        process.stdout.write(truncateResult(result) + '\n')
+      }
+      closeGrpcTransport()
+      return
+    } catch (err) {
+      handleApiError(err)
     }
   }
 
@@ -401,13 +553,56 @@ export async function keysCmd(opts: { json?: boolean } = {}) {
 
 // ─── status / config / set-* ──────────────────────────────────────────────
 
-export async function statusCmd(opts: { json?: boolean } = {}) {
+export async function statusCmd(opts: { json?: boolean; transport?: string } = {}) {
   const config = loadConfig()
   const version = (await import('../lib/version.js')).getVersion()
   const start = Date.now()
   let healthy = false
   let serverVersion: string | undefined
   let toolCount: number | undefined
+
+  // gRPC health check
+  let grpcHealthy = false
+  let grpcLatency = 0
+  if (opts.transport === 'grpc') {
+    try {
+      const { checkGrpcHealth } = await import('../lib/grpc-client.js')
+      const grpcUrl = deriveGrpcUrl(config)
+      const res = await checkGrpcHealth(grpcUrl)
+      grpcHealthy = res.serving
+      grpcLatency = res.latencyMs
+
+      if (opts.json) {
+        return emitJson({
+          transport: 'grpc',
+          grpcUrl,
+          healthy: grpcHealthy,
+          latencyMs: grpcLatency,
+          authenticated: !!config.apiKey,
+          cliVersion: version,
+        })
+      }
+      process.stdout.write(
+        `\n  ${c.gray('transport:')} ${c.cyan('gRPC')}\n` +
+          `  ${c.gray('grpcUrl:')}   ${c.cyan(grpcUrl)}\n` +
+          `  ${c.gray('health:')}    ${
+            grpcHealthy
+              ? `${sym.ok} ${c.green('serving')} ${formatMs(grpcLatency)}`
+              : `${sym.err} ${c.red('unreachable')}`
+          }\n` +
+          `  ${c.gray('auth:')}      ${
+            config.apiKey
+              ? `${sym.ok} ${c.green('logged in')}`
+              : `${sym.warn} ${c.yellow('not logged in')}`
+          }\n` +
+          `  ${c.gray('cli:')}       v${version}\n\n`,
+      )
+      return
+    } catch (err) {
+      handleApiError(err)
+    }
+  }
+
   try {
     const res = await fetch(`${config.serverUrl}/health`, { signal: AbortSignal.timeout(3000) })
     healthy = res.ok
@@ -472,9 +667,11 @@ export async function statusCmd(opts: { json?: boolean } = {}) {
 
 export function configCmd(opts: { json?: boolean } = {}) {
   const config = loadConfig()
-  if (opts.json) return emitJson(config)
+  const grpcUrl = deriveGrpcUrl(config)
+  if (opts.json) return emitJson({ ...config, grpcUrl })
   process.stdout.write(
     `\n  ${c.gray('serverUrl:')} ${c.cyan(config.serverUrl)}\n` +
+      `  ${c.gray('grpcUrl:')}   ${c.cyan(grpcUrl)}${config.grpcUrl ? '' : c.gray(' (derived)')}\n` +
       `  ${c.gray('apiKey:')}    ${
         config.apiKey ? c.green(`${config.apiKey.slice(0, 11)}…`) : c.yellow('(not set)')
       }\n` +
@@ -506,6 +703,21 @@ export function setUrlCmd(url: string) {
   const config = loadConfig()
   saveConfig({ ...config, serverUrl: url.replace(/\/$/, '') })
   emitOk(`Server URL set to ${c.cyan(url)}`)
+}
+
+export function setGrpcUrlCmd(url: string) {
+  if (!url) {
+    emitErr('Missing gRPC URL', 'Usage: opentool set-grpc-url <host:port>')
+    process.exit(EXIT.GENERAL)
+  }
+  // Basic validation: should be host:port format
+  if (!/^[a-zA-Z0-9._-]+:\d+$/.test(url)) {
+    emitErr('Invalid gRPC URL format', 'Expected host:port, e.g. localhost:50051')
+    process.exit(EXIT.GENERAL)
+  }
+  const config = loadConfig()
+  saveConfig({ ...config, grpcUrl: url })
+  emitOk(`gRPC URL set to ${c.cyan(url)}`)
 }
 
 // ─── history ──────────────────────────────────────────────────────────────
@@ -688,6 +900,26 @@ export async function doctorCmd() {
     } catch {
       /* skip */
     }
+  }
+
+  // 10. gRPC server reachable (best-effort, non-blocking)
+  const grpcUrl = deriveGrpcUrl(config)
+  try {
+    const { checkGrpcHealth } = await import('../lib/grpc-client.js')
+    const grpcRes = await checkGrpcHealth(grpcUrl)
+    checks.push({
+      label: 'gRPC endpoint',
+      ok: grpcRes.serving,
+      detail: grpcRes.serving
+        ? `${grpcUrl} — serving ${formatMs(grpcRes.latencyMs)}`
+        : `${grpcUrl} — not reachable (gRPC may be disabled)`,
+    })
+  } catch {
+    checks.push({
+      label: 'gRPC endpoint',
+      ok: false,
+      detail: `${grpcUrl} — gRPC deps not installed (optional)`,
+    })
   }
 
   // Print results

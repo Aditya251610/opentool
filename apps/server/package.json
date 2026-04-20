@@ -13,7 +13,9 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.19.14",
+    "@grpc/grpc-js": "^1.13.0",
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "@opentool/proto": "workspace:*",
     "@opentool/tool-schema": "workspace:*",
     "@prisma/client": "^5.0.0",
     "@types/bcryptjs": "^3.0.0",

@@ -5,6 +5,7 @@ import { join } from 'node:path'
 export interface OpenToolConfig {
   apiKey?: string
   serverUrl: string
+  grpcUrl?: string
   debug?: boolean
 }
 
@@ -22,6 +23,7 @@ export function loadConfig(): OpenToolConfig {
     return {
       serverUrl: typeof raw.serverUrl === 'string' ? raw.serverUrl : DEFAULT_SERVER_URL,
       apiKey: typeof raw.apiKey === 'string' ? raw.apiKey : undefined,
+      grpcUrl: typeof raw.grpcUrl === 'string' ? raw.grpcUrl : undefined,
       debug: typeof raw.debug === 'boolean' ? raw.debug : undefined,
     }
   } catch {
@@ -55,6 +57,20 @@ export function validateUrl(url: string): string | null {
     return null
   } catch {
     return 'Invalid URL format. Example: https://opentool.onrender.com'
+  }
+}
+
+/**
+ * Derive the gRPC endpoint from the config.
+ * Priority: config.grpcUrl > hostname:50051 from serverUrl.
+ */
+export function deriveGrpcUrl(config: OpenToolConfig): string {
+  if (config.grpcUrl) return config.grpcUrl
+  try {
+    const u = new URL(config.serverUrl)
+    return `${u.hostname}:50051`
+  } catch {
+    return 'localhost:50051'
   }
 }
 

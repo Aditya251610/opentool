@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package opentool.v1;
+
+option java_package = "dev.opentool.v1";
+option go_package = "github.com/opentool/proto/opentool/v1";
+
+// Standard gRPC Health Checking Protocol.
+// See: https://github.com/grpc/grpc/blob/master/doc/health-checking.md
+service Health {
+  // Unary health check.
+  rpc Check(HealthCheckRequest) returns (HealthCheckResponse);
+
+  // Streaming health check — server pushes updates when status changes.
+  rpc Watch(HealthCheckRequest) returns (stream HealthCheckResponse);
+}
+
+message HealthCheckRequest {
+  // Service name to check. Empty string = overall server health.
+  string service = 1;
+}
+
+message HealthCheckResponse {
+  ServingStatus status = 1;
+
+  // Additional detail (OpenTool extension)
+  HealthDetail detail = 2;
+}
+
+enum ServingStatus {
+  SERVING_STATUS_UNKNOWN = 0;
+  SERVING_STATUS_SERVING = 1;
+  SERVING_STATUS_NOT_SERVING = 2;
+  SERVING_STATUS_SERVICE_UNKNOWN = 3;
+}
+
+// OpenTool-specific health detail (extends standard gRPC health).
+message HealthDetail {
+  bool database_ok = 1;
+  bool redis_ok = 2;
+  string timestamp = 3;          // ISO 8601
+  string server_version = 4;
+}

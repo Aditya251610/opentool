@@ -217,7 +217,7 @@ Full guide: [docs/contributing-a-tool.md](docs/contributing-a-tool.md)
 - **Server** — Hono, TypeScript, Prisma, Postgres, Redis
 - **Dashboard** — Next.js 14, Auth.js
 - **CLI** — TypeScript, Ink (React for terminals), Commander
-- **Protocol** — MCP (Model Context Protocol) TypeScript SDK
+- **Protocol** — MCP (Model Context Protocol) TypeScript SDK + gRPC (Protocol Buffers)
 - **SDKs** — TypeScript ([npm](https://www.npmjs.com/package/@opentool-ts/sdk)) + Python ([PyPI](https://pypi.org/project/opentool/))
 - **Monorepo** — Turborepo + pnpm
 - **Security** — AES-256-GCM encryption, CSP/HSTS headers, session obfuscation
@@ -241,6 +241,7 @@ Full docs at [`docs/`](docs/README.md):
 - [Contributing a Tool](docs/contributing-a-tool.md) — Add a provider in ~100 lines
 - [Security](docs/security.md) — Encryption, tokens, threat model
 - [Troubleshooting](docs/troubleshooting.md) — Common issues and fixes
+- [gRPC Transport](docs/grpc.md) — High-performance binary transport with streaming
 
 ---
 
@@ -255,6 +256,7 @@ Full docs at [`docs/`](docs/README.md):
 - [x] Production hardening (CSP, HSTS, retry logic, 211 tests)
 - [x] CI/CD with automated releases
 - [x] curl installer (`install.sh`)
+- [x] gRPC transport (streaming execution, batch tools, mTLS, Kubernetes-native)
 - [ ] Team/org support
 - [ ] Tool marketplace
 - [ ] Usage analytics

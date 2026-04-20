@@ -25,8 +25,20 @@ export const config = {
   dashboardUrl: process.env['DASHBOARD_URL'] ?? 'http://localhost:3000',
   nodeEnv: (process.env['NODE_ENV'] ?? 'development') as 'development' | 'production' | 'test',
   port: Number(process.env['PORT'] ?? 3001),
-  postgresAllowedHosts: process.env['POSTGRES_ALLOWED_HOSTS']?.split(',').map(h => h.trim()).filter(Boolean) || [],
+  postgresAllowedHosts:
+    process.env['POSTGRES_ALLOWED_HOSTS']
+      ?.split(',')
+      .map((h) => h.trim())
+      .filter(Boolean) || [],
   sentryDsn: process.env['SENTRY_DSN'] || '',
+  // gRPC configuration
+  grpcEnabled: process.env['GRPC_ENABLED'] === 'true',
+  grpcPort: Number(process.env['GRPC_PORT'] ?? 50051),
+  grpcTlsCert: process.env['GRPC_TLS_CERT'] || '',
+  grpcTlsKey: process.env['GRPC_TLS_KEY'] || '',
+  grpcTlsCa: process.env['GRPC_TLS_CA'] || '',
+  grpcMaxStreams: Number(process.env['GRPC_MAX_STREAMS'] ?? 100),
+  grpcReflection: process.env['GRPC_REFLECTION'] !== 'false', // true by default in dev
 } as const
 
 /**

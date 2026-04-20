@@ -1,0 +1,102 @@
+syntax = "proto3";
+
+package opentool.v1;
+
+option java_package = "dev.opentool.v1";
+option go_package = "github.com/opentool/proto/opentool/v1";
+
+import "opentool/v1/types.proto";
+
+// ToolService provides tool listing, execution, and schema retrieval.
+// All RPCs require a valid API key in the `authorization` metadata field.
+service ToolService {
+  // List all tools available for the authenticated user.
+  // Includes connection status — unconnected tools are marked with auth_type.
+  rpc ListTools(ListToolsRequest) returns (ListToolsResponse);
+
+  // Execute a single tool (unary request/response).
+  rpc ExecuteTool(ExecuteToolRequest) returns (ExecuteToolResponse);
+
+  // Execute a tool with streaming progress updates.
+  // Returns a stream of progress events: STARTED → PROGRESS* → COMPLETED|ERROR
+  rpc ExecuteToolStream(ExecuteToolRequest) returns (stream ExecuteToolProgress);
+
+  // Execute multiple tools in parallel, streaming results as they complete.
+  rpc BatchExecute(BatchExecuteRequest) returns (stream BatchExecuteProgress);
+
+  // Get the input schema for a specific tool.
+  rpc GetToolSchema(GetToolSchemaRequest) returns (ToolSchema);
+}
+
+// ─── List Tools ───
+
+message ListToolsRequest {
+  // Optional: filter by provider (e.g. "github", "slack")
+  string provider = 1;
+
+  // Optional: only return connected tools
+  bool connected_only = 2;
+}
+
+message ListToolsResponse {
+  repeated Tool tools = 1;
+  int32 total_count = 2;
+}
+
+// ─── Execute Tool ───
+
+message ExecuteToolRequest {
+  // Tool ID to execute (e.g. "github.create_issue")
+  string tool_id = 1;
+
+  // Input arguments as a JSON string (matches the tool's input schema)
+  string input_json = 2;
+
+  // Optional: execution timeout in milliseconds (server default applies if 0)
+  int32 timeout_ms = 3;
+}
+
+message ExecuteToolResponse {
+  repeated ToolContent content = 1;
+  bool is_error = 2;
+  int64 duration_ms = 3;
+}
+
+// ─── Streaming Execution ───
+
+message ExecuteToolProgress {
+  ExecutionStatus status = 1;
+  repeated ToolContent content = 2;      // Present on COMPLETED
+  string progress_message = 3;           // Present on PROGRESS
+  ErrorDetail error = 4;                 // Present on ERROR
+  int64 elapsed_ms = 5;
+  double progress_percent = 6;           // 0.0–1.0 if available
+}
+
+// ─── Batch Execution ───
+
+message BatchExecuteRequest {
+  repeated ExecuteToolRequest requests = 1;
+
+  // Max parallel executions (default: 5)
+  int32 max_concurrency = 2;
+}
+
+message BatchExecuteProgress {
+  // Index in the original requests array
+  int32 request_index = 1;
+
+  // Tool ID for convenience
+  string tool_id = 2;
+
+  ExecutionStatus status = 3;
+  repeated ToolContent content = 4;
+  ErrorDetail error = 5;
+  int64 duration_ms = 6;
+}
+
+// ─── Get Schema ───
+
+message GetToolSchemaRequest {
+  string tool_id = 1;
+}

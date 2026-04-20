@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package opentool.v1;
+
+option java_package = "dev.opentool.v1";
+option go_package = "github.com/opentool/proto/opentool/v1";
+
+// McpTransport provides MCP protocol communication over gRPC.
+// This bridges the MCP JSON-RPC protocol with gRPC transport,
+// following Google's proposed gRPC transport spec for MCP.
+service McpTransport {
+  // Bidirectional streaming — mirrors MCP's SSE/Streamable HTTP.
+  // Client sends JSON-RPC requests, server responds with JSON-RPC responses.
+  rpc Connect(stream McpMessage) returns (stream McpMessage);
+
+  // Unary — for simple single-shot MCP request/response calls.
+  rpc Send(McpMessage) returns (McpMessage);
+}
+
+message McpMessage {
+  // Raw JSON-RPC message payload (the MCP protocol message).
+  string json_rpc_payload = 1;
+
+  // Session ID for stateful MCP sessions.
+  // Empty on the initial initialize request; server assigns and returns it.
+  string session_id = 2;
+
+  // Message type hint (optional, for routing optimization).
+  McpMessageType type = 3;
+}
+
+enum McpMessageType {
+  MCP_MESSAGE_TYPE_UNSPECIFIED = 0;
+  MCP_MESSAGE_TYPE_REQUEST = 1;
+  MCP_MESSAGE_TYPE_RESPONSE = 2;
+  MCP_MESSAGE_TYPE_NOTIFICATION = 3;
+}

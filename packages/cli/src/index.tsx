@@ -11,6 +11,7 @@ import {
   logoutCmd,
   setKeyCmd,
   setUrlCmd,
+  setGrpcUrlCmd,
   showToolCmd,
   statusCmd,
   toolsCmd,
@@ -130,6 +131,9 @@ ${c.bold(c.cyan('Examples:'))}
   $ opentool --debug exec my.tool         ${c.gray('verbose debug output')}
   $ opentool completion --shell zsh       ${c.gray('generate shell completions')}
   $ opentool doctor                       ${c.gray('diagnose setup issues')}
+  $ opentool exec my.tool -t grpc         ${c.gray('execute via gRPC transport')}
+  $ opentool exec my.tool -t grpc -s      ${c.gray('stream execution via gRPC')}
+  $ opentool status -t grpc               ${c.gray('check gRPC health')}
 
 ${c.gray('Docs: https://github.com/opentool/opentool')}
 `,
@@ -160,6 +164,7 @@ program
   .option('-p, --provider <provider>', 'filter by provider (e.g. github)')
   .option('-l, --limit <n>', 'max tools to display', parseInt)
   .option('--json', 'machine-readable output')
+  .option('-t, --transport <type>', 'transport: http (default) or grpc')
   .action(async (opts) => toolsCmd(opts))
 
 program
@@ -187,6 +192,8 @@ program
   .option('-a, --args <json>', 'tool arguments as JSON string')
   .option('--json', 'output result as JSON only')
   .option('--timeout <ms>', 'override default timeout in ms', parseInt)
+  .option('-t, --transport <type>', 'transport: http (default) or grpc')
+  .option('-s, --stream', 'use streaming execution (gRPC only)')
   .action(async (toolId, opts) => executeCmd(toolId, opts))
 
 program
@@ -199,6 +206,7 @@ program
   .command('status')
   .description('check server connection health')
   .option('--json', 'machine-readable output')
+  .option('-t, --transport <type>', 'transport: http (default) or grpc')
   .action(async (opts) => statusCmd(opts))
 
 program
@@ -216,6 +224,11 @@ program
   .command('set-url <server-url>')
   .description('set the OpenTool server URL')
   .action((url: string) => setUrlCmd(url))
+
+program
+  .command('set-grpc-url <host-port>')
+  .description('set the gRPC endpoint (host:port)')
+  .action((url: string) => setGrpcUrlCmd(url))
 
 program
   .command('history')

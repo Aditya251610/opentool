@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package opentool.v1;
+
+option java_package = "dev.opentool.v1";
+option go_package = "github.com/opentool/proto/opentool/v1";
+
+// Shared message types used across OpenTool gRPC services.
+
+// Represents a tool available in the OpenTool registry.
+message Tool {
+  string id = 1;              // e.g. "github.create_issue"
+  string name = 2;            // e.g. "Create GitHub Issue"
+  string description = 3;
+  string provider = 4;        // e.g. "github"
+  AuthType auth_type = 5;
+  bool connected = 6;         // Whether the user has connected this provider
+  repeated string required_scopes = 7;
+}
+
+// Tool input/output schema in JSON Schema format.
+message ToolSchema {
+  string tool_id = 1;
+  string input_json_schema = 2;   // JSON string of the input schema
+  string description = 3;
+}
+
+// Authentication type for a tool provider.
+enum AuthType {
+  AUTH_TYPE_UNSPECIFIED = 0;
+  AUTH_TYPE_NONE = 1;
+  AUTH_TYPE_OAUTH2 = 2;
+  AUTH_TYPE_API_KEY = 3;
+}
+
+// Result content from a tool execution.
+message ToolContent {
+  string type = 1;     // Usually "text"
+  string text = 2;     // The content payload
+}
+
+// Execution progress status.
+enum ExecutionStatus {
+  EXECUTION_STATUS_UNSPECIFIED = 0;
+  EXECUTION_STATUS_STARTED = 1;
+  EXECUTION_STATUS_PROGRESS = 2;
+  EXECUTION_STATUS_COMPLETED = 3;
+  EXECUTION_STATUS_ERROR = 4;
+}
+
+// Metadata about an API key (for auth validation responses).
+message ApiKeyInfo {
+  string user_id = 1;
+  string key_prefix = 2;
+  string name = 3;
+}
+
+// Error detail following google.rpc conventions.
+message ErrorDetail {
+  int32 code = 1;
+  string message = 2;
+  map<string, string> metadata = 3;
+}
