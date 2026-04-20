@@ -1,6 +1,6 @@
 {
   "name": "@opentool/proto",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Protocol Buffer definitions for OpenTool gRPC services",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
