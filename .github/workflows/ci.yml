@@ -22,16 +22,14 @@ jobs:
       # Build shared packages first
       - run: cd packages/tool-schema && pnpm build
       - run: cd packages/proto && pnpm build
+      - run: cd packages/sdk/ts && pnpm build
 
       # Server typecheck
       - run: cd apps/server && npx prisma generate
       - run: cd apps/server && npx tsc --noEmit
 
-      # CLI typecheck
+      # CLI typecheck (depends on SDK build)
       - run: cd packages/cli && npx tsc --noEmit
-
-      # SDK typecheck + build
-      - run: cd packages/sdk/ts && pnpm build
 
       # Dashboard build (includes type check)
       - run: cd apps/dashboard && npx next build
