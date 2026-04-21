@@ -55,6 +55,7 @@ export async function api<T = unknown>(path: string, opts: RequestOptions = {}):
 
   const headers: Record<string, string> = {}
   if (config.apiKey) headers['Authorization'] = `Bearer ${config.apiKey}`
+  if (config.orgSlug) headers['X-Org-Slug'] = config.orgSlug
   if (body !== undefined) headers['Content-Type'] = 'application/json'
 
   const url = `${config.serverUrl}${path}`
@@ -187,4 +188,40 @@ export function unwrapConnections(r: { connections: Connection[] } | Connection[
 }
 export function unwrapKeys(r: { keys: ApiKey[] } | ApiKey[]): ApiKey[] {
   return Array.isArray(r) ? r : r.keys
+}
+
+// ─── Org endpoints ──────────────────────────────────────────────────────────
+
+export interface Org {
+  id: string
+  name: string
+  slug: string
+  plan: string
+  role?: string
+  memberCount?: number
+}
+
+export interface OrgMember {
+  userId: string
+  email: string
+  name: string
+  role: string
+  joinedAt: string
+}
+
+export interface OrgTeam {
+  id: string
+  name: string
+  slug: string
+  memberCount: number
+}
+
+export const orgEndpoints = {
+  list: () => api<{ orgs: Org[] }>('/api/orgs'),
+  create: (name: string, slug: string) =>
+    api<{ org: Org }>('/api/orgs', { method: 'POST', body: { name, slug } }),
+  get: (slug: string) => api<{ org: Org; role: string }>(`/api/orgs/${slug}`),
+  members: (slug: string) => api<{ members: OrgMember[] }>(`/api/orgs/${slug}/members`),
+  teams: (slug: string) => api<{ teams: OrgTeam[] }>(`/api/orgs/${slug}/teams`),
+  keys: (slug: string) => api<{ keys: ApiKey[] }>(`/api/orgs/${slug}/keys`),
 }

@@ -20,6 +20,7 @@ import {
   EXIT,
   exitCodeFor,
   NetworkError,
+  orgEndpoints,
   unwrapConnections,
   unwrapKeys,
   unwrapTools,
@@ -130,6 +131,32 @@ export async function loginCmd(opts: { email?: string; password?: string; browse
     saveConfig({ ...config, apiKey: result.apiKey })
     emitOk(`Logged in as ${c.cyan(result.user.email)} ${formatMs(elapsedMs)}`)
     emitInfo(`API key saved to ${c.gray('~/.opentool/config.json')}`)
+
+    // Post-login: check org memberships and offer to select one
+    try {
+      const { result: orgResult } = await withSpinner('Checking organizations…', () =>
+        orgEndpoints.list(),
+      )
+      if (orgResult.orgs.length === 1) {
+        const org = orgResult.orgs[0]
+        saveConfig({ ...loadConfig(), orgSlug: org.slug })
+        emitInfo(`Auto-selected org: ${c.cyan(org.slug)} (${org.name})`)
+      } else if (orgResult.orgs.length > 1) {
+        process.stdout.write(
+          `\n  You belong to ${c.bold(String(orgResult.orgs.length))} organizations:\n`,
+        )
+        orgResult.orgs.forEach((o: any, i: number) => {
+          process.stdout.write(
+            `    ${c.gray(`${i + 1}.`)} ${c.cyan(o.slug)} — ${o.name} [${o.role}]\n`,
+          )
+        })
+        process.stdout.write(
+          `\n  ${c.gray('Set active org with:')} ${c.cyan('opentool org use <slug>')}\n\n`,
+        )
+      }
+    } catch {
+      // Org fetch failed — non-critical, skip silently
+    }
   } catch (err) {
     handleApiError(err)
   }
@@ -675,6 +702,7 @@ export function configCmd(opts: { json?: boolean } = {}) {
       `  ${c.gray('apiKey:')}    ${
         config.apiKey ? c.green(`${config.apiKey.slice(0, 11)}…`) : c.yellow('(not set)')
       }\n` +
+      `  ${c.gray('org:')}       ${config.orgSlug ? c.magenta(config.orgSlug) : c.gray('(none)')}\n` +
       `  ${c.gray('config:')}    ${c.gray(configDir() + '/config.json')}\n` +
       `  ${c.gray('history:')}   ${c.gray(configDir() + '/history')}\n\n`,
   )
@@ -1010,4 +1038,145 @@ export async function initCmd() {
       `  ${c.cyan('6.')} Run diagnostics: ${c.cyan('opentool doctor')}\n\n` +
       `${c.gray('Need help? https://github.com/opentool/opentool')}\n\n`,
   )
+}
+
+// ─── Organization Commands ──────────────────────────────────────────────────
+
+export async function orgCmd(sub?: string, opts: { json?: boolean } = {}) {
+  const config = loadConfig()
+
+  if (!sub || sub === 'list') {
+    const {
+      result: { orgs },
+    } = await withSpinner('Fetching organizations…', () => orgEndpoints.list())
+    if (opts.json) return emitJson(orgs)
+    if (orgs.length === 0) {
+      emitInfo('No organizations yet. Create one with: opentool org create <name> <slug>')
+      return
+    }
+    process.stdout.write(
+      '\n' +
+        table(orgs, [
+          {
+            header: '',
+            get: (o: any) => (config.orgSlug === o.slug ? '●' : ''),
+            color: (s: string) => c.green(s),
+          },
+          { header: 'slug', get: (o: any) => o.slug, color: (s: string) => c.cyan(s) },
+          { header: 'name', get: (o: any) => o.name },
+          { header: 'role', get: (o: any) => o.role, color: (s: string) => c.yellow(s) },
+          { header: 'plan', get: (o: any) => o.plan },
+        ]) +
+        '\n',
+    )
+    if (config.orgSlug) {
+      process.stdout.write(`  ${c.gray('Active org:')} ${c.cyan(config.orgSlug)}\n\n`)
+    }
+    return
+  }
+
+  if (sub === 'use') {
+    // handled separately via orgUseCmd
+    return
+  }
+
+  if (sub === 'unset') {
+    if (!config.orgSlug) {
+      emitInfo('No active organization to unset.')
+      return
+    }
+    const prev = config.orgSlug
+    saveConfig({ ...config, orgSlug: undefined })
+    emitOk(`Unset organization context (was: ${prev})`)
+    return
+  }
+
+  if (sub === 'info') {
+    if (!config.orgSlug) {
+      emitErr('No active organization', 'Set one with: opentool org use <slug>')
+      process.exit(EXIT.GENERAL)
+    }
+    const {
+      result: { org, role },
+    } = await withSpinner('Fetching org info…', () => orgEndpoints.get(config.orgSlug!))
+    if (opts.json) return emitJson({ org, role })
+    process.stdout.write(
+      `\n  ${c.gray('Name:')} ${c.bold(org.name)}\n` +
+        `  ${c.gray('Slug:')} ${c.cyan(org.slug)}\n` +
+        `  ${c.gray('Plan:')} ${org.plan}\n` +
+        `  ${c.gray('Your role:')} ${c.yellow(role)}\n\n`,
+    )
+    return
+  }
+
+  if (sub === 'members') {
+    if (!config.orgSlug) {
+      emitErr('No active organization', 'Set one with: opentool org use <slug>')
+      process.exit(EXIT.GENERAL)
+    }
+    const {
+      result: { members },
+    } = await withSpinner('Fetching members…', () => orgEndpoints.members(config.orgSlug!))
+    if (opts.json) return emitJson(members)
+    process.stdout.write(
+      '\n' +
+        table(members, [
+          { header: 'email', get: (m: any) => m.email, color: (s: string) => c.cyan(s) },
+          { header: 'name', get: (m: any) => m.name || '—' },
+          { header: 'role', get: (m: any) => m.role, color: (s: string) => c.yellow(s) },
+        ]) +
+        '\n',
+    )
+    return
+  }
+
+  if (sub === 'teams') {
+    if (!config.orgSlug) {
+      emitErr('No active organization', 'Set one with: opentool org use <slug>')
+      process.exit(EXIT.GENERAL)
+    }
+    const {
+      result: { teams },
+    } = await withSpinner('Fetching teams…', () => orgEndpoints.teams(config.orgSlug!))
+    if (opts.json) return emitJson(teams)
+    process.stdout.write(
+      '\n' +
+        table(teams, [
+          { header: 'slug', get: (t: any) => t.slug, color: (s: string) => c.cyan(s) },
+          { header: 'name', get: (t: any) => t.name },
+          { header: 'members', get: (t: any) => String(t.memberCount) },
+        ]) +
+        '\n',
+    )
+    return
+  }
+
+  emitErr(`Unknown org subcommand: ${sub}`, 'Available: list, use, unset, info, members, teams')
+}
+
+export function orgUseCmd(slug: string) {
+  if (!slug) {
+    emitErr('Missing org slug', 'Usage: opentool org use <slug>')
+    process.exit(EXIT.GENERAL)
+  }
+  const config = loadConfig()
+  saveConfig({ ...config, orgSlug: slug })
+  emitOk(`Active organization set to: ${c.cyan(slug)}`)
+  emitInfo('All subsequent API calls will include this org context.')
+}
+
+export async function orgCreateCmd(name: string, slug: string, opts: { json?: boolean } = {}) {
+  if (!name || !slug) {
+    emitErr('Missing arguments', 'Usage: opentool org create <name> <slug>')
+    process.exit(EXIT.GENERAL)
+  }
+  const {
+    result: { org },
+  } = await withSpinner('Creating organization…', () => orgEndpoints.create(name, slug))
+  if (opts.json) return emitJson(org)
+  emitOk(`Organization created: ${c.bold(org.name)} (${c.cyan(org.slug)})`)
+  // Auto-set as active
+  const config = loadConfig()
+  saveConfig({ ...config, orgSlug: org.slug })
+  emitInfo(`Set as active org. All commands now run in ${c.cyan(org.slug)} context.`)
 }

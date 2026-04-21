@@ -48,6 +48,8 @@ function StatusBarInner({ cmdCount, startTime }: Props) {
     <Text color="yellow"> · not logged in</Text>
   )
 
+  const orgLabel = config.orgSlug ? <Text color="magenta"> · org:{config.orgSlug}</Text> : null
+
   const uptime = formatUptime(Date.now() - startTime)
   const sessionInfo =
     cmdCount > 0 ? (
@@ -76,6 +78,7 @@ function StatusBarInner({ cmdCount, startTime }: Props) {
           <Text color="cyan">{config.serverUrl}</Text>
           {latency !== null && <Text dimColor> ({latency}ms)</Text>}
           {authLabel}
+          {orgLabel}
           {sessionInfo}
         </>
       )}

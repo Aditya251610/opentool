@@ -7,6 +7,7 @@ export interface OpenToolConfig {
   serverUrl: string
   grpcUrl?: string
   debug?: boolean
+  orgSlug?: string // Active organization context
 }
 
 const CONFIG_DIR = join(homedir(), '.opentool')
@@ -25,6 +26,7 @@ export function loadConfig(): OpenToolConfig {
       apiKey: typeof raw.apiKey === 'string' ? raw.apiKey : undefined,
       grpcUrl: typeof raw.grpcUrl === 'string' ? raw.grpcUrl : undefined,
       debug: typeof raw.debug === 'boolean' ? raw.debug : undefined,
+      orgSlug: typeof raw.orgSlug === 'string' ? raw.orgSlug : undefined,
     }
   } catch {
     return { serverUrl: DEFAULT_SERVER_URL }

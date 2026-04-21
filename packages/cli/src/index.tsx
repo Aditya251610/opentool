@@ -17,6 +17,9 @@ import {
   toolsCmd,
   historyCmd,
   doctorCmd,
+  orgCmd,
+  orgUseCmd,
+  orgCreateCmd,
 } from './commands/index.js'
 import { registerCompletionCommand } from './commands/completion.js'
 import { getVersion } from './lib/version.js'
@@ -241,6 +244,53 @@ program
   .command('doctor')
   .description('diagnose common configuration issues')
   .action(async () => doctorCmd())
+
+// Organization commands
+const org = program
+  .command('org')
+  .description('manage organizations')
+  .option('--json', 'machine-readable output')
+  .action(async (opts) => orgCmd(undefined, opts))
+
+org
+  .command('list')
+  .description('list your organizations')
+  .option('--json', 'machine-readable output')
+  .action(async (opts) => orgCmd('list', opts))
+
+org
+  .command('use <slug>')
+  .description('set active organization context')
+  .action((slug: string) => orgUseCmd(slug))
+
+org
+  .command('unset')
+  .description('clear active organization context')
+  .action(() => orgCmd('unset'))
+
+org
+  .command('info')
+  .description('show current organization details')
+  .option('--json', 'machine-readable output')
+  .action(async (opts) => orgCmd('info', opts))
+
+org
+  .command('members')
+  .description('list organization members')
+  .option('--json', 'machine-readable output')
+  .action(async (opts) => orgCmd('members', opts))
+
+org
+  .command('teams')
+  .description('list organization teams')
+  .option('--json', 'machine-readable output')
+  .action(async (opts) => orgCmd('teams', opts))
+
+org
+  .command('create <name> <slug>')
+  .description('create a new organization')
+  .option('--json', 'machine-readable output')
+  .action(async (name: string, slug: string, opts) => orgCreateCmd(name, slug, opts))
 
 // Shell completion generation
 registerCompletionCommand(program)

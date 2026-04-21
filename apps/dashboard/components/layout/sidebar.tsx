@@ -4,11 +4,24 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { LayoutGrid, Wrench, Key, Settings, LogOut, Menu, X } from 'lucide-react'
+import {
+  LayoutGrid,
+  Wrench,
+  Key,
+  Settings,
+  LogOut,
+  Menu,
+  X,
+  Users,
+  Shield,
+  ScrollText,
+} from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { CommandPaletteHint } from '@/components/ui/command-palette'
 import { OpenToolLogo } from '@/components/icons'
 import { useRouter } from 'next/navigation'
+import { OrgSwitcher } from '@/components/org/org-switcher'
+import { FEATURES } from '@/lib/api'
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Overview', icon: LayoutGrid },
@@ -17,9 +30,19 @@ const NAV_ITEMS = [
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ]
 
+const ORG_NAV_ITEMS = [
+  { href: '/dashboard/org', label: 'Overview', icon: LayoutGrid },
+  { href: '/dashboard/org/members', label: 'Members', icon: Users },
+  { href: '/dashboard/org/teams', label: 'Teams', icon: Shield },
+  { href: '/dashboard/org/tools', label: 'Tools', icon: Wrench },
+  { href: '/dashboard/org/keys', label: 'API Keys', icon: Key },
+  { href: '/dashboard/org/audit', label: 'Audit Log', icon: ScrollText },
+  { href: '/dashboard/org/settings', label: 'Settings', icon: Settings },
+]
+
 export function Sidebar() {
   const pathname = usePathname()
-  const { user, logout } = useAuth()
+  const { user, logout, activeOrg } = useAuth()
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -50,9 +73,16 @@ export function Sidebar() {
         <CommandPaletteHint />
       </div>
 
+      {/* Org switcher */}
+      {FEATURES.ORGS_ENABLED && (
+        <div className="mb-4">
+          <OrgSwitcher />
+        </div>
+      )}
+
       {/* Section label */}
       <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#737373] px-2 mb-2">
-        Platform
+        {activeOrg ? activeOrg.org.name : 'Platform'}
       </div>
 
       {/* Nav items */}
@@ -62,10 +92,12 @@ export function Sidebar() {
         variants={{ animate: { transition: { staggerChildren: 0.04, delayChildren: 0.05 } } }}
         className="flex flex-col gap-0.5"
       >
-        {NAV_ITEMS.map((item) => {
+        {(activeOrg ? ORG_NAV_ITEMS : NAV_ITEMS).map((item) => {
           const isActive =
             pathname === item.href ||
-            (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'))
+            (item.href !== '/dashboard' &&
+              item.href !== '/dashboard/org' &&
+              pathname.startsWith(item.href + '/'))
           return (
             <motion.div
               key={item.href}

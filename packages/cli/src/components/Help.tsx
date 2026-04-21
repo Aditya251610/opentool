@@ -34,6 +34,18 @@ const SECTIONS: { title: string; rows: { cmd: string; desc: string }[] }[] = [
     ],
   },
   {
+    title: '🏢 Organizations',
+    rows: [
+      { cmd: 'org list', desc: 'List your organizations' },
+      { cmd: 'org use <slug>', desc: 'Set active org context' },
+      { cmd: 'org unset', desc: 'Clear org context' },
+      { cmd: 'org info', desc: 'Show current org details' },
+      { cmd: 'org members', desc: 'List org members' },
+      { cmd: 'org teams', desc: 'List org teams' },
+      { cmd: 'org create <name> <slug>', desc: 'Create new org' },
+    ],
+  },
+  {
     title: '📋 Session',
     rows: [
       { cmd: 'history', desc: 'Show recent command history' },

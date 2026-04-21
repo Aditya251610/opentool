@@ -7,7 +7,14 @@ import ToolsList from './ToolsList.js'
 import Help from './Help.js'
 import CommandInput from './CommandInput.js'
 import { loadConfig, saveConfig, validateUrl } from '../lib/config.js'
-import { ApiError, endpoints, NetworkError, unwrapKeys, unwrapTools } from '../lib/api.js'
+import {
+  ApiError,
+  endpoints,
+  NetworkError,
+  unwrapKeys,
+  unwrapTools,
+  orgEndpoints,
+} from '../lib/api.js'
 import { appendHistory, loadHistory } from '../lib/history.js'
 import { setToolIds, TOP_LEVEL_COMMANDS } from '../lib/completion.js'
 import { cacheGet, cacheSet, cacheClear } from '../lib/cache.js'
@@ -419,6 +426,115 @@ function AppInner() {
             return
           }
           log(`Logged in to ${cfg.serverUrl}\n  API key: ${cfg.apiKey.slice(0, 11)}…`, 'cyan')
+          return
+        }
+
+        // Organization commands
+        if (v === 'org') {
+          const cfg = loadConfig()
+          const sub = rest[0]?.toLowerCase()
+
+          if (!sub || sub === 'list') {
+            if (!cfg.apiKey) return log('Not logged in. Run: login', 'yellow')
+            const res = await ctx.runWithSpinner('Fetching orgs', () => orgEndpoints.list())
+            if (res) {
+              const orgs = res.result.orgs
+              if (orgs.length === 0) {
+                log('No organizations yet. Create with: org create <name> <slug>', 'gray')
+              } else {
+                const lines = orgs.map(
+                  (o: any) =>
+                    `  ${cfg.orgSlug === o.slug ? '●' : ' '} ${o.slug} — ${o.name} (${o.role}, ${o.plan})`,
+                )
+                log(`Organizations:\n${lines.join('\n')}`, cfg.orgSlug ? 'cyan' : 'white')
+              }
+            }
+            return
+          }
+
+          if (sub === 'use') {
+            const slug = rest[1]
+            if (!slug) return log('Usage: org use <slug>', 'yellow')
+            saveConfig({ ...cfg, orgSlug: slug })
+            log(`✓ Active org set to: ${slug}`, 'green')
+            return
+          }
+
+          if (sub === 'unset') {
+            if (!cfg.orgSlug) return log('No active org to unset', 'yellow')
+            saveConfig({ ...cfg, orgSlug: undefined })
+            log('✓ Org context cleared', 'green')
+            return
+          }
+
+          if (sub === 'info') {
+            if (!cfg.orgSlug) return log('No active org. Set with: org use <slug>', 'yellow')
+            if (!cfg.apiKey) return log('Not logged in. Run: login', 'yellow')
+            const res = await ctx.runWithSpinner('Fetching org', () =>
+              orgEndpoints.get(cfg.orgSlug!),
+            )
+            if (res) {
+              const { org, role } = res.result
+              log(
+                `Org: ${org.name} (${org.slug})\n  Plan: ${org.plan}\n  Role: ${role}\n  Members: ${org.memberCount ?? '?'}`,
+                'cyan',
+              )
+            }
+            return
+          }
+
+          if (sub === 'members') {
+            if (!cfg.orgSlug) return log('No active org. Set with: org use <slug>', 'yellow')
+            if (!cfg.apiKey) return log('Not logged in. Run: login', 'yellow')
+            const res = await ctx.runWithSpinner('Fetching members', () =>
+              orgEndpoints.members(cfg.orgSlug!),
+            )
+            if (res) {
+              const lines = res.result.members.map(
+                (m: any) => `  ${m.email} — ${m.name || '(no name)'} [${m.role}]`,
+              )
+              log(`Members of ${cfg.orgSlug}:\n${lines.join('\n')}`, 'white')
+            }
+            return
+          }
+
+          if (sub === 'teams') {
+            if (!cfg.orgSlug) return log('No active org. Set with: org use <slug>', 'yellow')
+            if (!cfg.apiKey) return log('Not logged in. Run: login', 'yellow')
+            const res = await ctx.runWithSpinner('Fetching teams', () =>
+              orgEndpoints.teams(cfg.orgSlug!),
+            )
+            if (res) {
+              const lines = res.result.teams.map(
+                (t: any) => `  ${t.slug} — ${t.name} (${t.memberCount} members)`,
+              )
+              log(`Teams in ${cfg.orgSlug}:\n${lines.join('\n')}`, 'white')
+            }
+            return
+          }
+
+          if (sub === 'create') {
+            const name = rest[1]
+            const slug = rest[2]
+            if (!name || !slug) return log('Usage: org create <name> <slug>', 'yellow')
+            if (!cfg.apiKey) return log('Not logged in. Run: login', 'yellow')
+            const res = await ctx.runWithSpinner('Creating org', () =>
+              orgEndpoints.create(name, slug),
+            )
+            if (res) {
+              saveConfig({ ...cfg, orgSlug: slug })
+              log(
+                `✓ Organization "${name}" created (slug: ${slug})\n  Active org set to: ${slug}`,
+                'green',
+              )
+            }
+            return
+          }
+
+          log(
+            `Unknown org subcommand: "${sub}". Available: list, use, unset, info, members, teams, create`,
+            'yellow',
+          )
           return
         }
 

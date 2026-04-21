@@ -23,6 +23,7 @@ export const TOP_LEVEL_COMMANDS = [
   'completion',
   'ping',
   'whoami',
+  'org',
   'clear',
   'exit',
   'quit',
