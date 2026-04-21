@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.3](https://github.com/Aditya251610/opentool/compare/server-v0.0.2...server-v0.0.3) (2026-04-21)
+
+
+### Features
+
+* organizations, RBAC, SSO, GDPR — full multitenancy ([651a62d](https://github.com/Aditya251610/opentool/commit/651a62d13df6e75fd4f00abeb1cf455b2954836f))
+* organizations, RBAC, SSO, GDPR — full multitenancy ([b131c8c](https://github.com/Aditya251610/opentool/commit/b131c8c9d1dacf5557e10b535a381140a5db24a5))
+
 ## [0.0.2](https://github.com/Aditya251610/opentool/compare/server-v0.0.1...server-v0.0.2) (2026-04-20)
 
 

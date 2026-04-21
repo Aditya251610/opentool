@@ -5,6 +5,14 @@ All notable changes to the OpenTool project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3](https://github.com/Aditya251610/opentool/compare/opentool-v0.1.2...opentool-v0.1.3) (2026-04-21)
+
+
+### Features
+
+* organizations, RBAC, SSO, GDPR — full multitenancy ([651a62d](https://github.com/Aditya251610/opentool/commit/651a62d13df6e75fd4f00abeb1cf455b2954836f))
+* organizations, RBAC, SSO, GDPR — full multitenancy ([b131c8c](https://github.com/Aditya251610/opentool/commit/b131c8c9d1dacf5557e10b535a381140a5db24a5))
+
 ## [0.1.2](https://github.com/Aditya251610/opentool/compare/opentool-v0.1.1...opentool-v0.1.2) (2026-04-20)
 
 

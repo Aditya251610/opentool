@@ -1,6 +1,6 @@
 {
   "name": "@opentool/server",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "private": true,
   "scripts": {
     "dev": "dotenv -e .env -- tsx watch src/index.ts",
