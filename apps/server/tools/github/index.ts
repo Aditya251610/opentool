@@ -11,6 +11,12 @@ export const githubCreateIssue = defineTool({
   provider: 'github',
   authType: 'oauth2',
   requiredScopes: ['repo'],
+  annotations: {
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
   inputSchema: z.object({
     owner: z.string().describe('Repository owner (username or org)'),
     repo: z.string().describe('Repository name'),
@@ -58,10 +64,17 @@ export const githubCreateIssue = defineTool({
 export const githubListIssues = defineTool({
   id: 'github_list_issues',
   name: 'List GitHub Issues',
-  description: 'Lists issues in a GitHub repository',
+  description:
+    'Lists issues in a GitHub repository. Returns items with pagination metadata.\n\nReturns: { items: [{ id, title, state, url, createdAt }], count, limit, has_more }\n\nExamples:\n  - List open bugs: state="open"\n  - Recent 5 issues: limit=5',
   provider: 'github',
   authType: 'oauth2',
   requiredScopes: ['repo'],
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   inputSchema: z.object({
     owner: z.string().describe('Repository owner'),
     repo: z.string().describe('Repository name'),
@@ -98,13 +111,19 @@ export const githubListIssues = defineTool({
       created_at: string
     }>
 
-    return issues.map((issue) => ({
-      id: issue.number,
-      title: issue.title,
-      state: issue.state,
-      url: issue.html_url,
-      createdAt: issue.created_at,
-    }))
+    const limit = input.limit ?? 20
+    return {
+      items: issues.map((issue) => ({
+        id: issue.number,
+        title: issue.title,
+        state: issue.state,
+        url: issue.html_url,
+        createdAt: issue.created_at,
+      })),
+      count: issues.length,
+      limit,
+      has_more: issues.length >= limit,
+    }
   },
 })
 
@@ -115,6 +134,12 @@ export const githubCreatePR = defineTool({
   provider: 'github',
   authType: 'oauth2',
   requiredScopes: ['repo'],
+  annotations: {
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
   inputSchema: z.object({
     owner: z.string().describe('Repository owner (username or org)'),
     repo: z.string().describe('Repository name'),
@@ -172,6 +197,12 @@ export const githubCommentOnIssue = defineTool({
   provider: 'github',
   authType: 'oauth2',
   requiredScopes: ['repo'],
+  annotations: {
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
   inputSchema: z.object({
     owner: z.string().describe('Repository owner'),
     repo: z.string().describe('Repository name'),
@@ -221,6 +252,12 @@ export const githubGetRepo = defineTool({
   provider: 'github',
   authType: 'oauth2',
   requiredScopes: ['repo'],
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   inputSchema: z.object({
     owner: z.string().describe('Repository owner'),
     repo: z.string().describe('Repository name'),

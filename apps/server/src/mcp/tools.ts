@@ -18,6 +18,12 @@ export interface ConnectedTool {
   description: string
   inputJsonSchema: Record<string, unknown>
   inputZodShape: Record<string, unknown>
+  annotations: {
+    readOnlyHint?: boolean
+    destructiveHint?: boolean
+    idempotentHint?: boolean
+    openWorldHint?: boolean
+  }
 }
 
 export interface UserTool extends ConnectedTool {
@@ -130,6 +136,7 @@ export async function getAllToolsForUser(userId: string): Promise<UserTool[]> {
       inputZodShape: (t.inputSchema as any)._def.shape(),
       provider: t.provider,
       connected,
+      annotations: t.annotations,
     }
   })
 }

@@ -109,7 +109,7 @@ export async function generateAuthUrl(provider: string, userId: string): Promise
   })
 
   // Google requires access_type=offline for refresh tokens
-  if (provider === 'gmail' || provider === 'gcal') {
+  if (provider === 'gmail' || provider === 'google_calendar') {
     params.set('access_type', 'offline')
     params.set('prompt', 'consent')
   }

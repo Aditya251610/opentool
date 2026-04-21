@@ -13,11 +13,19 @@ async function resolveChannel(token: string | undefined, channel: string): Promi
   const res = await fetch(`${SLACK_BASE}/conversations.list?types=public_channel&limit=200`, {
     headers: { Authorization: `Bearer ${token}` },
   })
-  const data = await res.json() as { ok: boolean; error?: string; channels?: Array<{ id: string; name: string }> }
-  if (!data.ok || !data.channels) throw new Error(`Failed to list channels: ${data.error ?? 'unknown error'}`)
+  const data = (await res.json()) as {
+    ok: boolean
+    error?: string
+    channels?: Array<{ id: string; name: string }>
+  }
+  if (!data.ok || !data.channels)
+    throw new Error(`Failed to list channels: ${data.error ?? 'unknown error'}`)
 
   const found = data.channels.find((c) => c.name === name)
-  if (!found) throw new Error(`Channel "${name}" not found. Available: ${data.channels.map(c => c.name).join(', ')}`)
+  if (!found)
+    throw new Error(
+      `Channel "${name}" not found. Available: ${data.channels.map((c) => c.name).join(', ')}`,
+    )
   return found.id
 }
 
@@ -38,6 +46,12 @@ export const slackSendMessage = defineTool({
   provider: 'slack',
   authType: 'oauth2',
   requiredScopes: ['chat:write'],
+  annotations: {
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
   inputSchema: z.object({
     channel: z.string().describe('Channel name (e.g. "general") or ID (e.g. "C1234567890")'),
     text: z.string().describe('Message text (supports Slack markdown/mrkdwn)'),
@@ -63,7 +77,7 @@ export const slackSendMessage = defineTool({
       body: JSON.stringify(body),
     })
 
-    let data = await res.json() as {
+    let data = (await res.json()) as {
       ok: boolean
       error?: string
       ts?: string
@@ -82,7 +96,7 @@ export const slackSendMessage = defineTool({
         },
         body: JSON.stringify(body),
       })
-      data = await res.json() as typeof data
+      data = (await res.json()) as typeof data
     }
 
     if (!data.ok) {
@@ -100,10 +114,17 @@ export const slackSendMessage = defineTool({
 export const slackReadChannel = defineTool({
   id: 'slack_read_channel',
   name: 'Read Slack Channel',
-  description: 'Reads recent message history from a Slack channel',
+  description:
+    'Reads recent message history from a Slack channel. Returns messages with pagination metadata.\n\nReturns: { messages: [{ user, text, timestamp, threadTimestamp }], count, has_more }',
   provider: 'slack',
   authType: 'oauth2',
   requiredScopes: ['channels:history', 'groups:history'],
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   inputSchema: z.object({
     channel: z.string().describe('Channel name (e.g. "general") or ID (e.g. "C1234567890")'),
     limit: z.number().optional().describe('Number of messages to return (default 20, max 100)'),
@@ -127,7 +148,7 @@ export const slackReadChannel = defineTool({
       headers: { Authorization: `Bearer ${auth.accessToken}` },
     })
 
-    const data = await res.json() as {
+    const data = (await res.json()) as {
       ok: boolean
       error?: string
       messages?: Array<{
@@ -151,7 +172,8 @@ export const slackReadChannel = defineTool({
         timestamp: m.ts,
         threadTimestamp: m.thread_ts,
       })),
-      hasMore: data.has_more ?? false,
+      count: (data.messages ?? []).length,
+      has_more: data.has_more ?? false,
     }
   },
 })

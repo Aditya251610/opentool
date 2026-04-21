@@ -59,14 +59,40 @@ async function createPgClient(connectionString: string): Promise<any> {
 
 // ─── Tool: Execute Query ──────────────────
 
+// Dangerous patterns that should be blocked for safety
+const DANGEROUS_PATTERNS = [
+  /DROP\s+(DATABASE|SCHEMA)\b/i,
+  /TRUNCATE\b/i,
+  /\bCOPY\b/i,
+  /\bGRANT\s+/i,
+  /\bREVOKE\s+/i,
+]
+
+function assertSafeQuery(query: string): void {
+  for (const pattern of DANGEROUS_PATTERNS) {
+    if (pattern.test(query)) {
+      throw new Error(
+        `Query blocked: "${query.slice(0, 40)}..." matches dangerous pattern. ` +
+          'DROP DATABASE, DROP SCHEMA, TRUNCATE, COPY, GRANT, and REVOKE are not allowed through this tool.',
+      )
+    }
+  }
+}
+
 export const postgresExecuteQuery = defineTool({
   id: 'postgres_execute_query',
   name: 'Execute PostgreSQL Query',
   description:
-    'Executes a single SQL query against a PostgreSQL database. Supports read and write operations with parameterized queries. Results are truncated to 1000 rows.',
+    'Executes a single SQL query against a PostgreSQL database. Supports read and write operations with parameterized queries. Results are truncated to 1000 rows. Blocks dangerous operations (DROP DATABASE/SCHEMA, TRUNCATE, COPY, GRANT, REVOKE).\n\nReturns: { rows, rowCount, fields: [{ name, dataTypeID }] }\n\nExamples:\n  - SELECT * FROM users WHERE active = $1 (params: ["true"])\n  - INSERT INTO logs (msg) VALUES ($1)',
   provider: 'postgres',
   authType: 'api_key',
   requiredScopes: [],
+  annotations: {
+    readOnlyHint: false,
+    destructiveHint: true,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
   inputSchema: z.object({
     connection_string: z
       .string()
@@ -82,6 +108,7 @@ export const postgresExecuteQuery = defineTool({
       throw new Error('Query exceeds maximum length of 10,000 characters')
     }
 
+    assertSafeQuery(input.query)
     validateConnectionString(input.connection_string)
     const client = await createPgClient(input.connection_string)
 
@@ -116,10 +143,16 @@ export const postgresListTables = defineTool({
   id: 'postgres_list_tables',
   name: 'List Database Tables',
   description:
-    'Lists all tables in a PostgreSQL database, including schema name, table name, estimated row count, and table size. Excludes system schemas (pg_catalog, information_schema).',
+    'Lists all tables in a PostgreSQL database, including schema name, table name, and estimated row count. Excludes system schemas.\n\nReturns: { tables: [{ schema, table, estimated_rows }], count, schema }',
   provider: 'postgres',
   authType: 'api_key',
   requiredScopes: [],
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   inputSchema: z.object({
     connection_string: z
       .string()
@@ -169,6 +202,12 @@ export const postgresDescribeTable = defineTool({
   provider: 'postgres',
   authType: 'api_key',
   requiredScopes: [],
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   inputSchema: z.object({
     connection_string: z
       .string()
@@ -266,10 +305,16 @@ export const postgresRunTransaction = defineTool({
   id: 'postgres_run_transaction',
   name: 'Run SQL Transaction',
   description:
-    'Executes multiple SQL statements within a single atomic transaction. If any statement fails, the entire transaction is rolled back. Useful for migrations and multi-step data changes.',
+    'Executes multiple SQL statements within a single atomic transaction. If any statement fails, the entire transaction is rolled back. Useful for migrations and multi-step data changes. Blocks dangerous operations (DROP DATABASE/SCHEMA, TRUNCATE, COPY, GRANT, REVOKE).',
   provider: 'postgres',
   authType: 'api_key',
   requiredScopes: [],
+  annotations: {
+    readOnlyHint: false,
+    destructiveHint: true,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
   inputSchema: z.object({
     connection_string: z
       .string()
@@ -293,6 +338,11 @@ export const postgresRunTransaction = defineTool({
 
     validateConnectionString(input.connection_string)
     const client = await createPgClient(input.connection_string)
+
+    // Validate all statements before executing any
+    for (const stmt of input.statements) {
+      assertSafeQuery(stmt.query)
+    }
 
     const results: Array<{ statement: number; rowCount: number | null; status: string }> = []
 

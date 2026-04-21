@@ -68,7 +68,7 @@ export const PROVIDERS: Record<string, ProviderMeta> = {
     tools: ['send_email', 'read_email', 'search_emails'],
     authType: 'oauth2',
   },
-  gcal: {
+  google_calendar: {
     name: 'Google Calendar',
     Icon: GoogleCalendarIcon,
     color: '#4285f4',

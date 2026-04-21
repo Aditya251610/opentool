@@ -1305,14 +1305,16 @@ curl http://localhost:3001/api/tools \\
                   Available via MCP instantly.
                 </p>
                 <div className="flex flex-wrap gap-1.5 mt-6">
-                  {['github', 'notion', 'slack', 'linear', 'gmail', 'gcal', '+4'].map((t) => (
-                    <span
-                      key={t}
-                      className="px-2.5 py-1 rounded-md bg-white/[0.03] border border-white/[0.06] text-[11px] font-mono text-white/40"
-                    >
-                      {t}
-                    </span>
-                  ))}
+                  {['github', 'notion', 'slack', 'linear', 'gmail', 'google_calendar', '+4'].map(
+                    (t) => (
+                      <span
+                        key={t}
+                        className="px-2.5 py-1 rounded-md bg-white/[0.03] border border-white/[0.06] text-[11px] font-mono text-white/40"
+                      >
+                        {t}
+                      </span>
+                    ),
+                  )}
                 </div>
               </SpotlightCard>
             </FadeIn>

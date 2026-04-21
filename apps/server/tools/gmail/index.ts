@@ -24,6 +24,12 @@ export const gmailSendEmail = defineTool({
   provider: 'gmail',
   authType: 'oauth2',
   requiredScopes: ['https://www.googleapis.com/auth/gmail.send'],
+  annotations: {
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
   inputSchema: z.object({
     to: z.string().email().describe('Recipient email address'),
     subject: z.string().describe('Email subject'),
@@ -44,11 +50,11 @@ export const gmailSendEmail = defineTool({
     })
 
     if (!res.ok) {
-      const error = await res.json() as { error: { message: string } }
+      const error = (await res.json()) as { error: { message: string } }
       throw safeToolError(error.error, 'Gmail', 'execute')
     }
 
-    const data = await res.json() as { id: string; threadId: string; labelIds: string[] }
+    const data = (await res.json()) as { id: string; threadId: string; labelIds: string[] }
 
     return { id: data.id, threadId: data.threadId, labels: data.labelIds }
   },
@@ -61,9 +67,18 @@ export const gmailReadEmail = defineTool({
   provider: 'gmail',
   authType: 'oauth2',
   requiredScopes: ['https://www.googleapis.com/auth/gmail.readonly'],
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   inputSchema: z.object({
     message_id: z.string().describe('The message ID to read'),
-    format: z.enum(['full', 'metadata', 'minimal']).optional().describe('Response format (default: full)'),
+    format: z
+      .enum(['full', 'metadata', 'minimal'])
+      .optional()
+      .describe('Response format (default: full)'),
   }),
   execute: async ({ input, auth }) => {
     const params = new URLSearchParams({ format: input.format ?? 'full' })
@@ -73,11 +88,11 @@ export const gmailReadEmail = defineTool({
     })
 
     if (!res.ok) {
-      const error = await res.json() as { error: { message: string } }
+      const error = (await res.json()) as { error: { message: string } }
       throw safeToolError(error.error, 'Gmail', 'execute')
     }
 
-    const msg = await res.json() as {
+    const msg = (await res.json()) as {
       id: string
       threadId: string
       snippet: string
@@ -89,14 +104,16 @@ export const gmailReadEmail = defineTool({
     }
 
     const headers = msg.payload.headers
-    const getHeader = (name: string) => headers.find((h) => h.name.toLowerCase() === name.toLowerCase())?.value
+    const getHeader = (name: string) =>
+      headers.find((h) => h.name.toLowerCase() === name.toLowerCase())?.value
 
     let bodyText = ''
     if (msg.payload.body?.data) {
       bodyText = Buffer.from(msg.payload.body.data, 'base64url').toString('utf8')
     } else if (msg.payload.parts) {
-      const textPart = msg.payload.parts.find((p) => p.mimeType === 'text/plain')
-        ?? msg.payload.parts.find((p) => p.mimeType === 'text/html')
+      const textPart =
+        msg.payload.parts.find((p) => p.mimeType === 'text/plain') ??
+        msg.payload.parts.find((p) => p.mimeType === 'text/html')
       if (textPart?.body?.data) {
         bodyText = Buffer.from(textPart.body.data, 'base64url').toString('utf8')
       }
@@ -118,10 +135,17 @@ export const gmailReadEmail = defineTool({
 export const gmailSearchEmails = defineTool({
   id: 'gmail_search_emails',
   name: 'Search Gmail Emails',
-  description: 'Searches for emails in Gmail using a query string',
+  description:
+    'Searches for emails in Gmail using a query string. Returns results with pagination metadata.\n\nReturns: { results: [{ id, from, subject, date, snippet }], totalEstimate, count, has_more }\n\nExamples:\n  - From a person: query="from:alice@example.com"\n  - Recent with subject: query="subject:invoice newer_than:7d"',
   provider: 'gmail',
   authType: 'oauth2',
   requiredScopes: ['https://www.googleapis.com/auth/gmail.readonly'],
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   inputSchema: z.object({
     query: z.string().describe('Gmail search query (e.g. "from:user@example.com subject:hello")'),
     max_results: z.number().optional().describe('Maximum number of results (default 10, max 100)'),
@@ -137,11 +161,11 @@ export const gmailSearchEmails = defineTool({
     })
 
     if (!res.ok) {
-      const error = await res.json() as { error: { message: string } }
+      const error = (await res.json()) as { error: { message: string } }
       throw safeToolError(error.error, 'Gmail', 'execute')
     }
 
-    const data = await res.json() as {
+    const data = (await res.json()) as {
       messages?: Array<{ id: string; threadId: string }>
       resultSizeEstimate: number
     }
@@ -156,7 +180,7 @@ export const gmailSearchEmails = defineTool({
         const msgRes = await fetch(`${GMAIL_BASE}/messages/${m.id}?format=metadata`, {
           headers: { Authorization: `Bearer ${auth.accessToken}` },
         })
-        const msg = await msgRes.json() as {
+        const msg = (await msgRes.json()) as {
           id: string
           snippet: string
           payload: { headers: Array<{ name: string; value: string }> }
@@ -171,10 +195,15 @@ export const gmailSearchEmails = defineTool({
           date: getHeader('Date'),
           snippet: msg.snippet,
         }
-      })
+      }),
     )
 
-    return { results, totalEstimate: data.resultSizeEstimate }
+    return {
+      results,
+      totalEstimate: data.resultSizeEstimate,
+      count: results.length,
+      has_more: (data.messages?.length ?? 0) > results.length,
+    }
   },
 })
 

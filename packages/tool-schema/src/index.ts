@@ -6,7 +6,7 @@ export interface AuthContext {
   accessToken?: string
   apiKey?: string
   userId: string
-  metadata?: Record<string, unknown>   // provider-specific (e.g. Vercel team_id)
+  metadata?: Record<string, unknown> // provider-specific (e.g. Vercel team_id)
 }
 
 export interface ToolExecuteParams<TInput> {
@@ -14,14 +14,23 @@ export interface ToolExecuteParams<TInput> {
   auth: AuthContext
 }
 
+export interface ToolAnnotations {
+  readOnlyHint?: boolean
+  destructiveHint?: boolean
+  idempotentHint?: boolean
+  openWorldHint?: boolean
+}
+
 export interface ToolDefinitionConfig<TInput> {
-  id: string                          // "github.create_issue"
-  name: string                        // "Create GitHub Issue"
+  id: string
+  name: string
   description: string
-  provider: string                    // "github"
+  provider: string
   authType: AuthType
   requiredScopes?: string[]
   inputSchema: ZodSchema<TInput>
+  outputSchema?: ZodSchema
+  annotations?: ToolAnnotations
   execute: (params: ToolExecuteParams<TInput>) => Promise<unknown>
 }
 
@@ -34,12 +43,13 @@ export interface ToolDefinition<TInput = unknown> {
   requiredScopes: string[]
   inputSchema: ZodSchema<TInput>
   inputJsonSchema: Record<string, unknown>
+  outputSchema?: ZodSchema
+  outputJsonSchema?: Record<string, unknown>
+  annotations: ToolAnnotations
   execute: (params: ToolExecuteParams<TInput>) => Promise<unknown>
 }
 
-export function defineTool<TInput>(
-  config: ToolDefinitionConfig<TInput>
-): ToolDefinition<TInput> {
+export function defineTool<TInput>(config: ToolDefinitionConfig<TInput>): ToolDefinition<TInput> {
   return {
     id: config.id,
     name: config.name,
@@ -49,6 +59,13 @@ export function defineTool<TInput>(
     requiredScopes: config.requiredScopes ?? [],
     inputSchema: config.inputSchema,
     inputJsonSchema: zodToJsonSchema(config.inputSchema),
+    outputSchema: config.outputSchema,
+    outputJsonSchema: config.outputSchema ? zodToJsonSchema(config.outputSchema) : undefined,
+    annotations: config.annotations ?? {
+      readOnlyHint: false,
+      destructiveHint: true,
+      openWorldHint: true,
+    },
     execute: config.execute,
   }
 }

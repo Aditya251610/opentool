@@ -35,7 +35,7 @@ export const KNOWN_PROVIDERS = [
   'slack',
   'linear',
   'gmail',
-  'gcal',
+  'google_calendar',
   'stripe',
   'vercel',
   'resend',

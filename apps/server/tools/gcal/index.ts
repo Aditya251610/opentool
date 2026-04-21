@@ -3,18 +3,30 @@ import { defineTool, z } from '@opentool/tool-schema'
 
 const GCAL_BASE = 'https://www.googleapis.com/calendar/v3'
 
-export const gcalCreateEvent = defineTool({
-  id: 'gcal_create_event',
+export const googleCalendarCreateEvent = defineTool({
+  id: 'google_calendar_create_event',
   name: 'Create Google Calendar Event',
   description: 'Creates a new event in Google Calendar',
-  provider: 'gcal',
+  provider: 'google_calendar',
   authType: 'oauth2',
   requiredScopes: ['https://www.googleapis.com/auth/calendar'],
+  annotations: {
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
   inputSchema: z.object({
     summary: z.string().describe('Event title'),
     description: z.string().optional().describe('Event description'),
-    start: z.string().datetime({ message: 'Must be ISO 8601 datetime' }).describe('Start time in ISO 8601 format (e.g. "2024-03-15T10:00:00-05:00")'),
-    end: z.string().datetime({ message: 'Must be ISO 8601 datetime' }).describe('End time in ISO 8601 format'),
+    start: z
+      .string()
+      .datetime({ message: 'Must be ISO 8601 datetime' })
+      .describe('Start time in ISO 8601 format (e.g. "2024-03-15T10:00:00-05:00")'),
+    end: z
+      .string()
+      .datetime({ message: 'Must be ISO 8601 datetime' })
+      .describe('End time in ISO 8601 format'),
     location: z.string().optional().describe('Event location'),
     attendees: z.array(z.string().email()).optional().describe('List of attendee email addresses'),
     calendar_id: z.string().optional().describe('Calendar ID (default: "primary")'),
@@ -36,24 +48,21 @@ export const gcalCreateEvent = defineTool({
       body.attendees = input.attendees.map((email) => ({ email }))
     }
 
-    const res = await fetch(
-      `${GCAL_BASE}/calendars/${encodeURIComponent(calendarId)}/events`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${auth.accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      }
-    )
+    const res = await fetch(`${GCAL_BASE}/calendars/${encodeURIComponent(calendarId)}/events`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${auth.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    })
 
     if (!res.ok) {
-      const error = await res.json() as { error: { message: string } }
+      const error = (await res.json()) as { error: { message: string } }
       throw safeToolError(error.error, 'Google Calendar', 'execute')
     }
 
-    const event = await res.json() as {
+    const event = (await res.json()) as {
       id: string
       htmlLink: string
       summary: string
@@ -73,18 +82,39 @@ export const gcalCreateEvent = defineTool({
   },
 })
 
-export const gcalListEvents = defineTool({
-  id: 'gcal_list_events',
+export const googleCalendarListEvents = defineTool({
+  id: 'google_calendar_list_events',
   name: 'List Google Calendar Events',
-  description: 'Lists upcoming events from Google Calendar',
-  provider: 'gcal',
+  description:
+    'Lists upcoming events from Google Calendar. Returns events with pagination metadata.\n\nReturns: { events: [{ id, url, summary, description, location, start, end, status }], count, has_more }',
+  provider: 'google_calendar',
   authType: 'oauth2',
   requiredScopes: ['https://www.googleapis.com/auth/calendar'],
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   inputSchema: z.object({
     calendar_id: z.string().optional().describe('Calendar ID (default: "primary")'),
-    time_min: z.string().datetime({ message: 'Must be ISO 8601 datetime' }).optional().describe('Start of time range in ISO 8601 (default: now)'),
-    time_max: z.string().datetime({ message: 'Must be ISO 8601 datetime' }).optional().describe('End of time range in ISO 8601'),
-    max_results: z.number().int().positive().max(250).optional().describe('Maximum events to return (default 10, max 250)'),
+    time_min: z
+      .string()
+      .datetime({ message: 'Must be ISO 8601 datetime' })
+      .optional()
+      .describe('Start of time range in ISO 8601 (default: now)'),
+    time_max: z
+      .string()
+      .datetime({ message: 'Must be ISO 8601 datetime' })
+      .optional()
+      .describe('End of time range in ISO 8601'),
+    max_results: z
+      .number()
+      .int()
+      .positive()
+      .max(250)
+      .optional()
+      .describe('Maximum events to return (default 10, max 250)'),
     query: z.string().optional().describe('Free-text search query'),
   }),
   execute: async ({ input, auth }) => {
@@ -102,15 +132,15 @@ export const gcalListEvents = defineTool({
       `${GCAL_BASE}/calendars/${encodeURIComponent(calendarId)}/events?${params}`,
       {
         headers: { Authorization: `Bearer ${auth.accessToken}` },
-      }
+      },
     )
 
     if (!res.ok) {
-      const error = await res.json() as { error: { message: string } }
+      const error = (await res.json()) as { error: { message: string } }
       throw safeToolError(error.error, 'Google Calendar', 'execute')
     }
 
-    const data = await res.json() as {
+    const data = (await res.json()) as {
       items: Array<{
         id: string
         htmlLink: string
@@ -134,8 +164,10 @@ export const gcalListEvents = defineTool({
         end: e.end.dateTime ?? e.end.date,
         status: e.status,
       })),
+      count: (data.items ?? []).length,
+      has_more: (data.items ?? []).length >= (input.max_results ?? 10),
     }
   },
 })
 
-export const gcalTools = [gcalCreateEvent, gcalListEvents]
+export const gcalTools = [googleCalendarCreateEvent, googleCalendarListEvents]

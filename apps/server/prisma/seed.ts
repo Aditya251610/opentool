@@ -49,7 +49,14 @@ async function main() {
       revokeUrl: 'https://slack.com/api/auth.revoke',
       clientId: process.env.SLACK_CLIENT_ID ?? '',
       clientSecretEnc: encryptIfSet(process.env.SLACK_CLIENT_SECRET),
-      defaultScopes: ['channels:read', 'channels:history', 'groups:history', 'channels:join', 'chat:write', 'users:read'],
+      defaultScopes: [
+        'channels:read',
+        'channels:history',
+        'groups:history',
+        'channels:join',
+        'chat:write',
+        'users:read',
+      ],
       authType: AuthType.OAUTH2,
       isEnabled: !!(process.env.SLACK_CLIENT_ID && process.env.SLACK_CLIENT_SECRET),
     },
@@ -81,16 +88,14 @@ async function main() {
       isEnabled: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
     },
     {
-      provider: 'gcal',
+      provider: 'google_calendar',
       displayName: 'Google Calendar',
       authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
       tokenUrl: 'https://oauth2.googleapis.com/token',
       revokeUrl: 'https://oauth2.googleapis.com/revoke',
       clientId: process.env.GOOGLE_CLIENT_ID ?? '',
       clientSecretEnc: encryptIfSet(process.env.GOOGLE_CLIENT_SECRET),
-      defaultScopes: [
-        'https://www.googleapis.com/auth/calendar',
-      ],
+      defaultScopes: ['https://www.googleapis.com/auth/calendar'],
       authType: AuthType.OAUTH2,
       isEnabled: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
     },
@@ -161,7 +166,9 @@ async function main() {
       },
       create: { ...data, isEnabled },
     })
-    console.log(`  ${isEnabled ? '✅' : '⏭️ '} Provider: ${p.displayName}${isEnabled ? '' : ' (no credentials — disabled)'}`)
+    console.log(
+      `  ${isEnabled ? '✅' : '⏭️ '} Provider: ${p.displayName}${isEnabled ? '' : ' (no credentials — disabled)'}`,
+    )
   }
 
   // ─────────────────────────────────────────

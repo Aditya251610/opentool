@@ -9,7 +9,7 @@ export const PROVIDERS = [
   'slack',
   'linear',
   'gmail',
-  'gcal',
+  'google_calendar',
   'stripe',
   'vercel',
   'resend',

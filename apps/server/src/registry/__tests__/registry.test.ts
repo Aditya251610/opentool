@@ -56,7 +56,7 @@ describe('tool registry', () => {
         'notion',
         'linear',
         'stripe',
-        'gcal',
+        'google_calendar',
         'vercel',
         'resend',
         'postgres',

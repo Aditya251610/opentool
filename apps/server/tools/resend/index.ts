@@ -10,6 +10,12 @@ export const resendSendEmail = defineTool({
   provider: 'resend',
   authType: 'api_key',
   requiredScopes: [],
+  annotations: {
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
   inputSchema: z.object({
     from: z.string().email().describe('Sender email address (must be from a verified domain)'),
     to: z.string().email().describe('Recipient email address'),
@@ -19,10 +25,15 @@ export const resendSendEmail = defineTool({
     cc: z.array(z.string().email()).optional().describe('CC email addresses'),
     bcc: z.array(z.string().email()).optional().describe('BCC email addresses'),
     reply_to: z.string().email().optional().describe('Reply-to email address'),
-    tags: z.array(z.object({
-      name: z.string().describe('Tag name'),
-      value: z.string().describe('Tag value'),
-    })).optional().describe('Email tags for tracking'),
+    tags: z
+      .array(
+        z.object({
+          name: z.string().describe('Tag name'),
+          value: z.string().describe('Tag value'),
+        }),
+      )
+      .optional()
+      .describe('Email tags for tracking'),
   }),
   execute: async ({ input, auth }) => {
     const apiKey = auth.apiKey ?? auth.accessToken
@@ -49,11 +60,11 @@ export const resendSendEmail = defineTool({
     })
 
     if (!res.ok) {
-      const error = await res.json() as { message: string }
+      const error = (await res.json()) as { message: string }
       throw safeToolError(error, 'Resend', 'execute')
     }
 
-    const data = await res.json() as { id: string }
+    const data = (await res.json()) as { id: string }
 
     return { id: data.id }
   },

@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { gmailSendEmail, gmailReadEmail, gmailSearchEmails } from '../gmail'
-import { gcalCreateEvent, gcalListEvents } from '../gcal'
+import {
+  googleCalendarCreateEvent as gcalCreateEvent,
+  googleCalendarListEvents as gcalListEvents,
+} from '../gcal'
 import { stripeCreatePaymentLink, stripeListCustomers } from '../stripe'
 import { linearCreateIssue, linearUpdateIssueStatus } from '../linear'
 
