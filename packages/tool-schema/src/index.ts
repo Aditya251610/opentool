@@ -2,6 +2,16 @@ import { z, ZodSchema } from 'zod'
 
 export type AuthType = 'oauth2' | 'api_key' | 'none'
 
+export type ToolCategory =
+  | 'development'
+  | 'communication'
+  | 'email'
+  | 'productivity'
+  | 'database'
+  | 'payments'
+  | 'infrastructure'
+  | 'meta'
+
 export interface AuthContext {
   accessToken?: string
   apiKey?: string
@@ -27,6 +37,7 @@ export interface ToolDefinitionConfig<TInput> {
   description: string
   provider: string
   authType: AuthType
+  category?: ToolCategory
   requiredScopes?: string[]
   inputSchema: ZodSchema<TInput>
   outputSchema?: ZodSchema
@@ -40,6 +51,7 @@ export interface ToolDefinition<TInput = unknown> {
   description: string
   provider: string
   authType: AuthType
+  category: ToolCategory
   requiredScopes: string[]
   inputSchema: ZodSchema<TInput>
   inputJsonSchema: Record<string, unknown>
@@ -49,6 +61,20 @@ export interface ToolDefinition<TInput = unknown> {
   execute: (params: ToolExecuteParams<TInput>) => Promise<unknown>
 }
 
+const PROVIDER_CATEGORY_MAP: Record<string, ToolCategory> = {
+  github: 'development',
+  linear: 'development',
+  vercel: 'infrastructure',
+  slack: 'communication',
+  notion: 'productivity',
+  gmail: 'email',
+  google_calendar: 'productivity',
+  resend: 'email',
+  stripe: 'payments',
+  postgres: 'database',
+  meta: 'meta',
+}
+
 export function defineTool<TInput>(config: ToolDefinitionConfig<TInput>): ToolDefinition<TInput> {
   return {
     id: config.id,
@@ -56,6 +82,7 @@ export function defineTool<TInput>(config: ToolDefinitionConfig<TInput>): ToolDe
     description: config.description,
     provider: config.provider,
     authType: config.authType,
+    category: config.category ?? PROVIDER_CATEGORY_MAP[config.provider] ?? 'productivity',
     requiredScopes: config.requiredScopes ?? [],
     inputSchema: config.inputSchema,
     inputJsonSchema: zodToJsonSchema(config.inputSchema),

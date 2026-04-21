@@ -118,6 +118,25 @@ vi.mock('../../registry', () => ({
       authType: 'OAUTH',
     },
   ]),
+  getUserTools: vi.fn(() => [
+    {
+      id: 'tool1',
+      name: 'Tool 1',
+      description: 'Test tool 1',
+      provider: 'slack',
+      authType: 'OAUTH',
+      category: 'communication',
+    },
+    {
+      id: 'tool2',
+      name: 'Tool 2',
+      description: 'Test tool 2',
+      provider: 'gmail',
+      authType: 'OAUTH',
+      category: 'email',
+    },
+  ]),
+  getToolCategories: vi.fn(() => ({ slack: 1, gmail: 1 })),
   getToolsByProvider: vi.fn((provider) => {
     if (provider === 'slack') {
       return [

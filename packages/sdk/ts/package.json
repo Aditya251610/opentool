@@ -19,7 +19,8 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/"
   },
   "keywords": [
     "opentool",
@@ -38,6 +39,7 @@
     "access": "public"
   },
   "devDependencies": {
+    "@types/node": "^25.6.0",
     "tsup": "^8.0.0",
     "typescript": "^5.4.0",
     "vitest": "3.2.4"

@@ -53,12 +53,12 @@ export class GrpcTransport {
     if (this.toolClient) return
 
     // Dynamic imports — peer deps, not bundled
-    const proto: any = await Function('return import("@opentool/proto")')()
+    const proto: any = await import('@opentool/proto')
     this.grpcMod = proto.grpc
 
     let creds: any
     if (this.config.tls || this.config.caCert) {
-      const fs: any = await Function('return import("node:fs")')()
+      const fs: any = await import('node:fs')
       const root = this.config.caCert ? fs.readFileSync(this.config.caCert) : null
       const cert = this.config.clientCert ? fs.readFileSync(this.config.clientCert) : null
       const key = this.config.clientKey ? fs.readFileSync(this.config.clientKey) : null

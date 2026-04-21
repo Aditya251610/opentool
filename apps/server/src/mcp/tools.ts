@@ -1,5 +1,5 @@
 import { prisma } from '../db/client'
-import { getToolById, getAllTools } from '../registry'
+import { getToolById, getAllTools, getMetaTools } from '../registry'
 import { refreshTokenIfExpired } from '../auth/broker'
 import { generateAuthUrl } from '../auth/oauth'
 import { ConnectionStatus, AuditAction, AuditStatus } from '@prisma/client'
@@ -56,6 +56,25 @@ const SENSITIVE_KEYS = new Set([
   'private_key',
   'clientsecret',
   'client_secret',
+  'authkey',
+  'auth_key',
+  'dbpassword',
+  'db_password',
+  'jwt',
+  'jwttoken',
+  'jwt_token',
+  'ssotoken',
+  'sso_token',
+  'sessiontoken',
+  'session_token',
+  'webhooksecret',
+  'webhook_secret',
+  'signingkey',
+  'signing_key',
+  'hmackey',
+  'hmac_key',
+  'encryptionkey',
+  'encryption_key',
 ])
 
 /** Normalizes a key for comparison by converting to lowercase and removing hyphens/underscores. */
@@ -145,6 +164,23 @@ export async function getAllToolsForUser(userId: string): Promise<UserTool[]> {
 export async function getConnectedTools(userId: string): Promise<ConnectedTool[]> {
   const allTools = await getAllToolsForUser(userId)
   return allTools.filter((t) => t.connected)
+}
+
+/**
+ * Returns only meta-tools (search_tools, get_tool_details, execute_dynamic_tool)
+ * for lean mode sessions. These tools don't need provider connections.
+ */
+export async function getMetaToolsForUser(_userId: string): Promise<UserTool[]> {
+  const metaToolDefs = getMetaTools()
+  return metaToolDefs.map((t) => ({
+    id: t.id,
+    description: t.description,
+    inputJsonSchema: t.inputJsonSchema,
+    inputZodShape: (t.inputSchema as any)._def.shape(),
+    provider: t.provider,
+    connected: true, // meta-tools are always "connected"
+    annotations: t.annotations,
+  }))
 }
 
 // ─── Tool Execution ───────────────────────

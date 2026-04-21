@@ -19,7 +19,7 @@ export async function getGrpcTransport(): Promise<any> {
 
   try {
     // Dynamic import — keeps @grpc/grpc-js out of the main bundle
-    const sdk = await Function('return import("@opentool-ts/sdk")')()
+    const sdk = await import('@opentool-ts/sdk')
     _transport = new sdk.GrpcTransport({
       host: grpcUrl,
       apiKey: config.apiKey,
@@ -52,7 +52,7 @@ export async function checkGrpcHealth(
   const url = grpcUrl ?? deriveGrpcUrl(config)
 
   try {
-    const sdk = await Function('return import("@opentool-ts/sdk")')()
+    const sdk = await import('@opentool-ts/sdk')
     const transport = new sdk.GrpcTransport({
       host: url,
       apiKey: config.apiKey,
@@ -65,7 +65,7 @@ export async function checkGrpcHealth(
     transport.close()
 
     return {
-      serving: res.status === 'SERVING' || res.status === 1,
+      serving: res.status === 'SERVING' || (res.status as any) === 1,
       latencyMs,
       status: String(res.status),
     }

@@ -56,6 +56,12 @@ export const MAX_RESPONSE_BYTES = 1_048_576 // 1MB
 // ─── Tool Execution ───────────────────────
 export const TOOL_TIMEOUT_MS = 30000 // 30 seconds
 
+// ─── Tool Query ───────────────────────────
+export const TOOL_QUERY_DEFAULT_LIMIT = 20
+export const TOOL_QUERY_MAX_LIMIT = 50
+export const TOOL_QUERY_MAX_QUERY_LENGTH = 200
+export const META_PROVIDER = 'meta'
+
 // ─── Audit Log Retention ──────────────────
 export const AUDIT_LOG_RETENTION_DAYS = 90
 

@@ -66,14 +66,27 @@ const DANGEROUS_PATTERNS = [
   /\bCOPY\b/i,
   /\bGRANT\s+/i,
   /\bREVOKE\s+/i,
+  /ALTER\s+SYSTEM\b/i,
+  /CREATE\s+EXTENSION\b/i,
+  /LOAD\b/i,
 ]
 
+// Strip SQL comments (block and line) to prevent regex bypass via comment-based obfuscation
+function stripSqlComments(sql: string): string {
+  return sql
+    .replace(/\/\*[\s\S]*?\*\//g, ' ') // block comments
+    .replace(/--[^\n]*/g, ' ') // line comments
+    .replace(/\s+/g, ' ') // collapse whitespace
+    .trim()
+}
+
 function assertSafeQuery(query: string): void {
+  const normalized = stripSqlComments(query)
   for (const pattern of DANGEROUS_PATTERNS) {
-    if (pattern.test(query)) {
+    if (pattern.test(normalized)) {
       throw new Error(
         `Query blocked: "${query.slice(0, 40)}..." matches dangerous pattern. ` +
-          'DROP DATABASE, DROP SCHEMA, TRUNCATE, COPY, GRANT, and REVOKE are not allowed through this tool.',
+          'DROP DATABASE, DROP SCHEMA, TRUNCATE, COPY, GRANT, REVOKE, ALTER SYSTEM, CREATE EXTENSION, and LOAD are not allowed through this tool.',
       )
     }
   }

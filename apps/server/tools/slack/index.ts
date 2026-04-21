@@ -22,10 +22,7 @@ async function resolveChannel(token: string | undefined, channel: string): Promi
     throw new Error(`Failed to list channels: ${data.error ?? 'unknown error'}`)
 
   const found = data.channels.find((c) => c.name === name)
-  if (!found)
-    throw new Error(
-      `Channel "${name}" not found. Available: ${data.channels.map((c) => c.name).join(', ')}`,
-    )
+  if (!found) throw new Error(`Channel "${name}" not found. Check the channel name and try again.`)
   return found.id
 }
 
@@ -127,7 +124,13 @@ export const slackReadChannel = defineTool({
   },
   inputSchema: z.object({
     channel: z.string().describe('Channel name (e.g. "general") or ID (e.g. "C1234567890")'),
-    limit: z.number().optional().describe('Number of messages to return (default 20, max 100)'),
+    limit: z
+      .number()
+      .int()
+      .positive()
+      .max(100)
+      .optional()
+      .describe('Number of messages to return (default 20, max 100)'),
     oldest: z.string().optional().describe('Only messages after this Unix timestamp'),
     latest: z.string().optional().describe('Only messages before this Unix timestamp'),
   }),

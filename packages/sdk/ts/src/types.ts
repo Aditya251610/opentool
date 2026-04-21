@@ -37,11 +37,65 @@ export interface Tool {
   description: string
   provider: string
   authType: 'oauth2' | 'api_key' | 'none'
+  category?: string
+  annotations?: {
+    readOnlyHint?: boolean
+    destructiveHint?: boolean
+    idempotentHint?: boolean
+    openWorldHint?: boolean
+  }
 }
 
 export interface ToolList {
   count: number
   tools: Tool[]
+}
+
+export interface ToolSearchOptions {
+  query?: string
+  provider?: string
+  category?: string
+  authType?: 'oauth2' | 'api_key' | 'none'
+  readOnly?: boolean
+  limit?: number
+  offset?: number
+}
+
+export interface ToolSearchResult {
+  tools: Tool[]
+  total: number
+  limit: number
+  offset: number
+  hasMore: boolean
+}
+
+export interface ToolDetails {
+  id: string
+  name: string
+  description: string
+  provider: string
+  category: string
+  authType: string
+  requiredScopes: string[]
+  inputSchema: Record<string, unknown>
+  outputSchema: Record<string, unknown> | null
+  annotations: {
+    readOnlyHint?: boolean
+    destructiveHint?: boolean
+    idempotentHint?: boolean
+    openWorldHint?: boolean
+  }
+}
+
+export interface ProviderSummary {
+  provider: string
+  toolCount: number
+}
+
+export interface ToolSearchSummary {
+  message: string
+  providers: ProviderSummary[]
+  totalTools: number
 }
 
 export interface ConnectUrl {

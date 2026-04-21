@@ -244,6 +244,15 @@ export async function refreshTokenIfExpired(
   // expired — attempt refresh
   if (!tokenStore.refreshTokenEnc) return null // user must re-auth
 
+  // Rate limit: max 1 refresh per user+provider per 30 seconds to prevent DDoS on OAuth providers
+  const rateLimitKey = `ot:ratelimit:refresh:${userId}:${provider}`
+  const recentRefresh = await redis.get(rateLimitKey)
+  if (recentRefresh) {
+    // Already refreshed recently — return current token from cache/DB
+    logger.debug('Token refresh rate-limited, returning cached token', { userId, provider })
+    return getTokenForUser(userId, provider)
+  }
+
   // Distributed lock to prevent concurrent refreshes for same user+provider
   const lockKey = `ot:lock:refresh:${userId}:${provider}`
   const acquired = await redis.set(lockKey, '1', 'EX', 30, 'NX')
@@ -294,6 +303,9 @@ export async function refreshTokenIfExpired(
       expiresAt,
       scopes: connection.scopes,
     })
+
+    // Mark refresh as done — prevents repeated refresh attempts within 30s
+    await redis.set(rateLimitKey, '1', 'EX', 30)
 
     return getTokenForUser(userId, provider)
   } finally {

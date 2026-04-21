@@ -25,20 +25,22 @@ export const githubCreateIssue = defineTool({
     labels: z.array(z.string()).optional().describe('Labels to apply'),
   }),
   execute: async ({ input, auth }) => {
-    const res = await fetch(`${GITHUB_API_BASE_URL}/repos/${input.owner}/${input.repo}/issues`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${auth.accessToken}`,
-        Accept: 'application/vnd.github+json',
-        'Content-Type': 'application/json',
-        'X-GitHub-Api-Version': GITHUB_API_VERSION,
+    const res = await fetch(
+      `${GITHUB_API_BASE_URL}/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repo)}/issues`,
+      {
+        headers: {
+          Authorization: `Bearer ${auth.accessToken}`,
+          Accept: 'application/vnd.github+json',
+          'Content-Type': 'application/json',
+          'X-GitHub-Api-Version': GITHUB_API_VERSION,
+        },
+        body: JSON.stringify({
+          title: input.title,
+          body: input.body,
+          labels: input.labels,
+        }),
       },
-      body: JSON.stringify({
-        title: input.title,
-        body: input.body,
-        labels: input.labels,
-      }),
-    })
+    )
 
     if (!res.ok) {
       const error = (await res.json()) as { message: string }
@@ -79,7 +81,13 @@ export const githubListIssues = defineTool({
     owner: z.string().describe('Repository owner'),
     repo: z.string().describe('Repository name'),
     state: z.enum(['open', 'closed', 'all']).optional().describe('Issue state filter'),
-    limit: z.number().optional().describe('Max number of issues to return'),
+    limit: z
+      .number()
+      .int()
+      .positive()
+      .max(100)
+      .optional()
+      .describe('Max number of issues to return'),
   }),
   execute: async ({ input, auth }) => {
     const params = new URLSearchParams({
@@ -88,7 +96,7 @@ export const githubListIssues = defineTool({
     })
 
     const res = await fetch(
-      `${GITHUB_API_BASE_URL}/repos/${input.owner}/${input.repo}/issues?${params}`,
+      `${GITHUB_API_BASE_URL}/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repo)}/issues?${params}`,
       {
         headers: {
           Authorization: `Bearer ${auth.accessToken}`,
@@ -150,22 +158,25 @@ export const githubCreatePR = defineTool({
     draft: z.boolean().optional().describe('Whether to create as draft PR'),
   }),
   execute: async ({ input, auth }) => {
-    const res = await fetch(`${GITHUB_API_BASE_URL}/repos/${input.owner}/${input.repo}/pulls`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${auth.accessToken}`,
-        Accept: 'application/vnd.github+json',
-        'Content-Type': 'application/json',
-        'X-GitHub-Api-Version': GITHUB_API_VERSION,
+    const res = await fetch(
+      `${GITHUB_API_BASE_URL}/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repo)}/pulls`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${auth.accessToken}`,
+          Accept: 'application/vnd.github+json',
+          'Content-Type': 'application/json',
+          'X-GitHub-Api-Version': GITHUB_API_VERSION,
+        },
+        body: JSON.stringify({
+          title: input.title,
+          body: input.body,
+          head: input.head,
+          base: input.base,
+          draft: input.draft ?? false,
+        }),
       },
-      body: JSON.stringify({
-        title: input.title,
-        body: input.body,
-        head: input.head,
-        base: input.base,
-        draft: input.draft ?? false,
-      }),
-    })
+    )
 
     if (!res.ok) {
       const error = (await res.json()) as { message: string }
@@ -206,12 +217,12 @@ export const githubCommentOnIssue = defineTool({
   inputSchema: z.object({
     owner: z.string().describe('Repository owner'),
     repo: z.string().describe('Repository name'),
-    issue_number: z.number().describe('Issue or pull request number'),
+    issue_number: z.number().int().positive().describe('Issue or pull request number'),
     body: z.string().describe('Comment body (Markdown supported)'),
   }),
   execute: async ({ input, auth }) => {
     const res = await fetch(
-      `${GITHUB_API_BASE_URL}/repos/${input.owner}/${input.repo}/issues/${input.issue_number}/comments`,
+      `${GITHUB_API_BASE_URL}/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repo)}/issues/${encodeURIComponent(String(input.issue_number))}/comments`,
       {
         method: 'POST',
         headers: {
@@ -263,13 +274,16 @@ export const githubGetRepo = defineTool({
     repo: z.string().describe('Repository name'),
   }),
   execute: async ({ input, auth }) => {
-    const res = await fetch(`${GITHUB_API_BASE_URL}/repos/${input.owner}/${input.repo}`, {
-      headers: {
-        Authorization: `Bearer ${auth.accessToken}`,
-        Accept: 'application/vnd.github+json',
-        'X-GitHub-Api-Version': GITHUB_API_VERSION,
+    const res = await fetch(
+      `${GITHUB_API_BASE_URL}/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repo)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${auth.accessToken}`,
+          Accept: 'application/vnd.github+json',
+          'X-GitHub-Api-Version': GITHUB_API_VERSION,
+        },
       },
-    })
+    )
 
     if (!res.ok) {
       const error = (await res.json()) as { message: string }

@@ -3,9 +3,18 @@ import { defineTool, z } from '@opentool/tool-schema'
 
 const GMAIL_BASE = 'https://gmail.googleapis.com/gmail/v1/users/me'
 
-function encodeEmail(to: string, subject: string, body: string, from?: string): string {
+function encodeEmail(
+  to: string,
+  subject: string,
+  body: string,
+  from?: string,
+  cc?: string,
+  bcc?: string,
+): string {
   const lines = [
     `To: ${to}`,
+    ...(cc ? [`Cc: ${cc}`] : []),
+    ...(bcc ? [`Bcc: ${bcc}`] : []),
     ...(from ? [`From: ${from}`] : []),
     `Subject: ${subject}`,
     'MIME-Version: 1.0',
@@ -38,7 +47,7 @@ export const gmailSendEmail = defineTool({
     bcc: z.string().email().optional().describe('BCC email address'),
   }),
   execute: async ({ input, auth }) => {
-    const raw = encodeEmail(input.to, input.subject, input.body)
+    const raw = encodeEmail(input.to, input.subject, input.body, undefined, input.cc, input.bcc)
 
     const res = await fetch(`${GMAIL_BASE}/messages/send`, {
       method: 'POST',
@@ -83,9 +92,12 @@ export const gmailReadEmail = defineTool({
   execute: async ({ input, auth }) => {
     const params = new URLSearchParams({ format: input.format ?? 'full' })
 
-    const res = await fetch(`${GMAIL_BASE}/messages/${input.message_id}?${params}`, {
-      headers: { Authorization: `Bearer ${auth.accessToken}` },
-    })
+    const res = await fetch(
+      `${GMAIL_BASE}/messages/${encodeURIComponent(input.message_id)}?${params}`,
+      {
+        headers: { Authorization: `Bearer ${auth.accessToken}` },
+      },
+    )
 
     if (!res.ok) {
       const error = (await res.json()) as { error: { message: string } }
@@ -148,7 +160,13 @@ export const gmailSearchEmails = defineTool({
   },
   inputSchema: z.object({
     query: z.string().describe('Gmail search query (e.g. "from:user@example.com subject:hello")'),
-    max_results: z.number().optional().describe('Maximum number of results (default 10, max 100)'),
+    max_results: z
+      .number()
+      .int()
+      .positive()
+      .max(100)
+      .optional()
+      .describe('Maximum number of results (default 10, max 100)'),
   }),
   execute: async ({ input, auth }) => {
     const params = new URLSearchParams({
@@ -174,12 +192,15 @@ export const gmailSearchEmails = defineTool({
       return { results: [], totalEstimate: 0 }
     }
 
-    // Fetch snippet for each message
-    const results = await Promise.all(
+    // Fetch snippet for each message — use allSettled so one failure doesn't kill all
+    const settled = await Promise.allSettled(
       data.messages.slice(0, input.max_results ?? 10).map(async (m) => {
-        const msgRes = await fetch(`${GMAIL_BASE}/messages/${m.id}?format=metadata`, {
-          headers: { Authorization: `Bearer ${auth.accessToken}` },
-        })
+        const msgRes = await fetch(
+          `${GMAIL_BASE}/messages/${encodeURIComponent(m.id)}?format=metadata`,
+          {
+            headers: { Authorization: `Bearer ${auth.accessToken}` },
+          },
+        )
         const msg = (await msgRes.json()) as {
           id: string
           snippet: string
@@ -197,6 +218,20 @@ export const gmailSearchEmails = defineTool({
         }
       }),
     )
+
+    const results = settled
+      .filter(
+        (
+          s,
+        ): s is PromiseFulfilledResult<{
+          id: string
+          from: string | undefined
+          subject: string | undefined
+          date: string | undefined
+          snippet: string
+        }> => s.status === 'fulfilled',
+      )
+      .map((s) => s.value)
 
     return {
       results,

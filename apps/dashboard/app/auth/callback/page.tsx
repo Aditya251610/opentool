@@ -10,9 +10,7 @@ function CallbackInner() {
   const { login } = useAuth()
 
   useEffect(() => {
-    const apiKey = searchParams.get('apiKey')
-    const email = searchParams.get('email')
-    const name = searchParams.get('name')
+    const code = searchParams.get('code')
     const error = searchParams.get('error')
 
     if (error) {
@@ -20,10 +18,22 @@ function CallbackInner() {
       return
     }
 
-    if (apiKey && email) {
-      login(apiKey, { id: '', email, name: name || null }).then(() => {
-        router.replace('/dashboard')
+    if (code) {
+      // Exchange the temp code for credentials server-side
+      fetch('/api/auth/google-exchange', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
       })
+        .then((res) => {
+          if (!res.ok) throw new Error('Exchange failed')
+          return res.json()
+        })
+        .then((data: { apiKey: string; email: string; name: string }) => {
+          return login(data.apiKey, { id: '', email: data.email, name: data.name || null })
+        })
+        .then(() => router.replace('/dashboard'))
+        .catch(() => router.replace('/login?error=exchange_failed'))
     } else {
       router.replace('/login?error=missing_credentials')
     }

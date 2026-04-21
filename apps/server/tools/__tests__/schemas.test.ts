@@ -139,22 +139,22 @@ describe('Gmail search_emails schema', () => {
     expect(result.success).toBe(true)
   })
 
-  it('should accept max_results > 100 (no validation)', () => {
+  it('should reject max_results > 100', () => {
     const input = {
       query: 'test',
       max_results: 101,
     }
     const result = gmailSearchEmails.inputSchema.safeParse(input)
-    expect(result.success).toBe(true) // Schema doesn't validate upper bound
+    expect(result.success).toBe(false) // Schema validates upper bound (max 100)
   })
 
-  it('should accept max_results = 0 (no validation)', () => {
+  it('should reject max_results = 0', () => {
     const input = {
       query: 'test',
       max_results: 0,
     }
     const result = gmailSearchEmails.inputSchema.safeParse(input)
-    expect(result.success).toBe(true) // Schema doesn't validate lower bound
+    expect(result.success).toBe(false) // Schema validates lower bound (positive)
   })
 
   it('should require query', () => {

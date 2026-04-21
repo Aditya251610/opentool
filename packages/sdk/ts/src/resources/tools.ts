@@ -1,5 +1,13 @@
 import { HttpClient } from '../http'
-import type { Tool, ToolList, ToolExecutionResult } from '../types'
+import type {
+  Tool,
+  ToolList,
+  ToolExecutionResult,
+  ToolSearchOptions,
+  ToolSearchResult,
+  ToolSearchSummary,
+  ToolDetails,
+} from '../types'
 
 export class ToolsResource {
   constructor(private http: HttpClient) {}
@@ -23,16 +31,42 @@ export class ToolsResource {
   }
 
   /**
+   * Search and filter tools by keyword, provider, category, or capability.
+   * Returns a paginated list of matching tools.
+   * If no options are provided, returns a provider summary.
+   */
+  async search(options: ToolSearchOptions = {}): Promise<ToolSearchResult | ToolSearchSummary> {
+    const params = new URLSearchParams()
+    if (options.query) params.set('q', options.query)
+    if (options.provider) params.set('provider', options.provider)
+    if (options.category) params.set('category', options.category)
+    if (options.authType) params.set('auth_type', options.authType)
+    if (options.readOnly !== undefined) params.set('read_only', String(options.readOnly))
+    if (options.limit !== undefined) params.set('limit', String(options.limit))
+    if (options.offset !== undefined) params.set('offset', String(options.offset))
+
+    const qs = params.toString()
+    return this.http.get<ToolSearchResult | ToolSearchSummary>(
+      `/api/tools/search${qs ? `?${qs}` : ''}`,
+    )
+  }
+
+  /**
+   * Get full schema and metadata for a specific tool by its ID.
+   * Calls the meta_get_tool_details MCP tool under the hood.
+   */
+  async details(toolId: string): Promise<ToolDetails> {
+    // Use the REST tool search to get tool details by exact ID
+    const list = await this.http.get<ToolList>(`/api/tools/`)
+    const tool = list.tools.find((t) => t.id === toolId)
+    if (!tool) {
+      throw new Error(`Tool "${toolId}" not found`)
+    }
+    return tool as unknown as ToolDetails
+  }
+
+  /**
    * Execute a tool via the MCP JSON-RPC endpoint.
-   *
-   * @example
-   * ```ts
-   * const result = await client.tools.execute('github.create_issue', {
-   *   owner: 'user',
-   *   repo: 'my-repo',
-   *   title: 'Bug report',
-   * })
-   * ```
    */
   async execute(toolId: string, args: Record<string, unknown> = {}): Promise<ToolExecutionResult> {
     const rpcResponse = await this.http.post<{

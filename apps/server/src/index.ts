@@ -21,11 +21,13 @@ const app = new Hono()
 let isShuttingDown = false
 const activeRequests = new Set<string>()
 
+// In-memory rate limit fallback when Redis is unavailable
+const memoryRateLimit = new Map<string, { count: number; resetAt: number }>()
+
 /**
- * Redis-backed sliding-window rate limiter
- * Uses INCR + EXPIRE for distributed rate limiting across multiple instances
- * @param maxRequests - Maximum requests allowed
- * @param windowSeconds - Time window in seconds
+ * Redis-backed sliding-window rate limiter with in-memory fallback.
+ * Uses INCR + EXPIRE for distributed rate limiting across multiple instances.
+ * Falls back to in-memory LRU when Redis is down.
  */
 const createRateLimiter = (maxRequests: number, windowSeconds: number) => {
   return async (c: Context, next: Next) => {
@@ -49,15 +51,41 @@ const createRateLimiter = (maxRequests: number, windowSeconds: number) => {
         return c.json(
           {
             error: 'Too Many Requests',
-            message: 'Rate limit exceeded. Max 20 requests per minute.',
+            message: `Rate limit exceeded. Max ${maxRequests} requests per ${windowSeconds}s.`,
             retryAfter: ttl > 0 ? ttl : 1,
           },
           429,
         )
       }
     } catch (error) {
-      logger.error('Rate limiter error', { error, ip })
-      // If Redis is down, allow the request (fail-open for rate limiting)
+      logger.error('Rate limiter Redis error, using in-memory fallback', { error, ip })
+
+      // In-memory fallback — prevents abuse when Redis is down
+      const now = Date.now()
+      const entry = memoryRateLimit.get(key)
+      if (entry && entry.resetAt > now) {
+        entry.count++
+        if (entry.count > maxRequests) {
+          const retryAfter = Math.ceil((entry.resetAt - now) / 1000)
+          return c.json(
+            {
+              error: 'Too Many Requests',
+              message: `Rate limit exceeded. Max ${maxRequests} requests per ${windowSeconds}s.`,
+              retryAfter,
+            },
+            429,
+          )
+        }
+      } else {
+        memoryRateLimit.set(key, { count: 1, resetAt: now + windowSeconds * 1000 })
+      }
+
+      // Evict old entries to prevent unbounded memory growth
+      if (memoryRateLimit.size > 10000) {
+        for (const [k, v] of memoryRateLimit) {
+          if (v.resetAt < now) memoryRateLimit.delete(k)
+        }
+      }
     }
 
     await next()
@@ -100,12 +128,19 @@ app.use(
   '*',
   cors(config.nodeEnv === 'production' ? { origin: config.dashboardUrl } : { origin: '*' }),
 )
+if (config.nodeEnv !== 'production') {
+  logger.warn('CORS is permissive (origin: *) — only safe for development')
+}
 
 // Rate limiting for sensitive routes (20 requests per minute per IP)
 const authKeysRateLimiter = createRateLimiter(20, 60)
 app.use('/api/auth/*', authKeysRateLimiter)
 app.use('/api/keys/*', authKeysRateLimiter)
 app.use('/api/users/*', authKeysRateLimiter)
+
+// Stricter rate limit for signup (5 per hour per IP to prevent abuse)
+const signupRateLimiter = createRateLimiter(5, 3600)
+app.use('/api/auth/signup', signupRateLimiter)
 
 // Request logging in development
 if (config.nodeEnv === 'development') {

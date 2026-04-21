@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { createMcpServer } from './server'
+import { createMcpServer, McpSessionMode } from './server'
 import { Context } from 'hono'
 import { logger } from '../logger'
 import { MCP_SESSION_TTL_MS, MCP_SESSION_CLEANUP_INTERVAL_MS } from '../constants'
@@ -53,6 +53,12 @@ function extractBearerToken(c: Context): string | null {
   return token || null
 }
 
+function extractSessionMode(c: Context): McpSessionMode {
+  const header = c.req.header('X-OpenTool-Mode')
+  if (header === 'lean' || header === 'full') return header
+  return (process.env.OPENTOOL_DEFAULT_MODE as McpSessionMode) || 'lean'
+}
+
 /**
  * Handles MCP Streamable HTTP requests (GET, POST, DELETE).
  * Supports the full MCP Streamable HTTP transport protocol (2025-11-25)
@@ -86,7 +92,8 @@ export async function handleMcpStreamable(c: Context): Promise<Response> {
       const body = await c.req.json()
 
       if (!sessionId && isInitializeRequest(body)) {
-        const mcpServer = await createMcpServer(apiKey)
+        const mode = extractSessionMode(c)
+        const mcpServer = await createMcpServer(apiKey, mode)
 
         const transport = new WebStandardStreamableHTTPServerTransport({
           sessionIdGenerator: () => randomUUID(),
@@ -173,7 +180,8 @@ export async function handleMcpStreamable(c: Context): Promise<Response> {
  * Creates an ephemeral in-memory transport, auto-initializes, sends one request, returns one response.
  */
 async function handleStatelessPost(apiKey: string, body: unknown, _c: Context): Promise<Response> {
-  const mcpServer = await createMcpServer(apiKey)
+  const mode = _c ? extractSessionMode(_c) : 'full'
+  const mcpServer = await createMcpServer(apiKey, mode)
   const { InMemoryTransport } = await import('@modelcontextprotocol/sdk/inMemory.js')
 
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()

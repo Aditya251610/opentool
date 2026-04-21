@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync, chmodSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 
@@ -35,9 +35,15 @@ export function loadConfig(): OpenToolConfig {
 
 export function saveConfig(config: OpenToolConfig): void {
   if (!existsSync(CONFIG_DIR)) {
-    mkdirSync(CONFIG_DIR, { recursive: true })
+    mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 })
   }
-  writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2))
+  writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), { mode: 0o600 })
+  // Ensure file permissions are restricted even if file existed before
+  try {
+    chmodSync(CONFIG_FILE, 0o600)
+  } catch {
+    // chmod may fail on some platforms (Windows) — non-critical
+  }
 }
 
 export async function checkServerHealth(url: string): Promise<boolean> {

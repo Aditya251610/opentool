@@ -255,7 +255,12 @@ authRoutes.get('/callback/:provider', async (c) => {
 
   // Verify the state's provider matches the URL param to prevent cross-provider injection
   try {
-    const parsedState = JSON.parse(Buffer.from(state, 'base64').toString())
+    const rawState = Buffer.from(state, 'base64').toString()
+    const stateSchema = z.object({
+      provider: z.string().optional(),
+      userId: z.string().optional(),
+    })
+    const parsedState = stateSchema.parse(JSON.parse(rawState))
     if (parsedState.provider && parsedState.provider !== provider) {
       logger.error('Provider mismatch in OAuth callback', undefined, {
         urlProvider: provider,
@@ -263,8 +268,10 @@ authRoutes.get('/callback/:provider', async (c) => {
       })
       return c.json({ error: 'Provider mismatch in OAuth state' }, 400)
     }
-  } catch {
-    // State parsing is best-effort; exchangeCode will validate further
+  } catch (e) {
+    if (e instanceof z.ZodError || e instanceof SyntaxError) {
+      return c.json({ error: 'Invalid OAuth state parameter' }, 400)
+    }
   }
 
   try {
@@ -394,12 +401,45 @@ authRoutes.get('/google/callback', async (c) => {
 
     authEvents.inc({ event: 'login', provider: 'google' })
 
-    // Redirect to dashboard with the API key as a URL param (dashboard picks it up and stores it)
-    return c.redirect(
-      `${config.dashboardUrl}/auth/callback?apiKey=${encodeURIComponent(fullKey)}&email=${encodeURIComponent(user.email)}&name=${encodeURIComponent(user.name || '')}`,
+    // Store credentials in Redis with a short-lived temp code — avoids exposing API key in URL
+    const tempCode = crypto.randomBytes(32).toString('hex')
+    const tempKey = `ot:oauth:temp:${tempCode}`
+    await redis.set(
+      tempKey,
+      JSON.stringify({ apiKey: fullKey, email: user.email, name: user.name || '' }),
+      'EX',
+      120, // 2 minute expiry
     )
+
+    return c.redirect(`${config.dashboardUrl}/auth/callback?code=${tempCode}`)
   } catch (error) {
     logger.error('Google OAuth error', error)
     return c.redirect(`${config.dashboardUrl}/login?error=google_failed`)
+  }
+})
+
+// ─── Exchange temp OAuth code for credentials (called by dashboard server-side) ───
+
+authRoutes.post('/google/exchange', async (c) => {
+  const body = await c.req.json()
+  const code = typeof body.code === 'string' ? body.code : ''
+  if (!code || code.length !== 64) {
+    return c.json({ error: 'Invalid code' }, 400)
+  }
+
+  const tempKey = `ot:oauth:temp:${code}`
+  const raw = await redis.get(tempKey)
+  if (!raw) {
+    return c.json({ error: 'Code expired or invalid' }, 401)
+  }
+
+  // Delete immediately to prevent replay
+  await redis.del(tempKey)
+
+  try {
+    const data = JSON.parse(raw) as { apiKey: string; email: string; name: string }
+    return c.json(data)
+  } catch {
+    return c.json({ error: 'Invalid session data' }, 500)
   }
 })
