@@ -1,7 +1,7 @@
 {
-  ".": "0.1.2",
-  "apps/server": "0.0.2",
-  "packages/cli": "0.1.2",
+  ".": "0.1.3",
+  "apps/server": "0.0.3",
+  "packages/cli": "0.1.3",
   "packages/sdk/ts": "0.1.2",
   "packages/proto": "0.1.1"
 }

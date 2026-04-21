@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/Aditya251610/opentool/compare/cli-v0.1.2...cli-v0.1.3) (2026-04-21)
+
+
+### Features
+
+* organizations, RBAC, SSO, GDPR — full multitenancy ([b131c8c](https://github.com/Aditya251610/opentool/commit/b131c8c9d1dacf5557e10b535a381140a5db24a5))
+
 ## [0.1.2](https://github.com/Aditya251610/opentool/compare/cli-v0.1.1...cli-v0.1.2) (2026-04-20)
 
 
