@@ -8,12 +8,13 @@ import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js'
 import type { JSONRPCMessage } from '@modelcontextprotocol/sdk/types.js'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 
-// Session store: maps session IDs to their transport + server
+// Session store: maps session IDs to their transport + server + client info
 const sessions = new Map<
   string,
   {
     transport: WebStandardStreamableHTTPServerTransport
     server: McpServer
+    clientName: string
   }
 >()
 
@@ -93,13 +94,16 @@ export async function handleMcpStreamable(c: Context): Promise<Response> {
 
       if (!sessionId && isInitializeRequest(body)) {
         const mode = extractSessionMode(c)
-        const mcpServer = await createMcpServer(apiKey, mode)
+        // Extract client name from initialize request params
+        const initParams = (body as { params?: { clientInfo?: { name?: string } } }).params
+        const clientName = initParams?.clientInfo?.name || 'unknown'
+        const mcpServer = await createMcpServer(apiKey, mode, clientName)
 
         const transport = new WebStandardStreamableHTTPServerTransport({
           sessionIdGenerator: () => randomUUID(),
           enableJsonResponse: true,
           onsessioninitialized: (sid) => {
-            sessions.set(sid, { transport, server: mcpServer })
+            sessions.set(sid, { transport, server: mcpServer, clientName })
             sessionLastSeen.set(sid, Date.now())
             logger.info('MCP session initialized', { sessionId: sid })
           },

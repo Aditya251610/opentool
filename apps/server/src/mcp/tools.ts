@@ -9,6 +9,7 @@ import { logger } from '../logger'
 import { captureException } from '../error-tracking'
 import { AuthRequiredError, ToolNotFoundError } from '../errors'
 import { TOOL_TIMEOUT_MS } from '../constants'
+import { countToolTokens } from '../analytics/tokenizer'
 import { toolExecutions, toolErrors, toolDuration } from '../metrics'
 
 // ─── Types ────────────────────────────────
@@ -190,6 +191,7 @@ export async function executeTool(
   toolId: string,
   input: unknown,
   userId: string,
+  clientName: string = 'unknown',
 ): Promise<unknown> {
   const tool: ToolDefinition<any> | undefined = getToolById(toolId)
   if (!tool) throw new ToolNotFoundError(toolId)
@@ -204,7 +206,7 @@ export async function executeTool(
     input = parsed.data
   }
 
-  const auth: AuthContext = { userId }
+  const auth: AuthContext = { userId, clientName }
 
   if (tool.authType === 'oauth2') {
     const tokenData = await refreshTokenIfExpired(userId, tool.provider)
@@ -284,6 +286,7 @@ export async function executeTool(
           inputSnapshot: sanitizeInput(input) as any,
           errorMessage: error instanceof Error ? error.message : 'Unknown error',
           durationMs,
+          clientName: clientName || null,
         },
       })
       .catch((err) => logger.error('Audit log write failed', err))
@@ -291,6 +294,11 @@ export async function executeTool(
   }
 
   const durationMs = Date.now() - startTime
+
+  // Fire-and-forget token counting + enriched audit log
+  const tokenData = countToolTokens(tool.inputJsonSchema, input, result, clientName)
+  const responseStr = typeof result === 'string' ? result : JSON.stringify(result ?? '')
+
   void prisma.auditLog
     .create({
       data: {
@@ -300,6 +308,12 @@ export async function executeTool(
         status: AuditStatus.SUCCESS,
         inputSnapshot: sanitizeInput(input) as any,
         durationMs,
+        clientName: clientName || null,
+        responseSize: responseStr.length,
+        inputTokens: tokenData.inputTokens,
+        outputTokens: tokenData.outputTokens,
+        schemaTokens: tokenData.schemaTokens,
+        totalTokens: tokenData.totalTokens,
       },
     })
     .catch((err) => logger.error('Audit log write failed', err))

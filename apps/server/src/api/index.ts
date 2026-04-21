@@ -4,6 +4,7 @@ import { keyRoutes } from './routes/keys'
 import { toolRoutes } from './routes/tools'
 import { userRoutes } from './routes/users'
 import { orgRoutes } from './routes/orgs'
+import { analyticsRoutes } from './routes/analytics'
 
 export const api = new Hono()
 
@@ -13,3 +14,4 @@ api.route('/keys', keyRoutes)
 api.route('/tools', toolRoutes)
 api.route('/users', userRoutes)
 api.route('/orgs', orgRoutes)
+api.route('/analytics', analyticsRoutes)

@@ -24,7 +24,12 @@ async function getToolExecutor() {
     _toolExecutor = await import('../../src/mcp/tools')
   }
   return _toolExecutor as {
-    executeTool: (toolId: string, input: unknown, userId: string) => Promise<unknown>
+    executeTool: (
+      toolId: string,
+      input: unknown,
+      userId: string,
+      clientName?: string,
+    ) => Promise<unknown>
   }
 }
 
@@ -231,7 +236,7 @@ export const executeDynamicToolMeta = defineTool({
 
     // Delegate to the existing execution pipeline (auth, validation, audit, timeout)
     const { executeTool } = await getToolExecutor()
-    const result = await executeTool(input.tool_id, input.arguments, auth.userId)
+    const result = await executeTool(input.tool_id, input.arguments, auth.userId, auth.clientName)
     return result
   },
 })

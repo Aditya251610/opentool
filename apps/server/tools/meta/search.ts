@@ -59,12 +59,18 @@ const SCORE_ID_CONTAINS = 60
 const SCORE_NAME_MATCH = 80
 const SCORE_DESCRIPTION_MATCH = 40
 const SCORE_PROVIDER_MATCH = 20
+const SCORE_USAGE_BOOST_MAX = 30
 
 /**
  * Computes a relevance score for a tool against a search query.
  * Higher score = better match. Returns 0 if no match.
+ * Optionally boosts score based on usage frequency (logarithmic).
  */
-export function scoreTool(tool: ToolDefinition<any>, query: string): number {
+export function scoreTool(
+  tool: ToolDefinition<any>,
+  query: string,
+  usageCount: number = 0,
+): number {
   if (!query) return 1 // All tools match with equal score when no query
 
   const q = query.toLowerCase().trim()
@@ -91,6 +97,11 @@ export function scoreTool(tool: ToolDefinition<any>, query: string): number {
 
   if (provider.includes(q)) {
     score += SCORE_PROVIDER_MATCH
+  }
+
+  // Logarithmic usage boost — diminishing returns past ~50 uses
+  if (usageCount > 0 && score > 0) {
+    score += Math.min(Math.log2(usageCount + 1) * 5, SCORE_USAGE_BOOST_MAX)
   }
 
   return score
@@ -160,11 +171,13 @@ export function getProviderSummary(tools: ToolDefinition<any>[]): ProviderSummar
  * @param options Search/filter criteria
  * @param allTools The full list of tools to search (caller passes from registry)
  * @param connectedProviders Set of provider names the user has connected (pass empty set to skip filtering)
+ * @param usageMap Optional tool usage frequency map for scoring boost
  */
 export function searchToolRegistry(
   options: SearchOptions,
   allTools: ToolDefinition<any>[],
   connectedProviders: Set<string> = new Set(),
+  usageMap: Record<string, number> = {},
 ): SearchResult {
   const limit = Math.min(
     Math.max(options.limit ?? TOOL_QUERY_DEFAULT_LIMIT, 1),
@@ -211,7 +224,10 @@ export function searchToolRegistry(
 
   // Score and sort by relevance
   const query = options.query ? sanitizeQuery(options.query) : ''
-  let scored = tools.map((t) => ({ tool: t, score: scoreTool(t, query) }))
+  let scored = tools.map((t) => ({
+    tool: t,
+    score: scoreTool(t, query, usageMap[t.id] ?? 0),
+  }))
 
   // If there's a query, remove non-matching tools (score 0)
   if (query) {

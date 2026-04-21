@@ -261,6 +261,13 @@ model AuditLog {
   errorMessage     String?
   ipAddress        String?
   userAgent        String?
+  // Token analytics fields
+  clientName       String? // MCP client name (e.g. "cursor", "copilot-cli")
+  responseSize     Int? // response body size in bytes
+  inputTokens      Int? // tokens consumed by tool input
+  outputTokens     Int? // tokens consumed by tool response
+  schemaTokens     Int? // tokens consumed by tool schema definition
+  totalTokens      Int? // sum of input + output + schema tokens
   createdAt        DateTime    @default(now())
 
   user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -269,6 +276,7 @@ model AuditLog {
   @@index([userId])
   @@index([toolDefinitionId])
   @@index([createdAt])
+  @@index([clientName])
   @@map("audit_logs")
 }
 

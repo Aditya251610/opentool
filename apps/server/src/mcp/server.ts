@@ -51,6 +51,7 @@ export type McpSessionMode = 'lean' | 'full'
 export async function createMcpServer(
   apiKey: string,
   mode: McpSessionMode = (process.env.OPENTOOL_DEFAULT_MODE as McpSessionMode) || 'lean',
+  clientName: string = 'unknown',
 ): Promise<McpServer> {
   const user = await resolveApiKey(apiKey)
   if (!user) {
@@ -74,7 +75,7 @@ export async function createMcpServer(
       tool.annotations ?? {},
       async (input: Record<string, unknown>) => {
         try {
-          const result = await executeTool(tool.id, input, user.id)
+          const result = await executeTool(tool.id, input, user.id, clientName)
 
           // Truncate oversized responses at object level to preserve valid JSON
           let jsonStr: string

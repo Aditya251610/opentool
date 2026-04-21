@@ -17,6 +17,7 @@ export interface AuthContext {
   apiKey?: string
   userId: string
   metadata?: Record<string, unknown> // provider-specific (e.g. Vercel team_id)
+  clientName?: string // MCP client name for token analytics
 }
 
 export interface ToolExecuteParams<TInput> {
