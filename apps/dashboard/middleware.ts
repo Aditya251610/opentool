@@ -8,12 +8,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Generate nonce for script-src
-  const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
-
+  // CSP without nonce — nonce-based approach breaks Next.js hydration scripts
+  // and Vercel Live toolbar on Vercel deployments
   const csp = [
     "default-src 'self'",
-    `script-src 'self' 'unsafe-inline' 'nonce-${nonce}' https://vercel.live`,
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live https://*.vercel-scripts.com",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
@@ -23,12 +22,8 @@ export function middleware(request: NextRequest) {
     "form-action 'self'",
   ].join('; ')
 
-  const requestHeaders = new Headers(request.headers)
-  requestHeaders.set('x-nonce', nonce)
-
-  const response = NextResponse.next({ request: { headers: requestHeaders } })
+  const response = NextResponse.next()
   response.headers.set('Content-Security-Policy', csp)
-  response.headers.set('x-nonce', nonce)
   return response
 }
 
