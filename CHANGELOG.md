@@ -5,6 +5,13 @@ All notable changes to the OpenTool project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.10](https://github.com/Aditya251610/opentool/compare/opentool-v0.1.9...opentool-v0.1.10) (2026-04-21)
+
+
+### Features
+
+* added query tool and token analyzer features ([55dc7fd](https://github.com/Aditya251610/opentool/commit/55dc7fd6e627cc8e02e377768069cb2148027ccd))
+
 ## [0.1.9](https://github.com/Aditya251610/opentool/compare/opentool-v0.1.8...opentool-v0.1.9) (2026-04-21)
 
 
