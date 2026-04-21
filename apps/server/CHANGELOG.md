@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.5](https://github.com/Aditya251610/opentool/compare/server-v0.0.4...server-v0.0.5) (2026-04-21)
+
+
+### Features
+
+* production hardening + Next.js optimizations ([fe4c512](https://github.com/Aditya251610/opentool/commit/fe4c512b1d67909eac9aeeb5bd8019318073d1c4))
+
+
+### Bug Fixes
+
+* remove unused config imports (lint errors) ([bfbf0e4](https://github.com/Aditya251610/opentool/commit/bfbf0e44249ec10820ec779ac34b75d37a7e18f5))
+
 ## [0.0.4](https://github.com/Aditya251610/opentool/compare/server-v0.0.3...server-v0.0.4) (2026-04-21)
 
 
