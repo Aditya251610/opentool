@@ -10,6 +10,7 @@ import { config } from '../../config'
 import { logger } from '../../logger'
 import { BCRYPT_ROUNDS, PASSWORD_MIN_LENGTH, PROVIDERS } from '../../constants'
 import { authEvents } from '../../metrics'
+import crypto from 'crypto'
 
 const signupSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -257,5 +258,114 @@ authRoutes.delete('/revoke/:provider', apiKeyMiddleware, async (c) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
     return c.json({ error: message }, 400)
+  }
+})
+
+// ─── Google OAuth Login (user authentication) ───
+
+authRoutes.get('/google', (c) => {
+  const clientId = process.env['GOOGLE_CLIENT_ID']
+  if (!clientId) return c.json({ error: 'Google login not configured' }, 501)
+
+  const state = crypto.randomBytes(16).toString('hex')
+  const redirectUri = `${config.serverUrl}/api/auth/google/callback`
+
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    response_type: 'code',
+    scope: 'openid email profile',
+    state,
+    access_type: 'offline',
+    prompt: 'consent',
+  })
+
+  return c.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`)
+})
+
+authRoutes.get('/google/callback', async (c) => {
+  const code = c.req.query('code')
+  if (!code) return c.redirect(`${config.dashboardUrl}/login?error=google_no_code`)
+
+  const clientId = process.env['GOOGLE_CLIENT_ID']
+  const clientSecret = process.env['GOOGLE_CLIENT_SECRET']
+  if (!clientId || !clientSecret) {
+    return c.redirect(`${config.dashboardUrl}/login?error=google_not_configured`)
+  }
+
+  try {
+    // Exchange code for tokens
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: `${config.serverUrl}/api/auth/google/callback`,
+        grant_type: 'authorization_code',
+      }),
+    })
+
+    if (!tokenRes.ok) {
+      logger.error('Google token exchange failed', await tokenRes.text())
+      return c.redirect(`${config.dashboardUrl}/login?error=google_token_failed`)
+    }
+
+    const tokens = (await tokenRes.json()) as { access_token: string; id_token: string }
+
+    // Fetch user info
+    const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: { Authorization: `Bearer ${tokens.access_token}` },
+    })
+    if (!userRes.ok) {
+      return c.redirect(`${config.dashboardUrl}/login?error=google_userinfo_failed`)
+    }
+
+    const googleUser = (await userRes.json()) as {
+      id: string
+      email: string
+      name?: string
+      picture?: string
+      verified_email?: boolean
+    }
+
+    if (!googleUser.email) {
+      return c.redirect(`${config.dashboardUrl}/login?error=google_no_email`)
+    }
+
+    // Find or create user
+    let user = await prisma.user.findUnique({ where: { email: googleUser.email } })
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          email: googleUser.email,
+          name: googleUser.name || null,
+          // No password — Google-only account
+        },
+      })
+      authEvents.inc({ event: 'signup', provider: 'google' })
+    }
+
+    // Create session API key
+    await prisma.apiKey.updateMany({
+      where: { userId: user.id, name: 'Dashboard Session', revokedAt: null },
+      data: { revokedAt: new Date() },
+    })
+
+    const { hash, prefix, fullKey } = generateApiKey()
+    await prisma.apiKey.create({
+      data: { userId: user.id, name: 'Dashboard Session', keyHash: hash, keyPrefix: prefix },
+    })
+
+    authEvents.inc({ event: 'login', provider: 'google' })
+
+    // Redirect to dashboard with the API key as a URL param (dashboard picks it up and stores it)
+    return c.redirect(
+      `${config.dashboardUrl}/auth/callback?apiKey=${encodeURIComponent(fullKey)}&email=${encodeURIComponent(user.email)}&name=${encodeURIComponent(user.name || '')}`,
+    )
+  } catch (error) {
+    logger.error('Google OAuth error', error)
+    return c.redirect(`${config.dashboardUrl}/login?error=google_failed`)
   }
 })
