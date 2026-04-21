@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { prisma } from '../../db/client'
 import { apiKeyMiddleware } from '../middleware'
-import { orgContextMiddleware, requirePermission, requireAnyPermission } from '../../rbac'
+import { orgContextMiddleware, requirePermission } from '../../rbac'
 import { Permission } from '../../rbac/permissions'
 import { orgRateLimiter } from '../../rbac/rate-limit'
 import { invalidateMembershipCache } from '../../rbac/middleware'
@@ -14,10 +14,8 @@ import {
   updateTeamSchema,
   createOrgKeySchema,
   ssoConfigSchema,
-  paginationSchema,
   auditQuerySchema,
 } from '../../rbac/validators'
-import { generateApiKey } from '../../auth/encryption'
 import { logger } from '../../logger'
 import { OrgRole, TeamRole, InviteStatus } from '@prisma/client'
 import crypto from 'crypto'

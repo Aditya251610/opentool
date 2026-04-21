@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Hono } from 'hono'
-import { OrgRole, InviteStatus, TeamRole } from '@prisma/client'
+import { OrgRole } from '@prisma/client'
 
 // Mocks must be hoisted — no variable references in factory
 vi.mock('../../db/client', () => ({
