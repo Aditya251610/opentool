@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.4](https://github.com/Aditya251610/opentool/compare/server-v0.0.3...server-v0.0.4) (2026-04-21)
+
+
+### Features
+
+* add Google OAuth login + fix lint errors ([adcc586](https://github.com/Aditya251610/opentool/commit/adcc586bc492af3584f181d25fad141004901d18))
+
 ## [0.0.3](https://github.com/Aditya251610/opentool/compare/server-v0.0.2...server-v0.0.3) (2026-04-21)
 
 
