@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.6](https://github.com/Aditya251610/opentool/compare/server-v0.0.5...server-v0.0.6) (2026-04-21)
+
+
+### Features
+
+* improved mcp server and tools and made them organised ([19d1e05](https://github.com/Aditya251610/opentool/commit/19d1e0517ae583903621dde313d0ae8925d5fe52))
+
 ## [0.0.5](https://github.com/Aditya251610/opentool/compare/server-v0.0.4...server-v0.0.5) (2026-04-21)
 
 

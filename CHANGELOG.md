@@ -5,6 +5,13 @@ All notable changes to the OpenTool project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.8](https://github.com/Aditya251610/opentool/compare/opentool-v0.1.7...opentool-v0.1.8) (2026-04-21)
+
+
+### Features
+
+* improved mcp server and tools and made them organised ([19d1e05](https://github.com/Aditya251610/opentool/commit/19d1e0517ae583903621dde313d0ae8925d5fe52))
+
 ## [0.1.7](https://github.com/Aditya251610/opentool/compare/opentool-v0.1.6...opentool-v0.1.7) (2026-04-21)
 
 

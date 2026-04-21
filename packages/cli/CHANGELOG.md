@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/Aditya251610/opentool/compare/cli-v0.1.3...cli-v0.1.4) (2026-04-21)
+
+
+### Features
+
+* improved mcp server and tools and made them organised ([19d1e05](https://github.com/Aditya251610/opentool/commit/19d1e0517ae583903621dde313d0ae8925d5fe52))
+
 ## [0.1.3](https://github.com/Aditya251610/opentool/compare/cli-v0.1.2...cli-v0.1.3) (2026-04-21)
 
 
