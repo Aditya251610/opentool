@@ -1,5 +1,4 @@
 import { Context, Next } from 'hono'
-import { config } from '../config'
 import { logger } from '../logger'
 import { rateLimitRedis } from '../db/redis'
 
