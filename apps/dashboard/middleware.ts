@@ -13,11 +13,11 @@ export function middleware(request: NextRequest) {
 
   const csp = [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' https://vercel.live`,
+    `script-src 'self' 'unsafe-inline' 'nonce-${nonce}' https://vercel.live`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
-    "connect-src 'self' https://*.opentool.dev https://*.onrender.com https://vercel.live https://api.github.com wss://ws-us3.pusher.com",
+    "connect-src 'self' https://*.opentool.dev https://*.onrender.com https://vercel.live https://api.github.com wss://ws-us3.pusher.com wss://*.pusher.com",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
