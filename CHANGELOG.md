@@ -5,6 +5,18 @@ All notable changes to the OpenTool project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.9](https://github.com/Aditya251610/opentool/compare/opentool-v0.1.8...opentool-v0.1.9) (2026-04-21)
+
+
+### Features
+
+* security audit remediation + tool query meta-tools + lint hardening ([d4b4dd1](https://github.com/Aditya251610/opentool/commit/d4b4dd122b03defc3a5efb23db9b6aa07b1d388a))
+
+
+### CI/CD
+
+* updated ci order ([6cd38c4](https://github.com/Aditya251610/opentool/commit/6cd38c4e9f74d9250c128242136e8f79c960af5d))
+
 ## [0.1.8](https://github.com/Aditya251610/opentool/compare/opentool-v0.1.7...opentool-v0.1.8) (2026-04-21)
 
 
