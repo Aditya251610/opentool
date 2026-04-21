@@ -18,8 +18,8 @@ interface AuthState {
   apiKey: string | null
   user: User | null
   isLoading: boolean
-  login: (apiKey: string, user: User) => void
-  logout: () => void
+  login: (apiKey: string, user: User) => Promise<void>
+  logout: () => Promise<void>
   // Org state
   orgs: (Org & { role: OrgRole })[]
   activeOrg: OrgContext | null
@@ -32,8 +32,8 @@ const AuthContext = createContext<AuthState>({
   apiKey: null,
   user: null,
   isLoading: true,
-  login: () => {},
-  logout: () => {},
+  login: async () => {},
+  logout: async () => {},
   orgs: [],
   activeOrg: null,
   switchOrg: () => {},
@@ -41,27 +41,7 @@ const AuthContext = createContext<AuthState>({
   refreshOrgs: async () => {},
 })
 
-const STORAGE_KEY = 'opentool_api_key'
-const STORAGE_USER = 'opentool_user'
 const STORAGE_ORG = 'opentool_active_org'
-
-// XOR-based obfuscation for sessionStorage (not encryption, but prevents casual inspection)
-const OBF_KEY = 'OpEnToOl_2026'
-function obfuscate(text: string): string {
-  const arr: number[] = []
-  for (let i = 0; i < text.length; i++) {
-    arr.push(text.charCodeAt(i) ^ OBF_KEY.charCodeAt(i % OBF_KEY.length))
-  }
-  return btoa(String.fromCharCode(...arr))
-}
-function deobfuscate(encoded: string): string {
-  const decoded = atob(encoded)
-  const arr: number[] = []
-  for (let i = 0; i < decoded.length; i++) {
-    arr.push(decoded.charCodeAt(i) ^ OBF_KEY.charCodeAt(i % OBF_KEY.length))
-  }
-  return String.fromCharCode(...arr)
-}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [apiKey, setApiKey] = useState<string | null>(null)
@@ -70,27 +50,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [orgs, setOrgs] = useState<(Org & { role: OrgRole })[]>([])
   const [activeOrg, setActiveOrg] = useState<OrgContext | null>(null)
 
+  // On mount: check for existing httpOnly session
   useEffect(() => {
-    try {
-      const storedKey = sessionStorage.getItem(STORAGE_KEY)
-      const storedUser = sessionStorage.getItem(STORAGE_USER)
-      const storedOrg = sessionStorage.getItem(STORAGE_ORG)
-      if (storedKey) setApiKey(deobfuscate(storedKey))
-      if (storedUser) setUser(JSON.parse(deobfuscate(storedUser)))
-      if (storedOrg) setActiveOrg(JSON.parse(deobfuscate(storedOrg)))
-    } catch {
-      sessionStorage.removeItem(STORAGE_KEY)
-      sessionStorage.removeItem(STORAGE_USER)
-      sessionStorage.removeItem(STORAGE_ORG)
+    async function checkSession() {
+      try {
+        const res = await fetch('/api/auth/session')
+        const data = await res.json()
+        if (data.authenticated && data.user) {
+          setUser(data.user)
+          setApiKey('__httponly__') // Marker — real key is in httpOnly cookie
+        }
+        // Restore org context from localStorage (non-sensitive)
+        const storedOrg = localStorage.getItem(STORAGE_ORG)
+        if (storedOrg) {
+          setActiveOrg(JSON.parse(storedOrg))
+        }
+      } catch {
+        // No session — user is not logged in
+      }
+      setIsLoading(false)
     }
-    setIsLoading(false)
+    checkSession()
   }, [])
 
-  // Fetch orgs after api key is set
+  // Fetch orgs after authentication
   const refreshOrgs = useCallback(async () => {
     if (!apiKey || !FEATURES.ORGS_ENABLED) return
     try {
-      const { orgs: fetchedOrgs } = await orgApi.list(apiKey)
+      const { orgs: fetchedOrgs } = await orgApi.list()
       setOrgs(fetchedOrgs)
     } catch {
       // Non-critical — user may not have orgs yet
@@ -101,17 +88,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (apiKey) refreshOrgs()
   }, [apiKey, refreshOrgs])
 
-  const login = useCallback((key: string, userData: User) => {
-    sessionStorage.setItem(STORAGE_KEY, obfuscate(key))
-    sessionStorage.setItem(STORAGE_USER, obfuscate(JSON.stringify(userData)))
-    setApiKey(key)
+  const login = useCallback(async (key: string, userData: User) => {
+    // Store key in httpOnly cookie via server-side route
+    await fetch('/api/auth/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKey: key, user: userData }),
+    })
+    setApiKey('__httponly__')
     setUser(userData)
   }, [])
 
-  const logout = useCallback(() => {
-    sessionStorage.removeItem(STORAGE_KEY)
-    sessionStorage.removeItem(STORAGE_USER)
-    sessionStorage.removeItem(STORAGE_ORG)
+  const logout = useCallback(async () => {
+    await fetch('/api/auth/session', { method: 'DELETE' })
+    localStorage.removeItem(STORAGE_ORG)
     setApiKey(null)
     setUser(null)
     setOrgs([])
@@ -124,14 +114,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!found) return
       const ctx: OrgContext = { org: found, role: found.role }
       setActiveOrg(ctx)
-      sessionStorage.setItem(STORAGE_ORG, obfuscate(JSON.stringify(ctx)))
+      localStorage.setItem(STORAGE_ORG, JSON.stringify(ctx))
     },
     [orgs],
   )
 
   const clearOrg = useCallback(() => {
     setActiveOrg(null)
-    sessionStorage.removeItem(STORAGE_ORG)
+    localStorage.removeItem(STORAGE_ORG)
   }, [])
 
   return (

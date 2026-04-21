@@ -21,9 +21,33 @@ vi.mock('ioredis', () => {
     default: vi.fn().mockImplementation(() => ({
       ping: vi.fn().mockResolvedValue('PONG'),
       disconnect: vi.fn(),
+      on: vi.fn(),
+      incr: vi.fn().mockResolvedValue(1),
+      expire: vi.fn().mockResolvedValue(1),
+      get: vi.fn().mockResolvedValue(null),
+      set: vi.fn().mockResolvedValue('OK'),
+      del: vi.fn().mockResolvedValue(1),
     })),
   }
 })
+
+vi.mock('../../db/redis', () => ({
+  redis: {
+    ping: vi.fn().mockResolvedValue('PONG'),
+    disconnect: vi.fn(),
+    on: vi.fn(),
+    get: vi.fn().mockResolvedValue(null),
+    set: vi.fn().mockResolvedValue('OK'),
+    del: vi.fn().mockResolvedValue(1),
+  },
+  rateLimitRedis: {
+    disconnect: vi.fn(),
+    on: vi.fn(),
+    incr: vi.fn().mockResolvedValue(1),
+    expire: vi.fn().mockResolvedValue(1),
+  },
+  disconnectRedis: vi.fn(),
+}))
 
 // Mock config
 vi.mock('../../config', () => ({

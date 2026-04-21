@@ -17,38 +17,57 @@ export default function CursorNebula() {
       y = 0
     let cx = 0,
       cy = 0
-    let raf: number
+    let raf: number | null = null
+    let idleTimer: ReturnType<typeof setTimeout> | null = null
 
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t
-
-    const move = (e: MouseEvent) => {
-      x = e.clientX
-      y = e.clientY
-    }
 
     const tick = () => {
       cx = lerp(cx, x, 0.08)
       cy = lerp(cy, y, 0.08)
-      glow.style.transform = `translate(${cx - 300}px, ${cy - 300}px)`
+      glow.style.transform = `translate(${cx - 200}px, ${cy - 200}px)`
+
+      // Stop RAF when close enough to target (mouse idle)
+      if (Math.abs(cx - x) < 0.5 && Math.abs(cy - y) < 0.5) {
+        raf = null
+        return
+      }
       raf = requestAnimationFrame(tick)
     }
 
+    const startAnimation = () => {
+      if (raf === null) {
+        raf = requestAnimationFrame(tick)
+      }
+      // Reset idle timer
+      if (idleTimer) clearTimeout(idleTimer)
+      idleTimer = setTimeout(() => {
+        // Let animation coast to a stop naturally via the distance check in tick
+      }, 100)
+    }
+
+    const move = (e: MouseEvent) => {
+      x = e.clientX
+      y = e.clientY
+      startAnimation()
+    }
+
     window.addEventListener('mousemove', move, { passive: true })
-    raf = requestAnimationFrame(tick)
 
     return () => {
       window.removeEventListener('mousemove', move)
-      cancelAnimationFrame(raf)
+      if (raf !== null) cancelAnimationFrame(raf)
+      if (idleTimer) clearTimeout(idleTimer)
     }
   }, [])
 
   return (
     <div
       ref={glowRef}
-      className="fixed top-0 left-0 w-[600px] h-[600px] pointer-events-none z-[1] opacity-[0.11]"
+      className="fixed top-0 left-0 w-[400px] h-[400px] pointer-events-none z-[1] opacity-[0.12]"
       style={{
         background:
-          'radial-gradient(circle, rgba(0,212,255,0.65) 0%, rgba(139,92,246,0.3) 30%, transparent 68%)',
+          'radial-gradient(circle, rgba(0,212,255,0.45) 0%, rgba(139,92,246,0.2) 35%, transparent 65%)',
         willChange: 'transform',
       }}
       aria-hidden="true"

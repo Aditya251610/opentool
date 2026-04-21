@@ -30,7 +30,7 @@ export default function OrgTeamsPage() {
   async function loadTeams() {
     if (!apiKey || !activeOrg) return
     try {
-      const { teams: t } = await orgApi.teams(apiKey, activeOrg.org.slug)
+      const { teams: t } = await orgApi.teams(activeOrg.org.slug)
       setTeams(t)
     } catch {
       /* handled */
@@ -43,7 +43,7 @@ export default function OrgTeamsPage() {
     if (!apiKey || !activeOrg) return
     setError('')
     try {
-      await orgApi.createTeam(apiKey, activeOrg.org.slug, name, slug, desc || undefined)
+      await orgApi.createTeam(activeOrg.org.slug, name, slug, desc || undefined)
       setName('')
       setSlug('')
       setDesc('')
@@ -58,7 +58,7 @@ export default function OrgTeamsPage() {
     if (!apiKey || !activeOrg) return
     if (!confirm('Delete this team?')) return
     try {
-      await orgApi.deleteTeam(apiKey, activeOrg.org.slug, teamSlug)
+      await orgApi.deleteTeam(activeOrg.org.slug, teamSlug)
       loadTeams()
     } catch {
       /* handled */

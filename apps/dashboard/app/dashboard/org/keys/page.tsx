@@ -30,7 +30,7 @@ export default function OrgKeysPage() {
   async function loadKeys() {
     if (!apiKey || !activeOrg) return
     try {
-      const { keys: k } = await orgApi.orgKeys(apiKey, activeOrg.org.slug)
+      const { keys: k } = await orgApi.orgKeys(activeOrg.org.slug)
       setKeys(k)
     } catch {
       /* handled */
@@ -43,7 +43,7 @@ export default function OrgKeysPage() {
     if (!apiKey || !activeOrg || !name) return
     setError('')
     try {
-      const result = await orgApi.createOrgKey(apiKey, activeOrg.org.slug, { name })
+      const result = await orgApi.createOrgKey(activeOrg.org.slug, { name })
       setNewKey(result.key)
       setName('')
       setShowCreate(false)
@@ -57,7 +57,7 @@ export default function OrgKeysPage() {
     if (!apiKey || !activeOrg) return
     if (!confirm('Revoke this API key? This cannot be undone.')) return
     try {
-      await orgApi.revokeOrgKey(apiKey, activeOrg.org.slug, keyId)
+      await orgApi.revokeOrgKey(activeOrg.org.slug, keyId)
       loadKeys()
     } catch {
       /* handled */

@@ -4,19 +4,18 @@ import { cors } from 'hono/cors'
 import { secureHeaders } from 'hono/secure-headers'
 import { compress } from 'hono/compress'
 import { serve } from '@hono/node-server'
-import Redis from 'ioredis'
 import { config } from './config'
 import { logger } from './logger'
 import { captureException } from './error-tracking'
 import { prisma } from './db/client'
+import { redis, rateLimitRedis, disconnectRedis } from './db/redis'
 import { api } from './api'
 import { handleMcpStreamable, closeAllMcpSessions } from './mcp/transport'
 import { startGrpcServer, shutdownGrpcServer, isGrpcServerRunning } from './grpc/server'
 import { metrics, httpRequests } from './metrics'
+import { GRACEFUL_SHUTDOWN_TIMEOUT_MS } from './constants'
 
 const app = new Hono()
-const redis = new Redis(config.redisUrl)
-const rateLimitRedis = new Redis(config.redisUrl)
 
 // Graceful shutdown state
 let isShuttingDown = false
@@ -118,15 +117,22 @@ app.get('/health/live', (c) => {
   return c.json({ status: 'ok' }, 200)
 })
 
-// Metrics endpoint — Prometheus text format
+// Metrics endpoint — gated behind METRICS_TOKEN env var
 app.get('/metrics', (c) => {
+  const metricsToken = config.metricsToken
+  if (metricsToken) {
+    const provided = c.req.header('Authorization')?.replace('Bearer ', '')
+    if (provided !== metricsToken) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+  }
   return c.text(metrics.toPrometheus(), 200, {
     'Content-Type': 'text/plain; version=0.0.4',
   })
 })
 
-// Readiness probe — checks DB + Redis connectivity
-app.get('/health/ready', async (c) => {
+// Health check logic — shared between /health/ready and /health
+async function checkHealth() {
   const [dbResult, redisResult] = await Promise.allSettled([
     prisma.$queryRaw`SELECT 1`,
     redis.ping(),
@@ -134,41 +140,26 @@ app.get('/health/ready', async (c) => {
 
   const dbOk = dbResult.status === 'fulfilled'
   const redisOk = redisResult.status === 'fulfilled'
-
   const status = dbOk && redisOk ? 'ok' : 'degraded'
 
-  return c.json(
-    {
-      status,
-      db: dbOk ? 'ok' : 'error',
-      redis: redisOk ? 'ok' : 'error',
-      timestamp: new Date().toISOString(),
-    },
-    status === 'ok' ? 200 : 503,
-  )
+  return {
+    status,
+    db: dbOk ? 'ok' : 'error',
+    redis: redisOk ? 'ok' : 'error',
+    timestamp: new Date().toISOString(),
+  }
+}
+
+// Readiness probe — checks DB + Redis connectivity
+app.get('/health/ready', async (c) => {
+  const health = await checkHealth()
+  return c.json(health, health.status === 'ok' ? 200 : 503)
 })
 
 // Backwards compatibility: /health as alias for /health/ready
 app.get('/health', async (c) => {
-  const [dbResult, redisResult] = await Promise.allSettled([
-    prisma.$queryRaw`SELECT 1`,
-    redis.ping(),
-  ])
-
-  const dbOk = dbResult.status === 'fulfilled'
-  const redisOk = redisResult.status === 'fulfilled'
-
-  const status = dbOk && redisOk ? 'ok' : 'degraded'
-
-  return c.json(
-    {
-      status,
-      db: dbOk ? 'ok' : 'error',
-      redis: redisOk ? 'ok' : 'error',
-      timestamp: new Date().toISOString(),
-    },
-    status === 'ok' ? 200 : 503,
-  )
+  const health = await checkHealth()
+  return c.json(health, health.status === 'ok' ? 200 : 503)
 })
 
 app.route('/api', api)
@@ -207,11 +198,10 @@ const shutdown = async (signal: string) => {
   logger.info(`Received ${signal}, starting graceful shutdown`)
   isShuttingDown = true
 
-  // Set a 15-second timeout to force exit
   const forceExitTimer = setTimeout(() => {
     logger.error('Graceful shutdown timeout exceeded, forcing exit')
     process.exit(1)
-  }, 15000).unref()
+  }, GRACEFUL_SHUTDOWN_TIMEOUT_MS).unref()
 
   // Wait up to 10s for in-flight requests to complete
   let waitTime = 0
@@ -237,8 +227,7 @@ const shutdown = async (signal: string) => {
     await shutdownGrpcServer()
   }
   await prisma.$disconnect()
-  redis.disconnect()
-  rateLimitRedis.disconnect()
+  await disconnectRedis()
 
   clearTimeout(forceExitTimer)
   logger.info('Graceful shutdown complete')

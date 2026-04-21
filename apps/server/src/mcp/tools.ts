@@ -151,6 +151,16 @@ export async function executeTool(
   const tool: ToolDefinition<any> | undefined = getToolById(toolId)
   if (!tool) throw new ToolNotFoundError(toolId)
 
+  // Validate input against tool's schema before execution
+  if (tool.inputSchema) {
+    const parsed = tool.inputSchema.safeParse(input)
+    if (!parsed.success) {
+      const issues = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')
+      throw new Error(`Invalid input for ${toolId}: ${issues}`)
+    }
+    input = parsed.data
+  }
+
   const auth: AuthContext = { userId }
 
   if (tool.authType === 'oauth2') {

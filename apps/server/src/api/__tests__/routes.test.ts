@@ -36,9 +36,35 @@ vi.mock('ioredis', () => {
       ttl: vi.fn().mockResolvedValue(60),
       ping: vi.fn().mockResolvedValue('PONG'),
       disconnect: vi.fn(),
+      on: vi.fn(),
+      get: vi.fn().mockResolvedValue(null),
+      set: vi.fn().mockResolvedValue('OK'),
+      del: vi.fn().mockResolvedValue(1),
     })),
   }
 })
+
+vi.mock('../../db/redis', () => ({
+  redis: {
+    incr: vi.fn().mockResolvedValue(1),
+    expire: vi.fn().mockResolvedValue(1),
+    ttl: vi.fn().mockResolvedValue(60),
+    ping: vi.fn().mockResolvedValue('PONG'),
+    disconnect: vi.fn(),
+    on: vi.fn(),
+    get: vi.fn().mockResolvedValue(null),
+    set: vi.fn().mockResolvedValue('OK'),
+    del: vi.fn().mockResolvedValue(1),
+  },
+  rateLimitRedis: {
+    incr: vi.fn().mockResolvedValue(1),
+    expire: vi.fn().mockResolvedValue(1),
+    ttl: vi.fn().mockResolvedValue(60),
+    disconnect: vi.fn(),
+    on: vi.fn(),
+  },
+  disconnectRedis: vi.fn(),
+}))
 
 // Mock auth broker
 vi.mock('../../auth/broker', () => ({

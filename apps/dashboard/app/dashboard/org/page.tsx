@@ -22,8 +22,8 @@ export default function OrgOverview() {
     async function load() {
       try {
         const [m, t] = await Promise.all([
-          orgApi.members(apiKey!, activeOrg!.org.slug),
-          orgApi.teams(apiKey!, activeOrg!.org.slug),
+          orgApi.members(activeOrg!.org.slug),
+          orgApi.teams(activeOrg!.org.slug),
         ])
         setMembers(m.members)
         setTeams(t.teams)

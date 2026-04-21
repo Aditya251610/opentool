@@ -51,8 +51,8 @@ export default function OverviewPage() {
         const [health, tools, connected, keys] = await Promise.allSettled([
           api.health(),
           api.tools.list(),
-          api.tools.connected(apiKey!),
-          api.keys.list(apiKey!),
+          api.tools.connected(),
+          api.keys.list(),
         ])
 
         const allTools = tools.status === 'fulfilled' ? tools.value.count : 0

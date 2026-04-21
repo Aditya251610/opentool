@@ -69,23 +69,21 @@ function LoginPageInner() {
 
     try {
       const res = await api.auth.login(email, password)
-      login(res.apiKey, res.user)
+      await login(res.apiKey, res.user)
 
       // Accept invite if present
       if (inviteToken) {
         try {
-          await fetch(`${getServerUrl()}/api/invites/${inviteToken}/accept`, {
+          await fetch(`/api/proxy/api/invites/${inviteToken}/accept`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${res.apiKey}` },
+            headers: { 'Content-Type': 'application/json' },
           })
           await refreshOrgs()
         } catch {}
       }
 
       // Check if user has orgs for post-login selection
-      const orgsRes = await fetch(`${getServerUrl()}/api/orgs`, {
-        headers: { Authorization: `Bearer ${res.apiKey}` },
-      })
+      const orgsRes = await fetch('/api/proxy/api/orgs')
       const orgs = orgsRes.ok ? await orgsRes.json() : []
       if (orgs.length > 1 && !inviteToken) {
         router.push('/org-select')

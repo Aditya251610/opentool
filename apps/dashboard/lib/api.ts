@@ -1,5 +1,8 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
+// Use BFF proxy for authenticated requests (API key stays in httpOnly cookie)
+const PROXY_URL = '/api/proxy'
+
 // Feature flags
 export const FEATURES = {
   ORGS_ENABLED: process.env.NEXT_PUBLIC_ENABLE_ORGS !== 'false',
@@ -19,12 +22,34 @@ export function getServerHost(): string {
   }
 }
 
-async function request<T>(path: string, options: RequestInit = {}, orgSlug?: string): Promise<T> {
+// Authenticated requests go through BFF proxy (auth injected server-side from httpOnly cookie)
+async function authedRequest<T>(
+  path: string,
+  options: RequestInit = {},
+  orgSlug?: string,
+): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   }
   if (orgSlug) headers['X-Org-Slug'] = orgSlug
+  const res = await fetch(`${PROXY_URL}${path}`, {
+    ...options,
+    headers,
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body.error || `API ${res.status}: ${res.statusText}`)
+  }
+  return res.json()
+}
+
+// Public requests go directly to the API (no auth needed)
+async function publicRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string>),
+  }
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
     headers,
@@ -36,80 +61,63 @@ async function request<T>(path: string, options: RequestInit = {}, orgSlug?: str
   return res.json()
 }
 
-function authHeaders(apiKey: string) {
-  return { Authorization: `Bearer ${apiKey}` }
-}
-
 export const api = {
-  health: () => request<{ status: string; timestamp: string }>('/health'),
+  health: () => publicRequest<{ status: string; timestamp: string }>('/health'),
 
   auth: {
     signup: (email: string, password: string, name?: string) =>
-      request<{ user: User; apiKey: string }>('/api/auth/signup', {
+      publicRequest<{ user: User; apiKey: string }>('/api/auth/signup', {
         method: 'POST',
         body: JSON.stringify({ email, password, name }),
       }),
     login: (email: string, password: string) =>
-      request<{ user: User; apiKey: string }>('/api/auth/login', {
+      publicRequest<{ user: User; apiKey: string }>('/api/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       }),
   },
 
   users: {
-    me: (apiKey: string) =>
-      request<User & { createdAt: string; connectedToolsCount: number }>('/api/users/me', {
-        headers: authHeaders(apiKey),
-      }),
-    update: (apiKey: string, data: { name?: string; email?: string }) =>
-      request<User>('/api/users/me', {
+    me: () =>
+      authedRequest<User & { createdAt: string; connectedToolsCount: number }>('/api/users/me'),
+    update: (data: { name?: string; email?: string }) =>
+      authedRequest<User>('/api/users/me', {
         method: 'PATCH',
-        headers: authHeaders(apiKey),
         body: JSON.stringify(data),
       }),
   },
 
   tools: {
-    list: () => request<{ count: number; tools: Tool[] }>('/api/tools'),
-    connected: (apiKey: string) =>
-      request<{ count: number; tools: Tool[] }>('/api/tools/connected', {
-        headers: authHeaders(apiKey),
-      }),
-    connectUrl: (provider: string, apiKey: string) =>
-      request<{ url?: string; authType?: string; provider?: string }>(
+    list: () => publicRequest<{ count: number; tools: Tool[] }>('/api/tools'),
+    connected: () => authedRequest<{ count: number; tools: Tool[] }>('/api/tools/connected'),
+    connectUrl: (provider: string) =>
+      authedRequest<{ url?: string; authType?: string; provider?: string }>(
         `/api/auth/connect-url/${provider}`,
+      ),
+    connectApiKey: (provider: string, providerApiKey?: string) =>
+      authedRequest<{ success: boolean; provider: string }>(
+        `/api/auth/connect-api-key/${provider}`,
         {
-          headers: authHeaders(apiKey),
+          method: 'POST',
+          body: providerApiKey ? JSON.stringify({ apiKey: providerApiKey }) : undefined,
         },
       ),
-    connectApiKey: (provider: string, apiKey: string, providerApiKey?: string) =>
-      request<{ success: boolean; provider: string }>(`/api/auth/connect-api-key/${provider}`, {
-        method: 'POST',
-        headers: { ...authHeaders(apiKey), 'Content-Type': 'application/json' },
-        body: providerApiKey ? JSON.stringify({ apiKey: providerApiKey }) : undefined,
-      }),
-    disconnect: (provider: string, apiKey: string) =>
-      request<{ success: boolean }>('/api/auth/revoke/' + provider, {
+    disconnect: (provider: string) =>
+      authedRequest<{ success: boolean }>('/api/auth/revoke/' + provider, {
         method: 'DELETE',
-        headers: authHeaders(apiKey),
       }),
   },
 
   keys: {
-    list: (apiKey: string) =>
-      request<{ keys: ApiKey[] }>('/api/keys', {
-        headers: authHeaders(apiKey),
-      }),
-    create: (apiKey: string, name: string) =>
-      request<{ key: string; prefix: string; name: string }>('/api/keys', {
+    list: () => authedRequest<{ keys: ApiKey[] }>('/api/keys'),
+    create: (name: string) =>
+      authedRequest<{ key: string; prefix: string; name: string }>('/api/keys', {
         method: 'POST',
-        headers: authHeaders(apiKey),
         body: JSON.stringify({ name }),
       }),
-    revoke: (apiKey: string, keyId: string) =>
-      request<{ success: boolean }>(`/api/keys/${keyId}`, {
+    revoke: (keyId: string) =>
+      authedRequest<{ success: boolean }>(`/api/keys/${keyId}`, {
         method: 'DELETE',
-        headers: authHeaders(apiKey),
       }),
   },
 }
@@ -207,181 +215,119 @@ export interface OrgAuditEntry {
 // ─── Organization API ────────────────────────────────────────────────────────
 
 export const orgApi = {
-  list: (apiKey: string) =>
-    request<{ orgs: (Org & { role: OrgRole })[] }>('/api/orgs', {
-      headers: authHeaders(apiKey),
-    }),
+  list: () => authedRequest<{ orgs: (Org & { role: OrgRole })[] }>('/api/orgs'),
 
-  get: (apiKey: string, slug: string) =>
-    request<{ org: Org; role: OrgRole }>(
-      `/api/orgs/${slug}`,
-      {
-        headers: authHeaders(apiKey),
-      },
-      slug,
-    ),
+  get: (slug: string) => authedRequest<{ org: Org; role: OrgRole }>(`/api/orgs/${slug}`, {}, slug),
 
-  create: (apiKey: string, name: string, slug: string) =>
-    request<{ org: Org }>('/api/orgs', {
+  create: (name: string, slug: string) =>
+    authedRequest<{ org: Org }>('/api/orgs', {
       method: 'POST',
-      headers: authHeaders(apiKey),
       body: JSON.stringify({ name, slug }),
     }),
 
-  update: (apiKey: string, slug: string, data: { name?: string; plan?: string }) =>
-    request<{ org: Org }>(
+  update: (slug: string, data: { name?: string; plan?: string }) =>
+    authedRequest<{ org: Org }>(
       `/api/orgs/${slug}`,
       {
         method: 'PATCH',
-        headers: authHeaders(apiKey),
         body: JSON.stringify(data),
       },
       slug,
     ),
 
-  delete: (apiKey: string, slug: string) =>
-    request<{ success: boolean }>(
-      `/api/orgs/${slug}`,
-      {
-        method: 'DELETE',
-        headers: authHeaders(apiKey),
-      },
-      slug,
-    ),
+  delete: (slug: string) =>
+    authedRequest<{ success: boolean }>(`/api/orgs/${slug}`, { method: 'DELETE' }, slug),
 
   // Members
-  members: (apiKey: string, slug: string) =>
-    request<{ members: OrgMember[] }>(
-      `/api/orgs/${slug}/members`,
-      {
-        headers: authHeaders(apiKey),
-      },
-      slug,
-    ),
+  members: (slug: string) =>
+    authedRequest<{ members: OrgMember[] }>(`/api/orgs/${slug}/members`, {}, slug),
 
-  invite: (apiKey: string, slug: string, email: string, role: OrgRole) =>
-    request<{ invite: OrgInvite }>(
+  invite: (slug: string, email: string, role: OrgRole) =>
+    authedRequest<{ invite: OrgInvite }>(
       `/api/orgs/${slug}/members/invite`,
       {
         method: 'POST',
-        headers: authHeaders(apiKey),
         body: JSON.stringify({ email, role }),
       },
       slug,
     ),
 
-  removeMember: (apiKey: string, slug: string, userId: string) =>
-    request<{ success: boolean }>(
+  removeMember: (slug: string, userId: string) =>
+    authedRequest<{ success: boolean }>(
       `/api/orgs/${slug}/members/${userId}`,
-      {
-        method: 'DELETE',
-        headers: authHeaders(apiKey),
-      },
+      { method: 'DELETE' },
       slug,
     ),
 
-  changeRole: (apiKey: string, slug: string, userId: string, role: OrgRole) =>
-    request<{ success: boolean }>(
+  changeRole: (slug: string, userId: string, role: OrgRole) =>
+    authedRequest<{ success: boolean }>(
       `/api/orgs/${slug}/members/${userId}/role`,
       {
         method: 'PATCH',
-        headers: authHeaders(apiKey),
         body: JSON.stringify({ role }),
       },
       slug,
     ),
 
   // Teams
-  teams: (apiKey: string, slug: string) =>
-    request<{ teams: OrgTeam[] }>(
-      `/api/orgs/${slug}/teams`,
-      {
-        headers: authHeaders(apiKey),
-      },
-      slug,
-    ),
+  teams: (slug: string) => authedRequest<{ teams: OrgTeam[] }>(`/api/orgs/${slug}/teams`, {}, slug),
 
-  createTeam: (
-    apiKey: string,
-    slug: string,
-    name: string,
-    teamSlug: string,
-    description?: string,
-  ) =>
-    request<{ team: OrgTeam }>(
+  createTeam: (slug: string, name: string, teamSlug: string, description?: string) =>
+    authedRequest<{ team: OrgTeam }>(
       `/api/orgs/${slug}/teams`,
       {
         method: 'POST',
-        headers: authHeaders(apiKey),
         body: JSON.stringify({ name, slug: teamSlug, description }),
       },
       slug,
     ),
 
-  deleteTeam: (apiKey: string, slug: string, teamSlug: string) =>
-    request<{ success: boolean }>(
+  deleteTeam: (slug: string, teamSlug: string) =>
+    authedRequest<{ success: boolean }>(
       `/api/orgs/${slug}/teams/${teamSlug}`,
-      {
-        method: 'DELETE',
-        headers: authHeaders(apiKey),
-      },
+      { method: 'DELETE' },
       slug,
     ),
 
   // API Keys
-  orgKeys: (apiKey: string, slug: string) =>
-    request<{ keys: OrgApiKey[] }>(
-      `/api/orgs/${slug}/keys`,
-      {
-        headers: authHeaders(apiKey),
-      },
-      slug,
-    ),
+  orgKeys: (slug: string) =>
+    authedRequest<{ keys: OrgApiKey[] }>(`/api/orgs/${slug}/keys`, {}, slug),
 
-  createOrgKey: (
-    apiKey: string,
-    slug: string,
-    data: { name: string; scopes?: string[]; expiresInDays?: number },
-  ) =>
-    request<{ key: string; prefix: string; name: string }>(
+  createOrgKey: (slug: string, data: { name: string; scopes?: string[]; expiresInDays?: number }) =>
+    authedRequest<{ key: string; prefix: string; name: string }>(
       `/api/orgs/${slug}/keys`,
       {
         method: 'POST',
-        headers: authHeaders(apiKey),
         body: JSON.stringify(data),
       },
       slug,
     ),
 
-  revokeOrgKey: (apiKey: string, slug: string, keyId: string) =>
-    request<{ success: boolean }>(
+  revokeOrgKey: (slug: string, keyId: string) =>
+    authedRequest<{ success: boolean }>(
       `/api/orgs/${slug}/keys/${keyId}`,
-      {
-        method: 'DELETE',
-        headers: authHeaders(apiKey),
-      },
+      { method: 'DELETE' },
       slug,
     ),
 
   // Audit Log
   auditLog: (
-    apiKey: string,
     slug: string,
     params?: { page?: number; limit?: number; action?: string; userId?: string },
   ) =>
-    request<{ entries: OrgAuditEntry[]; total: number; page: number; pages: number }>(
+    authedRequest<{ entries: OrgAuditEntry[]; total: number; page: number; pages: number }>(
       `/api/orgs/${slug}/audit?${new URLSearchParams(
         Object.entries(params || {})
           .filter(([, v]) => v != null)
           .map(([k, v]) => [k, String(v)]),
       ).toString()}`,
-      { headers: authHeaders(apiKey) },
+      {},
       slug,
     ),
 
   // SSO
   configureSso: (slug: string, data: { provider: string; config: Record<string, any> }) =>
-    request<{ success: boolean }>(
+    authedRequest<{ success: boolean }>(
       `/api/orgs/${slug}/sso/configure`,
       {
         method: 'POST',
@@ -391,26 +337,22 @@ export const orgApi = {
     ),
 
   testSso: (slug: string) =>
-    request<{ success: boolean; error?: string }>(
+    authedRequest<{ success: boolean; error?: string }>(
       `/api/orgs/${slug}/sso/test`,
-      {
-        method: 'POST',
-      },
+      { method: 'POST' },
       slug,
     ),
 
   disableSso: (slug: string) =>
-    request<{ success: boolean }>(
+    authedRequest<{ success: boolean }>(
       `/api/orgs/${slug}/sso/disable`,
-      {
-        method: 'DELETE',
-      },
+      { method: 'DELETE' },
       slug,
     ),
 
   // Usage
   getUsage: (slug: string) =>
-    request<{
+    authedRequest<{
       members: { current: number; limit: number }
       keys: { current: number; limit: number }
       toolExecs: { current: number; limit: number }
@@ -419,16 +361,10 @@ export const orgApi = {
 
   // GDPR
   exportData: (slug: string) =>
-    request<Record<string, any>>(
-      `/api/orgs/${slug}/data/export`,
-      {
-        method: 'POST',
-      },
-      slug,
-    ),
+    authedRequest<Record<string, any>>(`/api/orgs/${slug}/data/export`, { method: 'POST' }, slug),
 
   eraseData: (slug: string, confirmEmail: string) =>
-    request<{ success: boolean }>(
+    authedRequest<{ success: boolean }>(
       `/api/orgs/${slug}/data/erase`,
       {
         method: 'DELETE',

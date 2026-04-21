@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, memo } from 'react'
+import { useState, useEffect, useMemo, memo, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Loader2 } from 'lucide-react'
 import { PROVIDERS, type ProviderMeta } from '@/lib/providers'
@@ -28,7 +28,7 @@ const API_KEY_LABELS: Record<string, { label: string; placeholder: string; help:
   },
 }
 
-export default function ToolsPage() {
+function ToolsPageContent() {
   const { apiKey } = useAuth()
   const searchParams = useSearchParams()
   const [search, setSearch] = useState('')
@@ -47,7 +47,7 @@ export default function ToolsPage() {
 
     async function fetchConnected() {
       try {
-        const { tools } = await api.tools.connected(apiKey!)
+        const { tools } = await api.tools.connected()
         const providers = new Set(tools.map((t) => t.provider))
         setConnectedProviders(providers)
       } catch {
@@ -115,7 +115,7 @@ export default function ToolsPage() {
     if (!apiKey) return
     setConnecting(provider)
     try {
-      const res = await api.tools.connectUrl(provider, apiKey)
+      const res = await api.tools.connectUrl(provider)
       if (res.authType === 'API_KEY') {
         // Show modal for user to enter their own API key
         setApiKeyModal(provider)
@@ -137,7 +137,7 @@ export default function ToolsPage() {
     if (!apiKey || !apiKeyModal || !providerKeyInput.trim()) return
     setConnecting(apiKeyModal)
     try {
-      await api.tools.connectApiKey(apiKeyModal, apiKey, providerKeyInput.trim())
+      await api.tools.connectApiKey(apiKeyModal, providerKeyInput.trim())
       setConnectedProviders((prev) => new Set([...prev, apiKeyModal]))
       toast.success(`${PROVIDERS[apiKeyModal].name} connected!`)
       setApiKeyModal(null)
@@ -155,7 +155,7 @@ export default function ToolsPage() {
     if (!apiKey) return
     setDisconnecting(provider)
     try {
-      await api.tools.disconnect(provider, apiKey)
+      await api.tools.disconnect(provider)
       setConnectedProviders((prev) => {
         const next = new Set(prev)
         next.delete(provider)
@@ -476,3 +476,17 @@ const ToolCard = memo(function ToolCard({
     </motion.div>
   )
 })
+
+export default function ToolsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-6 h-6 animate-spin text-[#a1a1aa]" />
+        </div>
+      }
+    >
+      <ToolsPageContent />
+    </Suspense>
+  )
+}

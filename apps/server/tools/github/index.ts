@@ -1,6 +1,9 @@
 import { defineTool, z } from '@opentool/tool-schema'
 import { safeToolError } from '../utils'
 
+const GITHUB_API_VERSION = '2022-11-28'
+const GITHUB_API_BASE_URL = 'https://api.github.com'
+
 export const githubCreateIssue = defineTool({
   id: 'github_create_issue',
   name: 'Create GitHub Issue',
@@ -16,30 +19,27 @@ export const githubCreateIssue = defineTool({
     labels: z.array(z.string()).optional().describe('Labels to apply'),
   }),
   execute: async ({ input, auth }) => {
-    const res = await fetch(
-      `https://api.github.com/repos/${input.owner}/${input.repo}/issues`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${auth.accessToken}`,
-          Accept: 'application/vnd.github+json',
-          'Content-Type': 'application/json',
-          'X-GitHub-Api-Version': '2022-11-28',
-        },
-        body: JSON.stringify({
-          title: input.title,
-          body: input.body,
-          labels: input.labels,
-        }),
-      }
-    )
+    const res = await fetch(`${GITHUB_API_BASE_URL}/repos/${input.owner}/${input.repo}/issues`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${auth.accessToken}`,
+        Accept: 'application/vnd.github+json',
+        'Content-Type': 'application/json',
+        'X-GitHub-Api-Version': GITHUB_API_VERSION,
+      },
+      body: JSON.stringify({
+        title: input.title,
+        body: input.body,
+        labels: input.labels,
+      }),
+    })
 
     if (!res.ok) {
-      const error = await res.json() as { message: string }
+      const error = (await res.json()) as { message: string }
       throw safeToolError(error, 'GitHub', 'execute')
     }
 
-    const issue = await res.json() as {
+    const issue = (await res.json()) as {
       number: number
       html_url: string
       title: string
@@ -75,22 +75,22 @@ export const githubListIssues = defineTool({
     })
 
     const res = await fetch(
-      `https://api.github.com/repos/${input.owner}/${input.repo}/issues?${params}`,
+      `${GITHUB_API_BASE_URL}/repos/${input.owner}/${input.repo}/issues?${params}`,
       {
         headers: {
           Authorization: `Bearer ${auth.accessToken}`,
           Accept: 'application/vnd.github+json',
-          'X-GitHub-Api-Version': '2022-11-28',
+          'X-GitHub-Api-Version': GITHUB_API_VERSION,
         },
-      }
+      },
     )
 
     if (!res.ok) {
-      const error = await res.json() as { message: string }
+      const error = (await res.json()) as { message: string }
       throw safeToolError(error, 'GitHub', 'execute')
     }
 
-    const issues = await res.json() as Array<{
+    const issues = (await res.json()) as Array<{
       number: number
       title: string
       state: string
@@ -125,32 +125,29 @@ export const githubCreatePR = defineTool({
     draft: z.boolean().optional().describe('Whether to create as draft PR'),
   }),
   execute: async ({ input, auth }) => {
-    const res = await fetch(
-      `https://api.github.com/repos/${input.owner}/${input.repo}/pulls`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${auth.accessToken}`,
-          Accept: 'application/vnd.github+json',
-          'Content-Type': 'application/json',
-          'X-GitHub-Api-Version': '2022-11-28',
-        },
-        body: JSON.stringify({
-          title: input.title,
-          body: input.body,
-          head: input.head,
-          base: input.base,
-          draft: input.draft ?? false,
-        }),
-      }
-    )
+    const res = await fetch(`${GITHUB_API_BASE_URL}/repos/${input.owner}/${input.repo}/pulls`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${auth.accessToken}`,
+        Accept: 'application/vnd.github+json',
+        'Content-Type': 'application/json',
+        'X-GitHub-Api-Version': GITHUB_API_VERSION,
+      },
+      body: JSON.stringify({
+        title: input.title,
+        body: input.body,
+        head: input.head,
+        base: input.base,
+        draft: input.draft ?? false,
+      }),
+    })
 
     if (!res.ok) {
-      const error = await res.json() as { message: string }
+      const error = (await res.json()) as { message: string }
       throw safeToolError(error, 'GitHub', 'execute')
     }
 
-    const pr = await res.json() as {
+    const pr = (await res.json()) as {
       number: number
       html_url: string
       title: string
@@ -183,25 +180,25 @@ export const githubCommentOnIssue = defineTool({
   }),
   execute: async ({ input, auth }) => {
     const res = await fetch(
-      `https://api.github.com/repos/${input.owner}/${input.repo}/issues/${input.issue_number}/comments`,
+      `${GITHUB_API_BASE_URL}/repos/${input.owner}/${input.repo}/issues/${input.issue_number}/comments`,
       {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${auth.accessToken}`,
           Accept: 'application/vnd.github+json',
           'Content-Type': 'application/json',
-          'X-GitHub-Api-Version': '2022-11-28',
+          'X-GitHub-Api-Version': GITHUB_API_VERSION,
         },
         body: JSON.stringify({ body: input.body }),
-      }
+      },
     )
 
     if (!res.ok) {
-      const error = await res.json() as { message: string }
+      const error = (await res.json()) as { message: string }
       throw safeToolError(error, 'GitHub', 'execute')
     }
 
-    const comment = await res.json() as {
+    const comment = (await res.json()) as {
       id: number
       html_url: string
       body: string
@@ -229,23 +226,20 @@ export const githubGetRepo = defineTool({
     repo: z.string().describe('Repository name'),
   }),
   execute: async ({ input, auth }) => {
-    const res = await fetch(
-      `https://api.github.com/repos/${input.owner}/${input.repo}`,
-      {
-        headers: {
-          Authorization: `Bearer ${auth.accessToken}`,
-          Accept: 'application/vnd.github+json',
-          'X-GitHub-Api-Version': '2022-11-28',
-        },
-      }
-    )
+    const res = await fetch(`${GITHUB_API_BASE_URL}/repos/${input.owner}/${input.repo}`, {
+      headers: {
+        Authorization: `Bearer ${auth.accessToken}`,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': GITHUB_API_VERSION,
+      },
+    })
 
     if (!res.ok) {
-      const error = await res.json() as { message: string }
+      const error = (await res.json()) as { message: string }
       throw safeToolError(error, 'GitHub', 'execute')
     }
 
-    const repo = await res.json() as {
+    const repo = (await res.json()) as {
       full_name: string
       description: string | null
       html_url: string

@@ -9,16 +9,18 @@ const createUserSchema = z.object({
   name: z.string().optional(),
 })
 
-const updateUserSchema = z.object({
-  name: z.string().optional(),
-  email: z.string().email('Valid email is required').optional(),
-}).refine(data => data.name !== undefined || data.email !== undefined, {
-  message: 'At least one field (name or email) must be provided',
-})
+const updateUserSchema = z
+  .object({
+    name: z.string().optional(),
+    email: z.string().email('Valid email is required').optional(),
+  })
+  .refine((data) => data.name !== undefined || data.email !== undefined, {
+    message: 'At least one field (name or email) must be provided',
+  })
 
 export const userRoutes = new Hono()
 
-userRoutes.post('/', async (c) => {
+userRoutes.post('/', apiKeyMiddleware, async (c) => {
   try {
     const body = await c.req.json()
     const parsed = createUserSchema.safeParse(body)

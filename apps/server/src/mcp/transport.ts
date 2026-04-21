@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { createMcpServer } from './server'
 import { Context } from 'hono'
 import { logger } from '../logger'
+import { MCP_SESSION_TTL_MS, MCP_SESSION_CLEANUP_INTERVAL_MS } from '../constants'
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js'
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js'
 import type { JSONRPCMessage } from '@modelcontextprotocol/sdk/types.js'
@@ -16,14 +17,13 @@ const sessions = new Map<
   }
 >()
 
-// Clean up stale sessions after 30 minutes of inactivity
-const SESSION_TTL_MS = 30 * 60 * 1000
+// Clean up stale sessions
 const sessionLastSeen = new Map<string, number>()
 
 setInterval(() => {
   const now = Date.now()
   for (const [sid, lastSeen] of sessionLastSeen) {
-    if (now - lastSeen > SESSION_TTL_MS) {
+    if (now - lastSeen > MCP_SESSION_TTL_MS) {
       const session = sessions.get(sid)
       if (session) {
         session.transport.close().catch(() => {})
@@ -33,7 +33,7 @@ setInterval(() => {
       }
     }
   }
-}, 60_000)
+}, MCP_SESSION_CLEANUP_INTERVAL_MS).unref()
 
 function extractBearerToken(c: Context): string | null {
   const authHeader = c.req.header('Authorization')

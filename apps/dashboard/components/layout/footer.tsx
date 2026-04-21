@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { OpenToolLogo, OpenToolMark } from '@/components/icons'
+import { useGitHubStars } from '@/lib/github-stars'
 
 const COLUMNS = [
   {
@@ -33,16 +33,7 @@ const COLUMNS = [
 ]
 
 export function Footer() {
-  const [stars, setStars] = useState<number | null>(null)
-
-  useEffect(() => {
-    fetch('https://api.github.com/repos/Aditya251610/opentool')
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.stargazers_count != null) setStars(d.stargazers_count)
-      })
-      .catch(() => {})
-  }, [])
+  const stars = useGitHubStars()
 
   return (
     <footer className="border-t border-white/[0.06] bg-[#030014]">

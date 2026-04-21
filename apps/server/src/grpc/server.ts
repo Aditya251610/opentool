@@ -65,8 +65,15 @@ export async function startGrpcServer(config: GrpcServerConfig): Promise<grpc.Se
       logger.info('gRPC server using TLS')
     }
   } else {
+    // Block insecure gRPC in production
+    if (process.env['NODE_ENV'] === 'production') {
+      logger.error(
+        'gRPC requires TLS in production. Set GRPC_TLS_CERT and GRPC_TLS_KEY. Skipping gRPC startup.',
+      )
+      return Promise.reject(new Error('gRPC requires TLS in production'))
+    }
     credentials = grpc.ServerCredentials.createInsecure()
-    logger.info('gRPC server using insecure credentials (development mode)')
+    logger.warn('gRPC server using insecure credentials (development only)')
   }
 
   // Bind and start

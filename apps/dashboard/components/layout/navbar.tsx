@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
+import { useGitHubStars } from '@/lib/github-stars'
 import { OpenToolLogo, OpenToolMark, GitHubIcon } from '@/components/icons'
 
 const ease: [number, number, number, number] = [0.23, 1, 0.32, 1]
@@ -23,21 +24,12 @@ interface NavbarProps {
 export function Navbar({ activePage, animate = false }: NavbarProps) {
   const { apiKey } = useAuth()
   const [scrolled, setScrolled] = useState(false)
-  const [stars, setStars] = useState<number | null>(null)
+  const stars = useGitHubStars()
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 20)
     window.addEventListener('scroll', fn, { passive: true })
     return () => window.removeEventListener('scroll', fn)
-  }, [])
-
-  useEffect(() => {
-    fetch('https://api.github.com/repos/Aditya251610/opentool')
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.stargazers_count != null) setStars(d.stargazers_count)
-      })
-      .catch(() => {})
   }, [])
 
   const Tag = animate ? motion.nav : 'nav'

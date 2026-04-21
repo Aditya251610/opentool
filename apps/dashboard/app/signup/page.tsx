@@ -49,7 +49,7 @@ export default function SignupPage() {
     setLoading(true)
     try {
       const res = await api.auth.signup(email, password, name || undefined)
-      login(res.apiKey, res.user)
+      await login(res.apiKey, res.user)
       router.push('/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Signup failed')

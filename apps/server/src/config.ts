@@ -39,6 +39,8 @@ export const config = {
   grpcTlsCa: process.env['GRPC_TLS_CA'] || '',
   grpcMaxStreams: Number(process.env['GRPC_MAX_STREAMS'] ?? 100),
   grpcReflection: process.env['GRPC_REFLECTION'] !== 'false', // true by default in dev
+  // Metrics endpoint protection
+  metricsToken: process.env['METRICS_TOKEN'] || '',
 } as const
 
 /**

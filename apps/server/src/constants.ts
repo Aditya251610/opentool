@@ -58,3 +58,17 @@ export const TOOL_TIMEOUT_MS = 30000 // 30 seconds
 
 // ─── Audit Log Retention ──────────────────
 export const AUDIT_LOG_RETENTION_DAYS = 90
+
+// ─── GitHub API ───────────────────────────
+export const GITHUB_API_VERSION = '2022-11-28'
+export const GITHUB_API_BASE_URL = 'https://api.github.com'
+
+// ─── MCP Session ──────────────────────────
+export const MCP_SESSION_TTL_MS = 30 * 60 * 1000 // 30 minutes
+export const MCP_SESSION_CLEANUP_INTERVAL_MS = 60_000 // 1 minute
+
+// ─── Graceful Shutdown ────────────────────
+export const GRACEFUL_SHUTDOWN_TIMEOUT_MS = 15_000
+
+// ─── Audit Output ─────────────────────────
+export const MAX_AUDIT_OUTPUT_LENGTH = 10_000

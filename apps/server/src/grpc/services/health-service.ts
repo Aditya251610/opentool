@@ -1,18 +1,8 @@
 import * as grpc from '@grpc/grpc-js'
 import { prisma } from '../../db/client'
-import Redis from 'ioredis'
-import { config } from '../../config'
+import { redis } from '../../db/redis'
 import { logger } from '../../logger'
 import type { HealthCheckRequest, HealthCheckResponse } from '@opentool/proto'
-
-let redis: Redis | null = null
-
-function getRedis(): Redis {
-  if (!redis) {
-    redis = new Redis(config.redisUrl)
-  }
-  return redis
-}
 
 /**
  * gRPC Health service implementation.
@@ -26,7 +16,7 @@ export const healthServiceImpl: grpc.UntypedServiceImplementation = {
     try {
       const [dbResult, redisResult] = await Promise.allSettled([
         prisma.$queryRaw`SELECT 1`,
-        getRedis().ping(),
+        redis.ping(),
       ])
 
       const dbOk = dbResult.status === 'fulfilled'
@@ -62,7 +52,7 @@ export const healthServiceImpl: grpc.UntypedServiceImplementation = {
       try {
         const [dbResult, redisResult] = await Promise.allSettled([
           prisma.$queryRaw`SELECT 1`,
-          getRedis().ping(),
+          redis.ping(),
         ])
 
         const dbOk = dbResult.status === 'fulfilled'
@@ -107,8 +97,5 @@ export const healthServiceImpl: grpc.UntypedServiceImplementation = {
 
 /** Clean up redis connection on shutdown */
 export async function shutdownHealthService(): Promise<void> {
-  if (redis) {
-    redis.disconnect()
-    redis = null
-  }
+  // Redis is now managed centrally by db/redis.ts — no local cleanup needed
 }

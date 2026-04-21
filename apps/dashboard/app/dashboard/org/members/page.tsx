@@ -37,7 +37,7 @@ export default function OrgMembersPage() {
   async function loadMembers() {
     if (!apiKey || !activeOrg) return
     try {
-      const { members: m } = await orgApi.members(apiKey, activeOrg.org.slug)
+      const { members: m } = await orgApi.members(activeOrg.org.slug)
       setMembers(m)
     } catch {
       /* handled */
@@ -50,7 +50,7 @@ export default function OrgMembersPage() {
     if (!apiKey || !activeOrg || !inviteEmail) return
     setError('')
     try {
-      await orgApi.invite(apiKey, activeOrg.org.slug, inviteEmail, inviteRole)
+      await orgApi.invite(activeOrg.org.slug, inviteEmail, inviteRole)
       setInviteEmail('')
       setShowInvite(false)
       loadMembers()
@@ -63,7 +63,7 @@ export default function OrgMembersPage() {
     if (!apiKey || !activeOrg) return
     if (!confirm('Remove this member from the organization?')) return
     try {
-      await orgApi.removeMember(apiKey, activeOrg.org.slug, userId)
+      await orgApi.removeMember(activeOrg.org.slug, userId)
       loadMembers()
     } catch {
       /* handled */
@@ -73,7 +73,7 @@ export default function OrgMembersPage() {
   async function handleRoleChange(userId: string, role: OrgRole) {
     if (!apiKey || !activeOrg) return
     try {
-      await orgApi.changeRole(apiKey, activeOrg.org.slug, userId, role)
+      await orgApi.changeRole(activeOrg.org.slug, userId, role)
       loadMembers()
     } catch {
       /* handled */

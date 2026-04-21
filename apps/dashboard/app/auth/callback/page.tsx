@@ -21,8 +21,9 @@ function CallbackInner() {
     }
 
     if (apiKey && email) {
-      login(apiKey, { id: '', email, name: name || null })
-      router.replace('/dashboard')
+      login(apiKey, { id: '', email, name: name || null }).then(() => {
+        router.replace('/dashboard')
+      })
     } else {
       router.replace('/login?error=missing_credentials')
     }

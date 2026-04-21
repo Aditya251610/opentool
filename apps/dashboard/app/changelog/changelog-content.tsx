@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
 import Link from 'next/link'
@@ -106,7 +107,7 @@ function EntryCard({ entry, index }: { entry: ChangelogEntry; index: number }) {
                 {section.items.map((item, i) => (
                   <li key={i} className="flex gap-2.5 text-sm text-white/50 leading-relaxed">
                     <span className="text-white/15 mt-[7px] flex-shrink-0">•</span>
-                    <span dangerouslySetInnerHTML={{ __html: formatItem(item) }} />
+                    <span>{formatItem(item)}</span>
                   </li>
                 ))}
               </ul>
@@ -118,9 +119,19 @@ function EntryCard({ entry, index }: { entry: ChangelogEntry; index: number }) {
   )
 }
 
-/* Format bold markers: **text** → <strong> */
-function formatItem(text: string): string {
-  return text.replace(/\*\*([^*]+)\*\*/g, '<strong class="text-white/70 font-medium">$1</strong>')
+/* Format bold markers: **text** → <strong> — returns React nodes (safe, no innerHTML) */
+function formatItem(text: string): React.ReactNode {
+  const parts = text.split(/\*\*([^*]+)\*\*/)
+  if (parts.length === 1) return text
+  return parts.map((part, i) =>
+    i % 2 === 1 ? (
+      <strong key={i} className="text-white/70 font-medium">
+        {part}
+      </strong>
+    ) : (
+      <span key={i}>{part}</span>
+    ),
+  )
 }
 
 /* ─── Main content ─── */

@@ -2,8 +2,7 @@ import { Context, Next } from 'hono'
 import { OrgRole } from '@prisma/client'
 import { prisma } from '../db/client'
 import { Permission, hasPermission, hasAnyPermission } from './permissions'
-import Redis from 'ioredis'
-import { config } from '../config'
+import { redis } from '../db/redis'
 
 // ─────────────────────────────────────────
 // TYPE EXTENSIONS
@@ -30,16 +29,6 @@ declare module 'hono' {
 const CACHE_TTL = 300 // 5 minutes
 const CACHE_PREFIX = 'ot:org:member'
 
-let redis: Redis | null = null
-
-function getRedis(): Redis {
-  if (!redis) {
-    redis = new Redis(config.redisUrl, { maxRetriesPerRequest: 1, lazyConnect: true })
-    redis.on('error', () => {}) // suppress connection errors — fallback to DB
-  }
-  return redis
-}
-
 function memberCacheKey(orgId: string, userId: string): string {
   return `${CACHE_PREFIX}:${orgId}:${userId}`
 }
@@ -53,7 +42,7 @@ async function getCachedMembership(
   userId: string,
 ): Promise<CachedMembership | null> {
   try {
-    const data = await getRedis().get(memberCacheKey(orgId, userId))
+    const data = await redis.get(memberCacheKey(orgId, userId))
     if (!data) return null
     return JSON.parse(data)
   } catch {
@@ -67,7 +56,7 @@ async function setCachedMembership(
   membership: CachedMembership,
 ): Promise<void> {
   try {
-    await getRedis().set(memberCacheKey(orgId, userId), JSON.stringify(membership), 'EX', CACHE_TTL)
+    await redis.set(memberCacheKey(orgId, userId), JSON.stringify(membership), 'EX', CACHE_TTL)
   } catch {
     // Best-effort cache write
   }
@@ -76,7 +65,7 @@ async function setCachedMembership(
 /** Invalidate a user's membership cache for a specific org */
 export async function invalidateMembershipCache(orgId: string, userId: string): Promise<void> {
   try {
-    await getRedis().del(memberCacheKey(orgId, userId))
+    await redis.del(memberCacheKey(orgId, userId))
   } catch {
     // Best-effort
   }

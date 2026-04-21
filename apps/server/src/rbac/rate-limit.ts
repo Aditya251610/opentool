@@ -1,7 +1,7 @@
 import { Context, Next } from 'hono'
-import Redis from 'ioredis'
 import { config } from '../config'
 import { logger } from '../logger'
+import { rateLimitRedis } from '../db/redis'
 
 // ─────────────────────────────────────────
 // PER-ORG RATE LIMITER
@@ -15,16 +15,6 @@ const PLAN_LIMITS: Record<string, { maxRequests: number; windowSeconds: number }
 }
 
 const DEFAULT_LIMIT = PLAN_LIMITS.free
-
-let rateLimitRedis: Redis | null = null
-
-function getRateLimitRedis(): Redis {
-  if (!rateLimitRedis) {
-    rateLimitRedis = new Redis(config.redisUrl, { maxRetriesPerRequest: 1, lazyConnect: true })
-    rateLimitRedis.on('error', () => {})
-  }
-  return rateLimitRedis
-}
 
 /**
  * Per-org rate limiting middleware.
@@ -43,11 +33,10 @@ export async function orgRateLimiter(c: Context, next: Next): Promise<Response |
   const key = `ot:org:ratelimit:${org.id}`
 
   try {
-    const redis = getRateLimitRedis()
-    const current = await redis.incr(key)
+    const current = await rateLimitRedis.incr(key)
 
     if (current === 1) {
-      await redis.expire(key, limits.windowSeconds)
+      await rateLimitRedis.expire(key, limits.windowSeconds)
     }
 
     // Set rate limit headers
@@ -56,7 +45,7 @@ export async function orgRateLimiter(c: Context, next: Next): Promise<Response |
     c.header('X-RateLimit-Remaining', String(remaining))
 
     if (current > limits.maxRequests) {
-      const ttl = await redis.ttl(key)
+      const ttl = await rateLimitRedis.ttl(key)
       c.header('X-RateLimit-Reset', String(ttl > 0 ? ttl : 1))
       c.header('Retry-After', String(ttl > 0 ? ttl : 1))
 

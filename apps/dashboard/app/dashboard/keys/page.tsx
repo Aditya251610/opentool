@@ -21,12 +21,12 @@ export default function KeysPage() {
   const [newKeyValue, setNewKeyValue] = useState<string | null>(null)
   const [copiedPrefix, setCopiedPrefix] = useState<string | null>(null)
 
-  function handleCopyPrefix(prefix: string) {
+  const handleCopyPrefix = useCallback((prefix: string) => {
     navigator.clipboard.writeText(prefix)
     setCopiedPrefix(prefix)
     toast.success('Prefix copied')
     setTimeout(() => setCopiedPrefix(null), 2000)
-  }
+  }, [])
   const [creating, setCreating] = useState(false)
   const [revoking, setRevoking] = useState<string | null>(null)
   const [confirmRevoke, setConfirmRevoke] = useState<string | null>(null)
@@ -34,7 +34,7 @@ export default function KeysPage() {
   const fetchKeys = useCallback(async () => {
     if (!apiKey) return
     try {
-      const { keys: serverKeys } = await api.keys.list(apiKey)
+      const { keys: serverKeys } = await api.keys.list()
       setKeys(serverKeys.filter((k) => k.name !== 'Dashboard Session'))
     } catch {
       toast.error('Failed to load API keys')
@@ -47,11 +47,11 @@ export default function KeysPage() {
     fetchKeys()
   }, [fetchKeys])
 
-  async function handleCreate() {
+  const handleCreate = useCallback(async () => {
     if (!newKeyName.trim() || !apiKey) return
     setCreating(true)
     try {
-      const result = await api.keys.create(apiKey, newKeyName.trim())
+      const result = await api.keys.create(newKeyName.trim())
       setNewKeyValue(result.key)
       setShowCreate(false)
       setNewKeyName('')
@@ -63,32 +63,35 @@ export default function KeysPage() {
     } finally {
       setCreating(false)
     }
-  }
+  }, [newKeyName, apiKey, fetchKeys])
 
-  async function handleRevoke(keyId: string) {
-    if (!apiKey) return
-    setRevoking(keyId)
-    try {
-      await api.keys.revoke(apiKey, keyId)
-      setKeys((prev) => prev.filter((k) => k.id !== keyId))
-      toast.success('API key revoked')
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to revoke key')
-    } finally {
-      setRevoking(null)
-      setConfirmRevoke(null)
-    }
-  }
+  const handleRevoke = useCallback(
+    async (keyId: string) => {
+      if (!apiKey) return
+      setRevoking(keyId)
+      try {
+        await api.keys.revoke(keyId)
+        setKeys((prev) => prev.filter((k) => k.id !== keyId))
+        toast.success('API key revoked')
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Failed to revoke key')
+      } finally {
+        setRevoking(null)
+        setConfirmRevoke(null)
+      }
+    },
+    [apiKey],
+  )
 
   const [newKeyCopied, setNewKeyCopied] = useState(false)
 
-  function handleCopy() {
+  const handleCopy = useCallback(() => {
     if (!newKeyValue) return
     navigator.clipboard.writeText(newKeyValue)
     setNewKeyCopied(true)
     toast.success('API key copied')
     setTimeout(() => setNewKeyCopied(false), 2000)
-  }
+  }, [newKeyValue])
 
   return (
     <div>

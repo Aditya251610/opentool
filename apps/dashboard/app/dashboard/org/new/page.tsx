@@ -21,7 +21,7 @@ export default function CreateOrgPage() {
     setError('')
     setCreating(true)
     try {
-      await orgApi.create(apiKey, name, slug)
+      await orgApi.create(name, slug)
       await refreshOrgs()
       switchOrg(slug)
       router.push('/dashboard/org')

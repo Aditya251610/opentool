@@ -1,14 +1,12 @@
 import { prisma } from '../db/client'
 import { encrypt, decrypt, hashApiKey, stripApiKeyPrefix } from './encryption'
-import Redis from 'ioredis'
+import { redis } from '../db/redis'
 import { ConnectionStatus, Prisma } from '@prisma/client'
 import { config } from '../config'
 import { logger } from '../logger'
 import { CACHE_KEY_PREFIX, TOKEN_CACHE_DEFAULT_TTL } from '../constants'
 import { ProviderNotFoundError } from '../errors'
 import crypto from 'crypto'
-
-const redis = new Redis(config.redisUrl)
 
 function cacheKey(userId: string, provider: string): string {
   return `${CACHE_KEY_PREFIX}:${userId}:${provider}`
@@ -247,48 +245,61 @@ export async function refreshTokenIfExpired(
   // expired — attempt refresh
   if (!tokenStore.refreshTokenEnc) return null // user must re-auth
 
-  const refreshToken = decrypt(tokenStore.refreshTokenEnc)
-  const clientSecret = decrypt(connection.provider.clientSecretEnc)
+  // Distributed lock to prevent concurrent refreshes for same user+provider
+  const lockKey = `ot:lock:refresh:${userId}:${provider}`
+  const acquired = await redis.set(lockKey, '1', 'EX', 30, 'NX')
+  if (!acquired) {
+    // Another instance is refreshing — wait briefly and return fresh token
+    await new Promise((r) => setTimeout(r, 1000))
+    return getTokenForUser(userId, provider)
+  }
 
-  const res = await fetch(connection.provider.tokenUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'refresh_token',
-      refresh_token: refreshToken,
-      client_id: connection.provider.clientId,
-      client_secret: clientSecret,
-    }),
-  })
+  try {
+    const refreshToken = decrypt(tokenStore.refreshTokenEnc)
+    const clientSecret = decrypt(connection.provider.clientSecretEnc)
 
-  if (!res.ok) {
-    // refresh failed — mark connection as expired
-    await prisma.toolConnection.update({
-      where: { id: connection.id },
-      data: { status: ConnectionStatus.EXPIRED },
+    const res = await fetch(connection.provider.tokenUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+        client_id: connection.provider.clientId,
+        client_secret: clientSecret,
+      }),
     })
-    logger.warn('Token refresh failed', { userId, provider })
-    return null
+
+    if (!res.ok) {
+      // refresh failed — mark connection as expired
+      await prisma.toolConnection.update({
+        where: { id: connection.id },
+        data: { status: ConnectionStatus.EXPIRED },
+      })
+      logger.warn('Token refresh failed', { userId, provider })
+      return null
+    }
+
+    const data = (await res.json()) as {
+      access_token: string
+      refresh_token?: string
+      expires_in?: number
+    }
+
+    const expiresAt = data.expires_in ? new Date(Date.now() + data.expires_in * 1000) : undefined
+
+    await storeToken({
+      userId,
+      provider,
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token,
+      expiresAt,
+      scopes: connection.scopes,
+    })
+
+    return getTokenForUser(userId, provider)
+  } finally {
+    await redis.del(lockKey)
   }
-
-  const data = (await res.json()) as {
-    access_token: string
-    refresh_token?: string
-    expires_in?: number
-  }
-
-  const expiresAt = data.expires_in ? new Date(Date.now() + data.expires_in * 1000) : undefined
-
-  await storeToken({
-    userId,
-    provider,
-    accessToken: data.access_token,
-    refreshToken: data.refresh_token,
-    expiresAt,
-    scopes: connection.scopes,
-  })
-
-  return getTokenForUser(userId, provider)
 }
 
 /** Revokes a user's connection to a provider, deleting stored tokens and invalidating cache. */

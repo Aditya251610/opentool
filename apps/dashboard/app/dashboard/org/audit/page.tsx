@@ -50,7 +50,7 @@ export default function OrgAuditPage() {
     if (!apiKey || !activeOrg) return
     setLoading(true)
     try {
-      const result = await orgApi.auditLog(apiKey, activeOrg.org.slug, {
+      const result = await orgApi.auditLog(activeOrg.org.slug, {
         page,
         limit: 25,
         action: actionFilter || undefined,

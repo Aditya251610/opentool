@@ -30,7 +30,7 @@ export default function SettingsPage() {
     if (!apiKey) return
     setSaving(true)
     try {
-      const updated = await api.users.update(apiKey, {
+      const updated = await api.users.update({
         name: name || undefined,
         email: email || undefined,
       })

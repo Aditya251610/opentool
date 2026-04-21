@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 function generateStars(count: number): string {
   const stars: string[] = []
@@ -16,17 +16,33 @@ function generateStars(count: number): string {
   return stars.join(', ')
 }
 
-// Pre-generate layers
-const LAYER_SLOW = generateStars(50)
-const LAYER_MED = generateStars(35)
-const LAYER_FAST = generateStars(20)
-
 export default function ParallaxStars() {
   const slowRef = useRef<HTMLDivElement>(null)
   const medRef = useRef<HTMLDivElement>(null)
   const fastRef = useRef<HTMLDivElement>(null)
+  const [layers, setLayers] = useState<{ slow: string; med: string; fast: string } | null>(null)
+
+  // Defer star generation to after initial paint
+  useEffect(() => {
+    const generate = () => {
+      setLayers({
+        slow: generateStars(50),
+        med: generateStars(35),
+        fast: generateStars(20),
+      })
+    }
+
+    if ('requestIdleCallback' in window) {
+      const id = requestIdleCallback(generate)
+      return () => cancelIdleCallback(id)
+    } else {
+      const timer = setTimeout(generate, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [])
 
   useEffect(() => {
+    if (!layers) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
     let ticking = false
@@ -43,27 +59,17 @@ export default function ParallaxStars() {
     }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+  }, [layers])
+
+  if (!layers) return null
 
   const base = 'fixed inset-0 pointer-events-none'
 
   return (
     <div aria-hidden="true">
-      <div
-        ref={slowRef}
-        className={base}
-        style={{ background: LAYER_SLOW, zIndex: 0, willChange: 'transform' }}
-      />
-      <div
-        ref={medRef}
-        className={base}
-        style={{ background: LAYER_MED, zIndex: 0, willChange: 'transform' }}
-      />
-      <div
-        ref={fastRef}
-        className={base}
-        style={{ background: LAYER_FAST, zIndex: 0, willChange: 'transform' }}
-      />
+      <div ref={slowRef} className={base} style={{ background: layers.slow, zIndex: 0 }} />
+      <div ref={medRef} className={base} style={{ background: layers.med, zIndex: 0 }} />
+      <div ref={fastRef} className={base} style={{ background: layers.fast, zIndex: 0 }} />
     </div>
   )
 }

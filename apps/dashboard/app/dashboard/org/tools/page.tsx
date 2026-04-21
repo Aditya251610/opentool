@@ -26,7 +26,7 @@ export default function OrgToolsPage() {
   async function loadTools() {
     if (!apiKey) return
     try {
-      const [all, conn] = await Promise.all([api.tools.list(), api.tools.connected(apiKey)])
+      const [all, conn] = await Promise.all([api.tools.list(), api.tools.connected()])
       setTools(all.tools)
       setConnected(new Set(conn.tools.map((t) => t.provider)))
     } catch {

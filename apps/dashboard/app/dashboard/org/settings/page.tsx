@@ -24,7 +24,7 @@ export default function OrgSettingsPage() {
     if (!apiKey || !activeOrg) return
     setSaving(true)
     try {
-      await orgApi.update(apiKey, activeOrg.org.slug, { name })
+      await orgApi.update(activeOrg.org.slug, { name })
       await refreshOrgs()
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
@@ -40,7 +40,7 @@ export default function OrgSettingsPage() {
     if (confirm1 !== activeOrg.org.slug) return
     setDeleting(true)
     try {
-      await orgApi.delete(apiKey, activeOrg.org.slug)
+      await orgApi.delete(activeOrg.org.slug)
       await refreshOrgs()
       router.push('/dashboard')
     } catch {

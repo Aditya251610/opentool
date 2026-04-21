@@ -5,12 +5,18 @@ import { generateAuthUrl, exchangeCode, revokeOAuthToken } from '../../auth/oaut
 import { storeToken } from '../../auth/broker'
 import bcrypt from 'bcryptjs'
 import { prisma } from '../../db/client'
+import { redis } from '../../db/redis'
 import { generateApiKey } from '../../auth/encryption'
 import { config } from '../../config'
 import { logger } from '../../logger'
 import { BCRYPT_ROUNDS, PASSWORD_MIN_LENGTH, PROVIDERS } from '../../constants'
 import { authEvents } from '../../metrics'
 import crypto from 'crypto'
+
+// Account lockout: 5 failed attempts → 15 min lock
+const MAX_LOGIN_ATTEMPTS = 5
+const LOCKOUT_DURATION_SECONDS = 15 * 60
+const LOGIN_ATTEMPT_PREFIX = 'ot:login:attempts'
 
 const signupSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -85,15 +91,36 @@ authRoutes.post('/login', async (c) => {
     }
     const { email, password } = parsed.data
 
+    // Check account lockout
+    const attemptKey = `${LOGIN_ATTEMPT_PREFIX}:${email}`
+    const attempts = await redis.get(attemptKey)
+    if (attempts && parseInt(attempts, 10) >= MAX_LOGIN_ATTEMPTS) {
+      const ttl = await redis.ttl(attemptKey)
+      logger.warn('Account locked due to too many failed attempts', { email })
+      return c.json(
+        { error: `Account temporarily locked. Try again in ${Math.ceil(ttl / 60)} minutes.` },
+        429,
+      )
+    }
+
     const user = await prisma.user.findUnique({ where: { email } })
     if (!user || !user.passwordHash) {
+      // Increment failed attempts
+      await redis.incr(attemptKey)
+      await redis.expire(attemptKey, LOCKOUT_DURATION_SECONDS)
       return c.json({ error: 'Invalid email or password' }, 401)
     }
 
     const valid = await bcrypt.compare(password, user.passwordHash)
     if (!valid) {
+      // Increment failed attempts
+      await redis.incr(attemptKey)
+      await redis.expire(attemptKey, LOCKOUT_DURATION_SECONDS)
       return c.json({ error: 'Invalid email or password' }, 401)
     }
+
+    // Successful login — clear lockout counter
+    await redis.del(attemptKey)
 
     // Revoke old dashboard session keys, create a fresh one
     await prisma.apiKey.updateMany({
@@ -102,8 +129,15 @@ authRoutes.post('/login', async (c) => {
     })
 
     const { hash, prefix, fullKey } = generateApiKey()
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
     await prisma.apiKey.create({
-      data: { userId: user.id, name: 'Dashboard Session', keyHash: hash, keyPrefix: prefix },
+      data: {
+        userId: user.id,
+        name: 'Dashboard Session',
+        keyHash: hash,
+        keyPrefix: prefix,
+        expiresAt,
+      },
     })
 
     // Record login event
