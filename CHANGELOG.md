@@ -5,6 +5,13 @@ All notable changes to the OpenTool project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.7](https://github.com/Aditya251610/opentool/compare/opentool-v0.1.6...opentool-v0.1.7) (2026-04-21)
+
+
+### Bug Fixes
+
+* remove CSP nonce — breaks Next.js hydration and Vercel Live ([5ff93a5](https://github.com/Aditya251610/opentool/commit/5ff93a5a34ae4c2bd2cc8884428b6ec431ea8ca9))
+
 ## [0.1.6](https://github.com/Aditya251610/opentool/compare/opentool-v0.1.5...opentool-v0.1.6) (2026-04-21)
 
 
