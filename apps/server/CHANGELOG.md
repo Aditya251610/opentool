@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.8](https://github.com/Aditya251610/opentool/compare/server-v0.0.7...server-v0.0.8) (2026-04-21)
+
+
+### Features
+
+* added query tool and token analyzer features ([55dc7fd](https://github.com/Aditya251610/opentool/commit/55dc7fd6e627cc8e02e377768069cb2148027ccd))
+
 ## [0.0.7](https://github.com/Aditya251610/opentool/compare/server-v0.0.6...server-v0.0.7) (2026-04-21)
 
 
