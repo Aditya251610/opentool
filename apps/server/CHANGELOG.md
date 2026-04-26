@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.9](https://github.com/Aditya251610/opentool/compare/server-v0.0.8...server-v0.0.9) (2026-04-26)
+
+
+### Features
+
+* add 11 new providers (66 tools) + MCP quality upgrade ([3938e00](https://github.com/Aditya251610/opentool/commit/3938e002dee70834006530b40fec08df7947da93))
+
 ## [0.0.8](https://github.com/Aditya251610/opentool/compare/server-v0.0.7...server-v0.0.8) (2026-04-21)
 
 

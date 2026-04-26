@@ -5,6 +5,18 @@ All notable changes to the OpenTool project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.11](https://github.com/Aditya251610/opentool/compare/opentool-v0.1.10...opentool-v0.1.11) (2026-04-26)
+
+
+### Features
+
+* add 11 new providers (66 tools) + MCP quality upgrade ([3938e00](https://github.com/Aditya251610/opentool/commit/3938e002dee70834006530b40fec08df7947da93))
+
+
+### Miscellaneous
+
+* bump python sdk to 0.1.1 ([f60484d](https://github.com/Aditya251610/opentool/commit/f60484d55f072b63f7a23d48baa9df1ad6126996))
+
 ## [0.1.10](https://github.com/Aditya251610/opentool/compare/opentool-v0.1.9...opentool-v0.1.10) (2026-04-21)
 
 

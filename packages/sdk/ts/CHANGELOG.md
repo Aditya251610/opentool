@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/Aditya251610/opentool/compare/sdk-ts-v0.1.3...sdk-ts-v0.1.4) (2026-04-26)
+
+
+### Features
+
+* add 11 new providers (66 tools) + MCP quality upgrade ([3938e00](https://github.com/Aditya251610/opentool/commit/3938e002dee70834006530b40fec08df7947da93))
+
 ## [0.1.3](https://github.com/Aditya251610/opentool/compare/sdk-ts-v0.1.2...sdk-ts-v0.1.3) (2026-04-21)
 
 
