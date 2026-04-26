@@ -3,30 +3,22 @@ name: Release Please
 on:
   push:
     branches: [main]
+    # Don't run on tag pushes
+    tags-ignore: ['**']
 
 permissions:
   contents: write
   pull-requests: write
 
+# Only one release-please run at a time
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
 jobs:
   release-please:
     name: Release Please
     runs-on: ubuntu-latest
-    outputs:
-      releases_created: ${{ steps.release.outputs.releases_created }}
-      # Per-package outputs
-      opentool--release_created: ${{ steps.release.outputs['opentool--release_created'] }}
-      opentool--tag_name: ${{ steps.release.outputs['opentool--tag_name'] }}
-      server--release_created: ${{ steps.release.outputs['server--release_created'] }}
-      server--tag_name: ${{ steps.release.outputs['server--tag_name'] }}
-      cli--release_created: ${{ steps.release.outputs['cli--release_created'] }}
-      cli--tag_name: ${{ steps.release.outputs['cli--tag_name'] }}
-      cli--version: ${{ steps.release.outputs['cli--version'] }}
-      sdk-ts--release_created: ${{ steps.release.outputs['sdk-ts--release_created'] }}
-      sdk-ts--tag_name: ${{ steps.release.outputs['sdk-ts--tag_name'] }}
-      sdk-ts--version: ${{ steps.release.outputs['sdk-ts--version'] }}
-      proto--release_created: ${{ steps.release.outputs['proto--release_created'] }}
-      proto--tag_name: ${{ steps.release.outputs['proto--tag_name'] }}
     steps:
       - uses: googleapis/release-please-action@v4
         id: release
@@ -34,45 +26,11 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-  # Publish CLI to npm when CLI release is created
-  publish-cli:
-    name: Publish CLI to npm
-    needs: release-please
-    if: needs.release-please.outputs.cli--release_created == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          registry-url: 'https://registry.npmjs.org'
-      - run: pnpm install --frozen-lockfile
-      - run: cd packages/cli && pnpm build
-      - run: cd packages/cli && npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-  # Publish TS SDK to npm when SDK release is created
-  publish-sdk-ts:
-    name: Publish TS SDK to npm
-    needs: release-please
-    if: needs.release-please.outputs.sdk-ts--release_created == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          registry-url: 'https://registry.npmjs.org'
-      - run: cd packages/sdk/ts && pnpm install && pnpm build
-      - run: cd packages/sdk/ts && npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    # ─── No publish jobs here! ────────────────────────────────
+    # Publishing is handled by tag-triggered workflows:
+    #   - publish-sdk.yml  → sdk-ts-v*, sdk-py-v* tags
+    #   - cli-release.yml  → cli-v* tags
+    #
+    # Flow: push to main → release-please creates PR →
+    #       merge PR → release-please creates tags →
+    #       tags trigger publish workflows

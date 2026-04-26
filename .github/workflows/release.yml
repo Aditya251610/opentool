@@ -1,12 +1,19 @@
-name: Release SDKs
+name: Publish SDKs
 
+# Triggered by tags — either from release-please or manual push
+# Flow: release-please merges → creates sdk-ts-v* / sdk-py-v* tags → this runs
 on:
   push:
     tags:
       - 'sdk-ts-v*'
       - 'sdk-py-v*'
 
+concurrency:
+  group: publish-sdk-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
+  # ── TypeScript SDK → npm ──────────────────────────────────────────
   publish-ts-npm:
     if: startsWith(github.ref, 'refs/tags/sdk-ts-v')
     name: Publish TS SDK to npm
@@ -21,11 +28,38 @@ jobs:
         with:
           node-version: 20
           registry-url: 'https://registry.npmjs.org'
-      - run: cd packages/sdk/ts && pnpm install && pnpm build
-      - run: cd packages/sdk/ts && npm publish --access public
+
+      - run: pnpm install --frozen-lockfile
+      - run: cd packages/sdk/ts && pnpm build
+
+      - name: Verify version matches tag
+        run: |
+          set -euo pipefail
+          PKG_VERSION=$(node -p "require('./packages/sdk/ts/package.json').version")
+          TAG_VERSION="${GITHUB_REF_NAME#sdk-ts-v}"
+          if [[ "$PKG_VERSION" != "$TAG_VERSION" ]]; then
+            echo "❌ Version mismatch: package.json=${PKG_VERSION} tag=${TAG_VERSION}"
+            exit 1
+          fi
+          echo "✅ Version match: ${PKG_VERSION}"
+
+      - name: Check if already published
+        run: |
+          set -euo pipefail
+          PKG_VERSION=$(node -p "require('./packages/sdk/ts/package.json').version")
+          PKG_NAME=$(node -p "require('./packages/sdk/ts/package.json').name")
+          if npm view "${PKG_NAME}@${PKG_VERSION}" version >/dev/null 2>&1; then
+            echo "⏭️ ${PKG_NAME}@${PKG_VERSION} already published — skipping"
+            echo "SKIP_PUBLISH=true" >> "$GITHUB_ENV"
+          fi
+
+      - name: Publish to npm
+        if: env.SKIP_PUBLISH != 'true'
+        run: cd packages/sdk/ts && npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+  # ── TypeScript SDK → GitHub Packages ──────────────────────────────
   publish-ts-github:
     if: startsWith(github.ref, 'refs/tags/sdk-ts-v')
     name: Publish TS SDK to GitHub Packages
@@ -41,11 +75,13 @@ jobs:
           node-version: 20
           registry-url: 'https://npm.pkg.github.com'
           scope: '@Aditya251610'
-      - run: cd packages/sdk/ts && pnpm install && pnpm build
+
+      - run: pnpm install --frozen-lockfile
+      - run: cd packages/sdk/ts && pnpm build
+
       - name: Publish to GitHub Packages
         working-directory: packages/sdk/ts
         run: |
-          # Temporarily set name to GitHub scoped package
           node -e "
             const pkg = require('./package.json');
             pkg.name = '@Aditya251610/opentool-sdk';
@@ -56,6 +92,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # ── Python SDK → PyPI ─────────────────────────────────────────────
   publish-py:
     if: startsWith(github.ref, 'refs/tags/sdk-py-v')
     name: Publish Python SDK to PyPI
@@ -65,20 +102,56 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
       - run: pip install build twine
-      - run: cd packages/sdk/python && python -m build
-      - run: cd packages/sdk/python && twine upload dist/*
+
+      - name: Verify version matches tag
+        run: |
+          set -euo pipefail
+          PKG_VERSION=$(python -c "
+          import tomllib
+          with open('packages/sdk/python/pyproject.toml', 'rb') as f:
+              print(tomllib.load(f)['project']['version'])
+          ")
+          TAG_VERSION="${GITHUB_REF_NAME#sdk-py-v}"
+          if [[ "$PKG_VERSION" != "$TAG_VERSION" ]]; then
+            echo "❌ Version mismatch: pyproject.toml=${PKG_VERSION} tag=${TAG_VERSION}"
+            exit 1
+          fi
+          echo "✅ Version match: ${PKG_VERSION}"
+
+      - name: Check if already published
+        run: |
+          set -euo pipefail
+          TAG_VERSION="${GITHUB_REF_NAME#sdk-py-v}"
+          if pip index versions opentool-sdk 2>/dev/null | grep -q "$TAG_VERSION"; then
+            echo "⏭️ opentool-sdk@${TAG_VERSION} already published — skipping"
+            echo "SKIP_PUBLISH=true" >> "$GITHUB_ENV"
+          fi
+
+      - name: Build
+        if: env.SKIP_PUBLISH != 'true'
+        run: cd packages/sdk/python && python -m build
+
+      - name: Publish to PyPI
+        if: env.SKIP_PUBLISH != 'true'
+        run: cd packages/sdk/python && twine upload dist/*
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
 
+  # ── GitHub Release with artifacts ─────────────────────────────────
   github-release:
     name: Create GitHub Release
+    needs: [publish-ts-npm, publish-py]
+    # Run even if one SDK job was skipped (they have `if` conditions)
+    if: always() && !cancelled()
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
+
       - uses: pnpm/action-setup@v4
         if: startsWith(github.ref, 'refs/tags/sdk-ts-v')
       - uses: actions/setup-node@v4
@@ -89,18 +162,22 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/sdk-py-v')
         with:
           python-version: '3.12'
+
       - name: Build TS SDK tarball
         if: startsWith(github.ref, 'refs/tags/sdk-ts-v')
         run: |
-          cd packages/sdk/ts && pnpm install && pnpm build
+          pnpm install --frozen-lockfile
+          cd packages/sdk/ts && pnpm build
           npm pack
           mv *.tgz ../../../
+
       - name: Build Python SDK artifacts
         if: startsWith(github.ref, 'refs/tags/sdk-py-v')
         run: |
           pip install build
           cd packages/sdk/python && python -m build
           mv dist/* ../../../
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
