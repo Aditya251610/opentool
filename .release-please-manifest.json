@@ -2,6 +2,6 @@
   ".": "0.1.11",
   "apps/server": "0.0.9",
   "packages/cli": "0.1.5",
-  "packages/sdk/ts": "0.1.4",
+  "packages/sdk/ts": "0.1.5",
   "packages/proto": "0.1.1"
 }
