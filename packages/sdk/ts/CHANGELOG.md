@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.6](https://github.com/Aditya251610/opentool/compare/sdk-ts-v0.1.5...sdk-ts-v0.1.6) (2026-04-26)
+
+
+### Documentation
+
+* production-ready changelogs — clean up root, fix SDK TS noise, add Python SDK ([86f9209](https://github.com/Aditya251610/opentool/commit/86f92096b3060009b136b4a444555669c43771a0))
+
 ## [0.1.5](https://github.com/Aditya251610/opentool/compare/sdk-ts-v0.1.4...sdk-ts-v0.1.5) (2026-04-26)
 
 ### Miscellaneous

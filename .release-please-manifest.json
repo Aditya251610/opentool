@@ -1,8 +1,8 @@
 {
-  ".": "0.1.11",
+  ".": "0.1.12",
   "apps/server": "0.0.9",
   "packages/cli": "0.1.5",
-  "packages/sdk/ts": "0.1.5",
+  "packages/sdk/ts": "0.1.6",
   "packages/proto": "0.1.1",
-  "packages/sdk/python": "0.1.1"
+  "packages/sdk/python": "0.1.2"
 }
