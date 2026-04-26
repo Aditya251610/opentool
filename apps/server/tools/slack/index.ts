@@ -39,7 +39,8 @@ async function tryJoinChannel(token: string | undefined, channelId: string): Pro
 export const slackSendMessage = defineTool({
   id: 'slack_send_message',
   name: 'Send Slack Message',
-  description: 'Sends a message to a Slack channel or conversation',
+  description:
+    'Sends a message via Slack chat.postMessage API. Accepts channel names or IDs. Auto-joins public channels if needed. Requires chat:write scope.\n\nReturns: { timestamp, channel, text }\n\nExamples:\n  - Post to channel: channel="general", text="Deploy complete!"\n  - Thread reply: channel="C1234", text="Fixed in v2", thread_ts="1234567890.123456"',
   provider: 'slack',
   authType: 'oauth2',
   requiredScopes: ['chat:write'],
@@ -181,4 +182,75 @@ export const slackReadChannel = defineTool({
   },
 })
 
-export const slackTools = [slackSendMessage, slackReadChannel]
+export const slackSearchMessages = defineTool({
+  id: 'slack_search_messages',
+  name: 'Search Slack Messages',
+  description:
+    'Search for messages across all Slack channels. Uses Slack search syntax.\n\nReturns: { messages: [{ text, user, channel, timestamp, permalink }], total, has_more }\n\nExamples:\n  - Find discussions: query="deployment failed"\n  - In channel: query="in:#engineering database migration"',
+  provider: 'slack',
+  authType: 'oauth2',
+  category: 'communication',
+  requiredScopes: ['search:read'],
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
+  inputSchema: z.object({
+    query: z
+      .string()
+      .min(1)
+      .describe('Slack search query (supports Slack search syntax like "in:#channel from:@user")'),
+    count: z.number().int().min(1).max(100).optional().describe('Number of results (default 20)'),
+    sort: z
+      .enum(['score', 'timestamp'])
+      .optional()
+      .describe('Sort by relevance or time (default score)'),
+  }),
+  execute: async ({ input, auth }) => {
+    const params = new URLSearchParams({
+      query: input.query,
+      count: String(input.count ?? 20),
+      sort: input.sort ?? 'score',
+    })
+    const res = await fetch(`${SLACK_BASE}/search.messages?${params}`, {
+      headers: { Authorization: `Bearer ${auth.accessToken}` },
+    })
+    const data = (await res.json()) as {
+      ok: boolean
+      error?: string
+      messages?: {
+        total: number
+        matches: Array<{
+          text: string
+          user: string
+          channel: { name: string }
+          ts: string
+          permalink: string
+        }>
+        paging?: { pages: number; page: number }
+      }
+    }
+    if (!data.ok)
+      throw new Error(
+        `Slack search failed: ${data.error ?? 'unknown error'}. Ensure search:read scope is granted.`,
+      )
+
+    const matches = data.messages?.matches ?? []
+    return {
+      messages: matches.map((m) => ({
+        text: m.text?.substring(0, 500),
+        user: m.user,
+        channel: m.channel?.name,
+        timestamp: m.ts,
+        permalink: m.permalink,
+      })),
+      total: data.messages?.total ?? 0,
+      count: matches.length,
+      has_more: (data.messages?.paging?.pages ?? 1) > (data.messages?.paging?.page ?? 1),
+    }
+  },
+})
+
+export const slackTools = [slackSendMessage, slackReadChannel, slackSearchMessages]

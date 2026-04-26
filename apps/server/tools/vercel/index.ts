@@ -6,10 +6,18 @@ const VERCEL_BASE = 'https://api.vercel.com'
 export const vercelListDeployments = defineTool({
   id: 'vercel_list_deployments',
   name: 'List Vercel Deployments',
-  description: 'Lists deployments for a Vercel project',
+  description:
+    'Lists Vercel deployments for a project, optionally filtered by target (production/preview).\n\nReturns: { deployments: [{ id, name, url, state, target, createdAt, readyAt, inspectorUrl }] }',
   provider: 'vercel',
   authType: 'oauth2',
   requiredScopes: [],
+  category: 'infrastructure',
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   inputSchema: z.object({
     projectId: z.string().describe('Vercel project ID or slug'),
     teamId: z.string().optional().describe('Team ID or slug (required for team projects)'),
@@ -30,11 +38,11 @@ export const vercelListDeployments = defineTool({
     })
 
     if (!res.ok) {
-      const error = await res.json() as { error: { message: string } }
+      const error = (await res.json()) as { error: { message: string } }
       throw safeToolError(error.error, 'Vercel', 'execute')
     }
 
-    const data = await res.json() as {
+    const data = (await res.json()) as {
       deployments: Array<{
         uid: string
         name: string
@@ -65,15 +73,25 @@ export const vercelListDeployments = defineTool({
 export const vercelGetDeployment = defineTool({
   id: 'vercel_get_deployment',
   name: 'Get Vercel Deployment',
-  description: 'Gets detailed information about a specific Vercel deployment',
+  description:
+    'Fetches full details for a Vercel deployment by ID or URL including build timing and metadata.\n\nReturns: { id, name, url, state, readyState, target, createdAt, buildingAt, readyAt, inspectorUrl, meta }',
   provider: 'vercel',
   authType: 'oauth2',
   requiredScopes: [],
+  category: 'infrastructure',
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   inputSchema: z.object({
-    idOrUrl: z.string().describe('Deployment ID (e.g. dpl_abc123) or URL').refine(
-      (val) => /^dpl_[a-zA-Z0-9]+$/.test(val) || /^https?:\/\//.test(val),
-      { message: 'Must be a deployment ID (dpl_xxx) or URL' }
-    ),
+    idOrUrl: z
+      .string()
+      .describe('Deployment ID (e.g. dpl_abc123) or URL')
+      .refine((val) => /^dpl_[a-zA-Z0-9]+$/.test(val) || /^https?:\/\//.test(val), {
+        message: 'Must be a deployment ID (dpl_xxx) or URL',
+      }),
     teamId: z.string().optional().describe('Team ID or slug'),
   }),
   execute: async ({ input, auth }) => {
@@ -82,16 +100,19 @@ export const vercelGetDeployment = defineTool({
     if (teamId) params.set('teamId', teamId)
     const qs = params.toString() ? `?${params}` : ''
 
-    const res = await fetch(`${VERCEL_BASE}/v13/deployments/${encodeURIComponent(input.idOrUrl)}${qs}`, {
-      headers: { Authorization: `Bearer ${auth.accessToken}` },
-    })
+    const res = await fetch(
+      `${VERCEL_BASE}/v13/deployments/${encodeURIComponent(input.idOrUrl)}${qs}`,
+      {
+        headers: { Authorization: `Bearer ${auth.accessToken}` },
+      },
+    )
 
     if (!res.ok) {
-      const error = await res.json() as { error: { message: string } }
+      const error = (await res.json()) as { error: { message: string } }
       throw safeToolError(error.error, 'Vercel', 'execute')
     }
 
-    const d = await res.json() as {
+    const d = (await res.json()) as {
       id: string
       name: string
       url: string

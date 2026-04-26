@@ -6,8 +6,10 @@ const GCAL_BASE = 'https://www.googleapis.com/calendar/v3'
 export const googleCalendarCreateEvent = defineTool({
   id: 'google_calendar_create_event',
   name: 'Create Google Calendar Event',
-  description: 'Creates a new event in Google Calendar',
+  description:
+    'Creates a Google Calendar event via the Calendar API. Supports attendees and custom timezone.\n\nReturns: { id, url, summary, start, end, status }\n\nExamples:\n  - Meeting: summary="Standup", start="2024-03-15T10:00:00Z", end="2024-03-15T10:30:00Z"\n  - With attendees: summary="Review", start="...", end="...", attendees=["alice@co.com"]',
   provider: 'google_calendar',
+  category: 'productivity',
   authType: 'oauth2',
   requiredScopes: ['https://www.googleapis.com/auth/calendar'],
   annotations: {
@@ -88,6 +90,7 @@ export const googleCalendarListEvents = defineTool({
   description:
     'Lists upcoming events from Google Calendar. Returns events with pagination metadata.\n\nReturns: { events: [{ id, url, summary, description, location, start, end, status }], count, has_more }',
   provider: 'google_calendar',
+  category: 'productivity',
   authType: 'oauth2',
   requiredScopes: ['https://www.googleapis.com/auth/calendar'],
   annotations: {

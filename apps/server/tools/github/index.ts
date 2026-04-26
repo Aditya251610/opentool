@@ -7,7 +7,8 @@ const GITHUB_API_BASE_URL = 'https://api.github.com'
 export const githubCreateIssue = defineTool({
   id: 'github_create_issue',
   name: 'Create GitHub Issue',
-  description: 'Creates a new issue in a GitHub repository',
+  description:
+    'Creates a GitHub issue via POST /repos/{owner}/{repo}/issues. Requires repo OAuth scope.\n\nReturns: { id, url, title, state }\n\nExamples:\n  - Bug report: owner="acme", repo="api", title="Login broken", labels=["bug"]\n  - Feature request: owner="acme", repo="api", title="Add SSO", body="We need SAML support"',
   provider: 'github',
   authType: 'oauth2',
   requiredScopes: ['repo'],
@@ -138,7 +139,8 @@ export const githubListIssues = defineTool({
 export const githubCreatePR = defineTool({
   id: 'github_create_pr',
   name: 'Create GitHub Pull Request',
-  description: 'Creates a new pull request in a GitHub repository',
+  description:
+    'Creates a pull request via POST /repos/{owner}/{repo}/pulls. The head branch must already exist. Requires repo OAuth scope.\n\nReturns: { id, url, title, state, draft }\n\nExamples:\n  - Standard PR: owner="acme", repo="api", head="feature-x", base="main"\n  - Draft PR: owner="acme", repo="api", head="wip", base="main", draft=true',
   provider: 'github',
   authType: 'oauth2',
   requiredScopes: ['repo'],
@@ -204,7 +206,8 @@ export const githubCreatePR = defineTool({
 export const githubCommentOnIssue = defineTool({
   id: 'github_comment_on_issue',
   name: 'Comment on GitHub Issue',
-  description: 'Adds a comment to an existing GitHub issue or pull request',
+  description:
+    'Adds a comment to an issue or PR via POST /repos/{owner}/{repo}/issues/{number}/comments. Works for both issues and PRs (same endpoint). Requires repo OAuth scope.\n\nReturns: { id, url, body, createdAt }',
   provider: 'github',
   authType: 'oauth2',
   requiredScopes: ['repo'],
@@ -259,7 +262,8 @@ export const githubCommentOnIssue = defineTool({
 export const githubGetRepo = defineTool({
   id: 'github_get_repo',
   name: 'Get GitHub Repository',
-  description: 'Gets information about a GitHub repository',
+  description:
+    'Fetches repository metadata via GET /repos/{owner}/{repo}. Requires repo OAuth scope.\n\nReturns: { fullName, description, url, language, stars, forks, openIssues, defaultBranch, isPrivate }',
   provider: 'github',
   authType: 'oauth2',
   requiredScopes: ['repo'],
@@ -316,10 +320,136 @@ export const githubGetRepo = defineTool({
   },
 })
 
+export const githubSearchCode = defineTool({
+  id: 'github_search_code',
+  name: 'Search GitHub Code',
+  description:
+    'Search for code across GitHub repositories using GitHub code search syntax.\n\nReturns: { items: [{ path, repository, url, text_matches }], total_count, has_more }\n\nExamples:\n  - Find usage: query="useState language:typescript"\n  - In repo: query="repo:owner/repo handleAuth"',
+  provider: 'github',
+  authType: 'oauth2',
+  category: 'development',
+  requiredScopes: ['repo'],
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
+  inputSchema: z.object({
+    query: z
+      .string()
+      .min(1)
+      .describe('GitHub code search query (e.g. "handleAuth language:typescript repo:acme/api")'),
+    limit: z.number().int().min(1).max(100).optional().describe('Max results (default 20)'),
+    page: z.number().int().min(1).optional().describe('Page number for pagination'),
+  }),
+  execute: async ({ input, auth }) => {
+    const params = new URLSearchParams({
+      q: input.query,
+      per_page: String(input.limit ?? 20),
+      page: String(input.page ?? 1),
+    })
+    const res = await fetch(`${GITHUB_API_BASE_URL}/search/code?${params}`, {
+      headers: {
+        Authorization: `Bearer ${auth.accessToken}`,
+        Accept: 'application/vnd.github.text-match+json',
+        'X-GitHub-Api-Version': GITHUB_API_VERSION,
+      },
+    })
+    if (!res.ok) {
+      const err = (await res.json()) as { message: string }
+      throw new Error(`GitHub code search failed (HTTP ${res.status}): ${err.message}`)
+    }
+    const data = (await res.json()) as { total_count: number; items: any[] }
+    const limit = input.limit ?? 20
+    return {
+      items: data.items.map((item: any) => ({
+        path: item.path,
+        repository: item.repository?.full_name,
+        url: item.html_url,
+        text_matches: item.text_matches?.map((tm: any) => tm.fragment).slice(0, 3),
+      })),
+      total_count: data.total_count,
+      count: data.items.length,
+      has_more: data.total_count > (input.page ?? 1) * limit,
+    }
+  },
+})
+
+export const githubGetPRDiff = defineTool({
+  id: 'github_get_pr_diff',
+  name: 'Get PR Diff',
+  description:
+    'Gets the diff of a GitHub pull request for code review. Returns the raw unified diff.\n\nReturns: { diff, files_changed, additions, deletions }\n\nExamples:\n  - Review PR: owner="acme", repo="api", pull_number=42',
+  provider: 'github',
+  authType: 'oauth2',
+  category: 'development',
+  requiredScopes: ['repo'],
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
+  inputSchema: z.object({
+    owner: z.string().describe('Repository owner'),
+    repo: z.string().describe('Repository name'),
+    pull_number: z.number().int().describe('Pull request number'),
+  }),
+  execute: async ({ input, auth }) => {
+    const diffRes = await fetch(
+      `${GITHUB_API_BASE_URL}/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repo)}/pulls/${input.pull_number}`,
+      {
+        headers: {
+          Authorization: `Bearer ${auth.accessToken}`,
+          Accept: 'application/vnd.github.diff',
+          'X-GitHub-Api-Version': GITHUB_API_VERSION,
+        },
+      },
+    )
+    if (!diffRes.ok) throw new Error(`GitHub get PR diff failed (HTTP ${diffRes.status})`)
+    const diff = await diffRes.text()
+
+    const prRes = await fetch(
+      `${GITHUB_API_BASE_URL}/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repo)}/pulls/${input.pull_number}`,
+      {
+        headers: {
+          Authorization: `Bearer ${auth.accessToken}`,
+          Accept: 'application/vnd.github+json',
+          'X-GitHub-Api-Version': GITHUB_API_VERSION,
+        },
+      },
+    )
+    const pr = prRes.ok
+      ? ((await prRes.json()) as {
+          changed_files: number
+          additions: number
+          deletions: number
+          title: string
+          state: string
+        })
+      : null
+
+    return {
+      title: pr?.title,
+      state: pr?.state,
+      diff:
+        diff.length > 20000
+          ? diff.substring(0, 20000) + '\n...diff truncated at 20000 chars'
+          : diff,
+      files_changed: pr?.changed_files,
+      additions: pr?.additions,
+      deletions: pr?.deletions,
+    }
+  },
+})
+
 export const githubTools = [
   githubCreateIssue,
   githubListIssues,
   githubCreatePR,
   githubCommentOnIssue,
   githubGetRepo,
+  githubSearchCode,
+  githubGetPRDiff,
 ]

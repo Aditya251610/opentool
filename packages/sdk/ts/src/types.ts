@@ -57,6 +57,7 @@ export interface ToolSearchOptions {
   category?: string
   authType?: 'oauth2' | 'api_key' | 'none'
   readOnly?: boolean
+  connectedOnly?: boolean
   limit?: number
   offset?: number
 }
@@ -160,6 +161,61 @@ export interface HealthCheckResponse {
     serverVersion: string
   } | null
 }
+
+// ─── Analytics types ───
+
+export interface ToolUsageStat {
+  toolId: string
+  provider: string
+  callCount: number
+  avgDurationMs: number
+  errorRate: number
+  totalInputTokens: number
+  totalOutputTokens: number
+  totalTokens: number
+  lastUsedAt: string | null
+}
+
+export interface UsageSummary {
+  totalCalls: number
+  totalTokens: number
+  avgTokensPerCall: number
+  topTools: { toolId: string; count: number }[]
+  topProviders: { provider: string; count: number }[]
+  dailyUsage: { date: string; calls: number; tokens: number }[]
+}
+
+export type ExportFormat = 'context.md' | 'memory.json' | '.cursorrules' | 'CLAUDE.md'
+
+// ─── Provider type ───
+
+export type Provider =
+  | 'github'
+  | 'notion'
+  | 'slack'
+  | 'linear'
+  | 'gmail'
+  | 'google_calendar'
+  | 'stripe'
+  | 'vercel'
+  | 'resend'
+  | 'postgres'
+  | 'gitlab'
+  | 'sentry'
+  | 'cloudflare'
+  | 'paypal'
+  | 'docker'
+  | 'telegram'
+  | 'discord'
+  | 'twilio'
+  | 'google_drive'
+  | 'google_meet'
+  | 'jira'
+  | 'confluence'
+  | 'microsoft'
+  | 'aws'
+  | 'azure'
+  | 'gcp'
 
 // ─── Request types ───
 

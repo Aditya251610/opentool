@@ -388,6 +388,65 @@ export const postgresRunTransaction = defineTool({
   },
 })
 
+// ─── Tool: Explain Query ──────────────────
+
+export const postgresExplainQuery = defineTool({
+  id: 'postgres_explain_query',
+  name: 'Explain PostgreSQL Query',
+  description:
+    'Runs EXPLAIN ANALYZE on a SQL query to show the execution plan. Essential for optimizing slow queries. Only SELECT queries are allowed for safety.\n\nReturns: { plan: string, planning_time, execution_time }\n\nExamples:\n  - Optimize query: query="SELECT * FROM users WHERE email LIKE \'%@gmail.com\'"',
+  provider: 'postgres',
+  authType: 'api_key',
+  category: 'database',
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
+  inputSchema: z.object({
+    connection_string: z
+      .string()
+      .describe('PostgreSQL connection string (e.g. "postgresql://user:pass@host:5432/db")'),
+    query: z.string().min(1).describe('SELECT query to analyze (only SELECT is allowed)'),
+    analyze: z
+      .boolean()
+      .optional()
+      .describe('If true, actually executes the query for real timing (default true)'),
+  }),
+  execute: async ({ input }) => {
+    const trimmed = input.query.trim()
+    if (!/^SELECT\s/i.test(trimmed)) {
+      return {
+        error: 'Only SELECT queries are allowed for EXPLAIN. Remove any INSERT/UPDATE/DELETE.',
+      }
+    }
+    if (/;\s*(DROP|DELETE|INSERT|UPDATE|ALTER|CREATE|TRUNCATE)/i.test(trimmed)) {
+      return {
+        error:
+          'Query contains dangerous statements after semicolon. Only pure SELECT queries are allowed.',
+      }
+    }
+
+    validateConnectionString(input.connection_string)
+    const client = await createPgClient(input.connection_string)
+
+    try {
+      const explainPrefix =
+        input.analyze !== false
+          ? 'EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT)'
+          : 'EXPLAIN (FORMAT TEXT)'
+      const result = await client.query(`${explainPrefix} ${trimmed}`)
+      const plan = result.rows.map((r: any) => r['QUERY PLAN']).join('\n')
+      return { plan }
+    } catch (error) {
+      throw safeToolError(error, 'PostgreSQL', 'explain_query')
+    } finally {
+      await client.end()
+    }
+  },
+})
+
 // ─── Export all tools ──────────────────
 
 export const postgresTools = [
@@ -395,4 +454,5 @@ export const postgresTools = [
   postgresListTables,
   postgresDescribeTable,
   postgresRunTransaction,
+  postgresExplainQuery,
 ]

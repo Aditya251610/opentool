@@ -5,17 +5,30 @@ import { logger } from '../src/logger'
  * Logs the full error server-side for debugging.
  */
 export function safeToolError(error: unknown, provider: string, operation: string): Error {
-  const message = error instanceof Error ? error.message : String(error)
+  // Extract the most useful info from the error
+  let detail = ''
+  if (error && typeof error === 'object') {
+    const errObj = error as Record<string, unknown>
+    detail = (errObj.message || errObj.error || errObj.error_description || '') as string
+  } else if (typeof error === 'string') {
+    detail = error
+  } else if (error instanceof Error) {
+    detail = error.message
+  }
 
-  // Log the full error for debugging
-  logger.error(`Tool execution failed`, {
+  // Log full error server-side
+  logger.error('Tool execution failed', {
     provider,
     operation,
-    errorMessage: message,
+    errorMessage: detail,
     errorStack: error instanceof Error ? error.stack : undefined,
   })
 
-  return new Error(`${provider} ${operation} failed. Check server logs for details.`)
+  // Return actionable message for AI agents
+  return new Error(
+    `${provider} ${operation} failed: ${detail || 'unknown error'}. ` +
+      `Try checking your input parameters or retry the request.`,
+  )
 }
 
 /**
@@ -26,7 +39,7 @@ export async function safeFetch(
   url: string,
   options: RequestInit,
   provider: string,
-  operation: string
+  operation: string,
 ): Promise<Response> {
   const res = await fetch(url, options)
   if (!res.ok) {
@@ -39,7 +52,7 @@ export async function safeFetch(
       bodyPreview: text.substring(0, 500), // truncate for safety
     })
     throw new Error(
-      `${provider} ${operation} failed (HTTP ${res.status}). Check server logs for details.`
+      `${provider} ${operation} failed (HTTP ${res.status}${res.status === 401 ? ' — authentication expired, reconnect your account' : res.status === 403 ? ' — insufficient permissions, check required scopes' : res.status === 404 ? ' — resource not found, verify the ID/name' : res.status === 429 ? ' — rate limited, wait and retry' : ''}). ${text ? `API response: ${text.substring(0, 200)}` : 'No response body.'}`,
     )
   }
   return res
@@ -62,7 +75,7 @@ export async function fetchWithRetry(
   options: RequestInit,
   provider: string,
   operation: string,
-  retryOpts: RetryOptions = {}
+  retryOpts: RetryOptions = {},
 ): Promise<Response> {
   const { maxRetries = 2, baseDelayMs = 1000, timeoutMs = 25000 } = retryOpts
 
@@ -101,7 +114,7 @@ export async function fetchWithRetry(
           body: text.substring(0, 500),
         })
         throw new Error(
-          `${provider} ${operation} failed (HTTP ${res.status}). Check server logs for details.`
+          `${provider} ${operation} failed (HTTP ${res.status}${res.status === 401 ? ' — authentication expired, reconnect your account' : res.status === 403 ? ' — insufficient permissions' : res.status === 404 ? ' — resource not found' : ''}). ${text ? text.substring(0, 200) : ''}`,
         )
       }
 
@@ -116,14 +129,9 @@ export async function fetchWithRetry(
           })
           continue
         }
-        throw new Error(
-          `${provider} ${operation} timed out after ${timeoutMs}ms`
-        )
+        throw new Error(`${provider} ${operation} timed out after ${timeoutMs}ms`)
       }
-      if (
-        attempt < maxRetries &&
-        !(error instanceof Error && error.message.includes('failed ('))
-      ) {
+      if (attempt < maxRetries && !(error instanceof Error && error.message.includes('failed ('))) {
         const delay = baseDelayMs * Math.pow(2, attempt)
         logger.warn('Retrying after error', {
           provider,
@@ -138,7 +146,5 @@ export async function fetchWithRetry(
     }
   }
 
-  throw new Error(
-    `${provider} ${operation} failed after ${maxRetries + 1} attempts`
-  )
+  throw new Error(`${provider} ${operation} failed after ${maxRetries + 1} attempts`)
 }

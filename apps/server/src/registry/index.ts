@@ -9,6 +9,22 @@ import { stripeTools } from '../../tools/stripe'
 import { vercelTools } from '../../tools/vercel'
 import { resendTools } from '../../tools/resend'
 import { postgresTools } from '../../tools/postgres'
+import { gitlabTools } from '../../tools/gitlab'
+import { sentryTools } from '../../tools/sentry'
+import { cloudflareTools } from '../../tools/cloudflare'
+import { paypalTools } from '../../tools/paypal'
+import { dockerTools } from '../../tools/docker'
+import { telegramTools } from '../../tools/telegram'
+import { discordTools } from '../../tools/discord'
+import { twilioTools } from '../../tools/twilio'
+import { gdriveTools } from '../../tools/gdrive'
+import { gmeetTools } from '../../tools/gmeet'
+import { jiraTools } from '../../tools/jira'
+import { confluenceTools } from '../../tools/confluence'
+import { microsoftTools } from '../../tools/microsoft'
+import { awsTools } from '../../tools/aws'
+import { azureTools } from '../../tools/azure'
+import { gcpTools } from '../../tools/gcp'
 import { metaTools } from '../../tools/meta'
 import { META_PROVIDER } from '../constants'
 
@@ -23,6 +39,22 @@ const allTools: ToolDefinition<any>[] = [
   ...vercelTools,
   ...resendTools,
   ...postgresTools,
+  ...gitlabTools,
+  ...sentryTools,
+  ...cloudflareTools,
+  ...paypalTools,
+  ...dockerTools,
+  ...telegramTools,
+  ...discordTools,
+  ...twilioTools,
+  ...gdriveTools,
+  ...gmeetTools,
+  ...jiraTools,
+  ...confluenceTools,
+  ...microsoftTools,
+  ...awsTools,
+  ...azureTools,
+  ...gcpTools,
   ...metaTools,
 ]
 

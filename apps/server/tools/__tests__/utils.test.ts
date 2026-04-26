@@ -12,13 +12,13 @@ vi.mock('../../src/logger', () => ({
 }))
 
 describe('safeToolError', () => {
-  it('should wrap Error with safe message', () => {
+  it('should wrap Error with actionable message including details', () => {
     const err = new Error('Internal API failure details')
     const result = safeToolError(err, 'github', 'create_issue')
     expect(result).toBeInstanceOf(Error)
     expect(result.message).toContain('github')
     expect(result.message).toContain('create_issue')
-    expect(result.message).not.toContain('Internal API failure details')
+    expect(result.message).toContain('Internal API failure details')
   })
 
   it('should handle non-Error values', () => {

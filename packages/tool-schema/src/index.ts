@@ -74,6 +74,22 @@ const PROVIDER_CATEGORY_MAP: Record<string, ToolCategory> = {
   stripe: 'payments',
   postgres: 'database',
   meta: 'meta',
+  gitlab: 'development',
+  sentry: 'development',
+  cloudflare: 'infrastructure',
+  paypal: 'payments',
+  docker: 'infrastructure',
+  telegram: 'communication',
+  discord: 'communication',
+  twilio: 'communication',
+  google_drive: 'productivity',
+  google_meet: 'productivity',
+  jira: 'development',
+  confluence: 'productivity',
+  microsoft: 'productivity',
+  aws: 'infrastructure',
+  azure: 'infrastructure',
+  gcp: 'infrastructure',
 }
 
 export function defineTool<TInput>(config: ToolDefinitionConfig<TInput>): ToolDefinition<TInput> {

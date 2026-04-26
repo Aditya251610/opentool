@@ -29,7 +29,8 @@ function encodeEmail(
 export const gmailSendEmail = defineTool({
   id: 'gmail_send_email',
   name: 'Send Gmail Email',
-  description: 'Sends an email via Gmail',
+  description:
+    'Sends an email via Gmail API. Supports HTML body, CC, and BCC.\n\nReturns: { id, threadId, labels }\n\nExamples:\n  - Simple: to="alice@co.com", subject="Hi", body="Hello"\n  - With CC: to="alice@co.com", subject="Update", body="...", cc="bob@co.com"',
   provider: 'gmail',
   authType: 'oauth2',
   requiredScopes: ['https://www.googleapis.com/auth/gmail.send'],
@@ -72,7 +73,8 @@ export const gmailSendEmail = defineTool({
 export const gmailReadEmail = defineTool({
   id: 'gmail_read_email',
   name: 'Read Gmail Email',
-  description: 'Reads a specific email message by ID',
+  description:
+    'Reads a Gmail message by ID. Decodes base64url body. Use gmail_search_emails to find message IDs.\n\nReturns: { id, threadId, from, to, subject, date, snippet, body }',
   provider: 'gmail',
   authType: 'oauth2',
   requiredScopes: ['https://www.googleapis.com/auth/gmail.readonly'],

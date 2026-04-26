@@ -101,7 +101,9 @@ describe('search engine', () => {
       const all = searchToolRegistry({ limit: 50 }, userTools)
       const offset = searchToolRegistry({ limit: 50, offset: 2 }, userTools)
       expect(offset.total).toBe(all.total)
-      expect(offset.tools.length).toBe(all.tools.length - 2)
+      // When total > limit, both return limit items; otherwise offset returns limit-2
+      const expectedLen = Math.min(all.total - 2, 50)
+      expect(offset.tools.length).toBe(expectedLen)
     })
 
     it('returns hasMore when more results exist', () => {

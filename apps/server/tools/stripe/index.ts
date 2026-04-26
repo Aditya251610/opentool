@@ -13,14 +13,33 @@ function stripeHeaders(token: string) {
 export const stripeCreatePaymentLink = defineTool({
   id: 'stripe_create_payment_link',
   name: 'Create Stripe Payment Link',
-  description: 'Creates a Stripe payment link for a given price',
+  description:
+    'Creates a Stripe Payment Link for a given Price ID. The link is reusable and can be shared with customers.\n\nReturns: { id, url, active, livemode }',
   provider: 'stripe',
   authType: 'oauth2',
   requiredScopes: ['read_write'],
+  category: 'payments',
+  annotations: {
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
   inputSchema: z.object({
     price_id: z.string().describe('Stripe Price ID (e.g. "price_1234...")'),
-    quantity: z.number().int().positive().max(99999).optional().describe('Quantity (default 1, max 99999)'),
-    after_completion_url: z.string().url().refine(url => url.startsWith('https://'), { message: 'URL must use HTTPS' }).optional().describe('URL to redirect to after payment (must be HTTPS)'),
+    quantity: z
+      .number()
+      .int()
+      .positive()
+      .max(99999)
+      .optional()
+      .describe('Quantity (default 1, max 99999)'),
+    after_completion_url: z
+      .string()
+      .url()
+      .refine((url) => url.startsWith('https://'), { message: 'URL must use HTTPS' })
+      .optional()
+      .describe('URL to redirect to after payment (must be HTTPS)'),
   }),
   execute: async ({ input, auth }) => {
     const params = new URLSearchParams()
@@ -38,11 +57,11 @@ export const stripeCreatePaymentLink = defineTool({
     })
 
     if (!res.ok) {
-      const error = await res.json() as { error: { message: string } }
+      const error = (await res.json()) as { error: { message: string } }
       throw safeToolError(error.error, 'Stripe', 'execute')
     }
 
-    const link = await res.json() as {
+    const link = (await res.json()) as {
       id: string
       url: string
       active: boolean
@@ -56,13 +75,27 @@ export const stripeCreatePaymentLink = defineTool({
 export const stripeListCustomers = defineTool({
   id: 'stripe_list_customers',
   name: 'List Stripe Customers',
-  description: 'Lists customers in your Stripe account',
+  description:
+    'Lists Stripe customers with optional email filter and cursor pagination.\n\nReturns: { customers: [{ id, email, name, createdAt, currency, description }], hasMore }',
   provider: 'stripe',
   authType: 'oauth2',
   requiredScopes: ['read_write'],
+  category: 'payments',
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   inputSchema: z.object({
     email: z.string().email().optional().describe('Filter by customer email'),
-    limit: z.number().int().positive().max(100).optional().describe('Number of customers to return (default 10, max 100)'),
+    limit: z
+      .number()
+      .int()
+      .positive()
+      .max(100)
+      .optional()
+      .describe('Number of customers to return (default 10, max 100)'),
     starting_after: z.string().optional().describe('Cursor for pagination (customer ID)'),
   }),
   execute: async ({ input, auth }) => {
@@ -77,11 +110,11 @@ export const stripeListCustomers = defineTool({
     })
 
     if (!res.ok) {
-      const error = await res.json() as { error: { message: string } }
+      const error = (await res.json()) as { error: { message: string } }
       throw safeToolError(error.error, 'Stripe', 'execute')
     }
 
-    const data = await res.json() as {
+    const data = (await res.json()) as {
       data: Array<{
         id: string
         email: string | null

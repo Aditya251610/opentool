@@ -3,6 +3,7 @@ import { AuthResource } from './resources/auth'
 import { UsersResource } from './resources/users'
 import { KeysResource } from './resources/keys'
 import { ToolsResource } from './resources/tools'
+import { AnalyticsResource } from './resources/analytics'
 import type { OpenToolConfig, HealthStatus } from './types'
 
 /**
@@ -46,12 +47,16 @@ export class OpenTool {
   /** Tool listing, provider browsing, and execution. */
   readonly tools: ToolsResource
 
+  /** Usage analytics, token stats, and context export. */
+  readonly analytics: AnalyticsResource
+
   constructor(config: OpenToolConfig) {
     this.http = new HttpClient(config)
     this.auth = new AuthResource(this.http)
     this.users = new UsersResource(this.http)
     this.keys = new KeysResource(this.http)
     this.tools = new ToolsResource(this.http)
+    this.analytics = new AnalyticsResource(this.http)
   }
 
   /** Set or replace the API key used for authenticated requests. */

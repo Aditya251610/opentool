@@ -45,21 +45,35 @@ function notionHeaders(token: string) {
 export const notionCreatePage = defineTool({
   id: 'notion_create_page',
   name: 'Create Notion Page',
-  description: 'Creates a new page in a Notion database or as a child of another page',
+  description:
+    'Creates a Notion page in a database or as a child of another page. Properties param is a JSON string of Notion property objects.\n\nReturns: { id, url, createdAt }',
   provider: 'notion',
   authType: 'oauth2',
   requiredScopes: [],
+  category: 'productivity',
+  annotations: {
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
   inputSchema: z.object({
-    parent_type: z.enum(['database_id', 'page_id']).describe('Type of parent: "database_id" or "page_id"'),
+    parent_type: z
+      .enum(['database_id', 'page_id'])
+      .describe('Type of parent: "database_id" or "page_id"'),
     parent_id: z.string().describe('ID of the parent database or page'),
     title: z.string().describe('Page title'),
-    properties: z.string().optional().describe('JSON string of additional Notion properties (for database pages)'),
+    properties: z
+      .string()
+      .optional()
+      .describe('JSON string of additional Notion properties (for database pages)'),
     content: z.string().optional().describe('Plain text content for the page body'),
   }),
   execute: async ({ input, auth }) => {
-    const parent = input.parent_type === 'database_id'
-      ? { database_id: input.parent_id }
-      : { page_id: input.parent_id }
+    const parent =
+      input.parent_type === 'database_id'
+        ? { database_id: input.parent_id }
+        : { page_id: input.parent_id }
 
     const properties: Record<string, unknown> = input.properties
       ? safeJsonParse(input.properties, 'properties')
@@ -96,11 +110,11 @@ export const notionCreatePage = defineTool({
     })
 
     if (!res.ok) {
-      const error = await res.json() as { message: string }
+      const error = (await res.json()) as { message: string }
       throw safeToolError(error, 'Notion', 'execute')
     }
 
-    const page = await res.json() as {
+    const page = (await res.json()) as {
       id: string
       url: string
       created_time: string
@@ -113,10 +127,18 @@ export const notionCreatePage = defineTool({
 export const notionQueryDatabase = defineTool({
   id: 'notion_query_database',
   name: 'Query Notion Database',
-  description: 'Queries a Notion database with optional filters and sorts',
+  description:
+    'Queries a Notion database with optional filter and sort objects (pass as JSON strings). Supports pagination via next_cursor.\n\nReturns: { results: [{ id, url, properties, createdAt }], hasMore, nextCursor }',
   provider: 'notion',
   authType: 'oauth2',
   requiredScopes: [],
+  category: 'productivity',
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   inputSchema: z.object({
     database_id: z.string().describe('The ID of the database to query'),
     filter: z.string().optional().describe('JSON string of Notion filter object'),
@@ -129,21 +151,18 @@ export const notionQueryDatabase = defineTool({
     if (input.sorts) body.sorts = safeJsonParseArray(input.sorts, 'sorts')
     if (input.page_size) body.page_size = input.page_size
 
-    const res = await fetch(
-      `${NOTION_BASE}/databases/${input.database_id}/query`,
-      {
-        method: 'POST',
-        headers: notionHeaders(auth.accessToken!),
-        body: JSON.stringify(body),
-      }
-    )
+    const res = await fetch(`${NOTION_BASE}/databases/${input.database_id}/query`, {
+      method: 'POST',
+      headers: notionHeaders(auth.accessToken!),
+      body: JSON.stringify(body),
+    })
 
     if (!res.ok) {
-      const error = await res.json() as { message: string }
+      const error = (await res.json()) as { message: string }
       throw safeToolError(error, 'Notion', 'execute')
     }
 
-    const data = await res.json() as {
+    const data = (await res.json()) as {
       results: Array<{
         id: string
         url: string
@@ -170,13 +189,30 @@ export const notionQueryDatabase = defineTool({
 export const notionUpdateBlock = defineTool({
   id: 'notion_update_block',
   name: 'Update Notion Block',
-  description: 'Updates the content of an existing block in Notion',
+  description:
+    "Updates a Notion block's text content by block ID. Supports paragraph, heading, to_do, and list item blocks.\n\nReturns: { id, type, lastEditedAt }",
   provider: 'notion',
   authType: 'oauth2',
   requiredScopes: [],
+  category: 'productivity',
+  annotations: {
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   inputSchema: z.object({
     block_id: z.string().describe('The ID of the block to update'),
-    block_type: z.enum(['paragraph', 'heading_1', 'heading_2', 'heading_3', 'to_do', 'bulleted_list_item', 'numbered_list_item'])
+    block_type: z
+      .enum([
+        'paragraph',
+        'heading_1',
+        'heading_2',
+        'heading_3',
+        'to_do',
+        'bulleted_list_item',
+        'numbered_list_item',
+      ])
       .describe('The type of the block'),
     content: z.string().describe('New text content for the block'),
     checked: z.boolean().optional().describe('For to_do blocks: whether the item is checked'),
@@ -197,11 +233,11 @@ export const notionUpdateBlock = defineTool({
     })
 
     if (!res.ok) {
-      const error = await res.json() as { message: string }
+      const error = (await res.json()) as { message: string }
       throw safeToolError(error, 'Notion', 'execute')
     }
 
-    const block = await res.json() as {
+    const block = (await res.json()) as {
       id: string
       type: string
       last_edited_time: string

@@ -6,8 +6,10 @@ const RESEND_BASE = 'https://api.resend.com'
 export const resendSendEmail = defineTool({
   id: 'resend_send_email',
   name: 'Send Email via Resend',
-  description: 'Sends an email using the Resend API',
+  description:
+    'Sends an email via Resend API. The from address must use a verified domain. Supports HTML/text body, CC, BCC, reply-to, and tags.\n\nReturns: { id }\n\nExamples:\n  - Simple: from="noreply@yourapp.com", to="user@co.com", subject="Welcome", html="<h1>Hi</h1>"',
   provider: 'resend',
+  category: 'communication',
   authType: 'api_key',
   requiredScopes: [],
   annotations: {

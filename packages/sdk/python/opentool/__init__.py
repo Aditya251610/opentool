@@ -9,6 +9,13 @@ from opentool.types import (
     ApiKeyCreated,
     Tool,
     ToolList,
+    ToolSearchOptions,
+    ToolSearchResult,
+    ToolSearchSummary,
+    ToolDetails,
+    ProviderSummary,
+    ToolUsageStat,
+    UsageSummary,
     ConnectUrl,
     HealthStatus,
     ToolExecutionResult,
@@ -28,6 +35,13 @@ __all__ = [
     "ApiKeyCreated",
     "Tool",
     "ToolList",
+    "ToolSearchOptions",
+    "ToolSearchResult",
+    "ToolSearchSummary",
+    "ToolDetails",
+    "ProviderSummary",
+    "ToolUsageStat",
+    "UsageSummary",
     "ConnectUrl",
     "HealthStatus",
     "ToolExecutionResult",
@@ -37,4 +51,4 @@ __all__ = [
     "NotFoundError",
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

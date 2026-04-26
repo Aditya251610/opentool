@@ -10,6 +10,7 @@ from opentool.resources.auth import AuthResource, AsyncAuthResource
 from opentool.resources.users import UsersResource, AsyncUsersResource
 from opentool.resources.keys import KeysResource, AsyncKeysResource
 from opentool.resources.tools import ToolsResource, AsyncToolsResource
+from opentool.resources.analytics import AnalyticsResource, AsyncAnalyticsResource
 
 
 class OpenTool:
@@ -50,6 +51,7 @@ class OpenTool:
         self.users = UsersResource(self._http)
         self.keys = KeysResource(self._http)
         self.tools = ToolsResource(self._http)
+        self.analytics = AnalyticsResource(self._http)
 
     def set_api_key(self, key: str) -> None:
         """Set or replace the API key used for authenticated requests."""
@@ -112,6 +114,7 @@ class AsyncOpenTool:
         self.users = AsyncUsersResource(self._http)
         self.keys = AsyncKeysResource(self._http)
         self.tools = AsyncToolsResource(self._http)
+        self.analytics = AsyncAnalyticsResource(self._http)
 
     def set_api_key(self, key: str) -> None:
         """Set or replace the API key used for authenticated requests."""

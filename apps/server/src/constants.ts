@@ -14,6 +14,22 @@ export const PROVIDERS = [
   'vercel',
   'resend',
   'postgres',
+  'gitlab',
+  'sentry',
+  'cloudflare',
+  'paypal',
+  'docker',
+  'telegram',
+  'discord',
+  'twilio',
+  'google_drive',
+  'google_meet',
+  'jira',
+  'confluence',
+  'microsoft',
+  'aws',
+  'azure',
+  'gcp',
 ] as const
 export type Provider = (typeof PROVIDERS)[number]
 
@@ -47,6 +63,14 @@ export const AUTH_RATE_LIMIT_MAX = 20
 export const API_KEY_ENV_MAP: Record<string, string> = {
   resend: 'RESEND_API_KEY',
   postgres: 'POSTGRES_CONNECTION_STRING',
+  sentry: 'SENTRY_AUTH_TOKEN',
+  cloudflare: 'CLOUDFLARE_API_TOKEN',
+  docker: 'DOCKER_HUB_TOKEN',
+  telegram: 'TELEGRAM_BOT_TOKEN',
+  discord: 'DISCORD_BOT_TOKEN',
+  twilio: 'TWILIO_ACCOUNT_SID',
+  aws: 'AWS_ACCESS_KEY_ID',
+  gcp: 'GCP_SERVICE_ACCOUNT_KEY',
 } as const
 
 // ─── Tool Response Truncation ─────────────

@@ -76,7 +76,7 @@ describe('tool registry', () => {
   describe('tool id format', () => {
     it('all tool IDs follow provider_action pattern', () => {
       for (const tool of getAllTools()) {
-        expect(tool.id).toMatch(/^[a-z]+_[a-z_]+$/)
+        expect(tool.id).toMatch(/^[a-z][a-z0-9]*_[a-z][a-z0-9_]*$/)
       }
     })
 

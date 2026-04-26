@@ -67,12 +67,14 @@ export async function createMcpServer(
   })
 
   for (const tool of tools) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(server.tool as any)(
+    server.registerTool(
       tool.id,
-      tool.description,
-      tool.inputZodShape,
-      tool.annotations ?? {},
+      {
+        title: tool.id,
+        description: tool.description,
+        inputSchema: tool.inputZodShape as any,
+        annotations: tool.annotations ?? {},
+      },
       async (input: Record<string, unknown>) => {
         try {
           const result = await executeTool(tool.id, input, user.id, clientName)
@@ -128,7 +130,7 @@ export async function createMcpServer(
             content: [
               {
                 type: 'text' as const,
-                text: `Error executing ${tool.id}: ${errMsg}. Check your inputs and try again.`,
+                text: `Error executing ${tool.id}: ${errMsg}`,
               },
             ],
           }
