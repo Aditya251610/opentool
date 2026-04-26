@@ -22,10 +22,24 @@ import {
   LinearIcon,
   GmailIcon,
   GoogleCalendarIcon,
-  StripeIcon,
   VercelIcon,
   ResendIcon,
   NeonIcon,
+  GitLabIcon,
+  JiraIcon,
+  ConfluenceIcon,
+  GoogleDriveIcon,
+  GoogleMeetIcon,
+  MicrosoftIcon,
+  AzureIcon,
+  GCPIcon,
+  SentryIcon,
+  CloudflareIcon,
+  DiscordIcon,
+  TelegramIcon,
+  DockerIcon,
+  PayPalIcon,
+  TwilioIcon,
 } from '@/components/icons'
 
 const ParallaxStars = dynamic(() => import('@/components/landing/parallax-stars'), { ssr: false })
@@ -41,16 +55,30 @@ const Footer = dynamic(() =>
 const ease: [number, number, number, number] = [0.23, 1, 0.32, 1]
 
 const TOOLS: { name: string; Icon: typeof GitHubIcon; tools: number; accent: string }[] = [
-  { name: 'GitHub', Icon: GitHubIcon, tools: 5, accent: '#f0f0f0' },
+  { name: 'GitHub', Icon: GitHubIcon, tools: 7, accent: '#f0f0f0' },
+  { name: 'GitLab', Icon: GitLabIcon, tools: 8, accent: '#FC6D26' },
   { name: 'Notion', Icon: NotionIcon, tools: 3, accent: '#f0f0f0' },
-  { name: 'Slack', Icon: SlackIcon, tools: 2, accent: '#E01E5A' },
-  { name: 'Linear', Icon: LinearIcon, tools: 2, accent: '#5E6AD2' },
+  { name: 'Slack', Icon: SlackIcon, tools: 3, accent: '#E01E5A' },
+  { name: 'Linear', Icon: LinearIcon, tools: 3, accent: '#5E6AD2' },
   { name: 'Gmail', Icon: GmailIcon, tools: 3, accent: '#EA4335' },
   { name: 'Google Cal', Icon: GoogleCalendarIcon, tools: 2, accent: '#4285F4' },
-  { name: 'Stripe', Icon: StripeIcon, tools: 2, accent: '#635BFF' },
+  { name: 'Google Drive', Icon: GoogleDriveIcon, tools: 6, accent: '#4285F4' },
+  { name: 'Google Meet', Icon: GoogleMeetIcon, tools: 3, accent: '#00897B' },
+  { name: 'Jira', Icon: JiraIcon, tools: 7, accent: '#0052CC' },
+  { name: 'Confluence', Icon: ConfluenceIcon, tools: 6, accent: '#1868DB' },
+  { name: 'Microsoft', Icon: MicrosoftIcon, tools: 8, accent: '#0078D4' },
+  { name: 'Azure', Icon: AzureIcon, tools: 7, accent: '#0089D6' },
+  { name: 'GCP', Icon: GCPIcon, tools: 7, accent: '#4285F4' },
   { name: 'Vercel', Icon: VercelIcon, tools: 2, accent: '#f0f0f0' },
+  { name: 'Sentry', Icon: SentryIcon, tools: 7, accent: '#362D59' },
+  { name: 'Cloudflare', Icon: CloudflareIcon, tools: 6, accent: '#F48120' },
+  { name: 'PayPal', Icon: PayPalIcon, tools: 8, accent: '#003087' },
+  { name: 'Discord', Icon: DiscordIcon, tools: 5, accent: '#5865F2' },
+  { name: 'Telegram', Icon: TelegramIcon, tools: 5, accent: '#26A5E4' },
+  { name: 'Twilio', Icon: TwilioIcon, tools: 4, accent: '#F22F46' },
+  { name: 'Docker', Icon: DockerIcon, tools: 4, accent: '#2496ED' },
   { name: 'Resend', Icon: ResendIcon, tools: 1, accent: '#f0f0f0' },
-  { name: 'Neon', Icon: NeonIcon, tools: 4, accent: '#00E699' },
+  { name: 'Neon', Icon: NeonIcon, tools: 5, accent: '#00E699' },
 ]
 
 /* ─── Reusable Components ─── */
@@ -221,7 +249,7 @@ function TypedTerminal() {
     { text: '✓ slack          2 tools', speed: 15 },
     { text: '✓ neon           4 tools', speed: 15 },
     { text: '✓ gmail          3 tools', speed: 15 },
-    { text: '→ 26 tools loaded across 10 providers', speed: 15 },
+    { text: '→ 120 tools loaded across 24 providers', speed: 15 },
     { text: '✓ MCP server running on :3001/mcp', speed: 20 },
   ]
 
@@ -463,7 +491,7 @@ export default function LandingPage() {
             className="text-base md:text-[19px] text-white/45 mt-8 max-w-[540px] mx-auto leading-[1.8]"
           >
             The open-source MCP server that gives AI agents secure, authenticated access to GitHub,
-            Notion, Slack, and 7 more providers — 26 tools total. Self-hosted. MIT licensed.
+            Notion, Slack, and 21 more providers — 120 tools total. Self-hosted. MIT licensed.
           </motion.p>
 
           {/* CTAs — glow buttons */}
@@ -535,7 +563,7 @@ export default function LandingPage() {
                 <span className="hidden sm:inline-block w-1 h-1 rounded-full bg-white/10" />
               </>
             )}
-            {['MIT Licensed', 'Self-hosted', '26 tools'].map((t, i) => (
+            {['MIT Licensed', 'Self-hosted', '120 tools'].map((t, i) => (
               <span key={t} className="flex items-center gap-2">
                 {i > 0 && (
                   <span className="hidden sm:inline-block w-1 h-1 rounded-full bg-white/10" />
@@ -612,7 +640,7 @@ export default function LandingPage() {
                     <div>)</div>
                     <div>
                       <span className="text-white/15">
-                        {'// × 10 providers × token rotation = pain'}
+                        {'// × 24 providers × token rotation = pain'}
                       </span>
                     </div>
                   </div>
@@ -747,7 +775,7 @@ export default function LandingPage() {
                       agent: 'Your Agent',
                       agentBorder: 'border-white/[0.06] border-dashed',
                       toolIcon: NotionIcon,
-                      tool: '+8 more',
+                      tool: '+21 more',
                     },
                   ].map((row, i) => {
                     const ToolIcon = row.toolIcon
@@ -954,7 +982,7 @@ export default function LandingPage() {
                   {[
                     { Icon: GitHubIcon, name: 'GitHub' },
                     { Icon: SlackIcon, name: 'Slack' },
-                    { Icon: NotionIcon, name: '+8 more' },
+                    { Icon: NotionIcon, name: '+21 more' },
                   ].map((t) => (
                     <div
                       key={t.name}
@@ -1500,16 +1528,16 @@ claude mcp add opentool \\
         <div className="max-w-[1100px] mx-auto">
           <FadeIn className="text-center mb-14 md:mb-28">
             <h2 className="text-[36px] sm:text-[48px] md:text-[64px] font-extrabold text-white leading-[1.02] tracking-[-0.04em]">
-              <Counter value={10} /> providers. <Counter value={26} /> tools.
+              <Counter value={24} /> providers. <Counter value={120} /> tools.
             </h2>
             <p className="text-base text-white/45 mt-5 max-w-[420px] mx-auto leading-[1.8]">
               Each tool is a single TypeScript file. Add your own, open a PR.
             </p>
           </FadeIn>
 
-          {/* Icon grid — 5x2 visual grid */}
+          {/* Icon grid */}
           <StaggerIn
-            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-10"
+            className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 mb-10"
             staggerDelay={0.05}
           >
             {TOOLS.map((tool) => (

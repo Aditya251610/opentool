@@ -8,10 +8,15 @@ import {
   LinearIcon,
   GmailIcon,
   GoogleCalendarIcon,
-  StripeIcon,
   VercelIcon,
   ResendIcon,
   NeonIcon,
+  GitLabIcon,
+  JiraIcon,
+  MicrosoftIcon,
+  SentryIcon,
+  CloudflareIcon,
+  DiscordIcon,
 } from '@/components/icons'
 
 const PROVIDERS = [
@@ -21,10 +26,15 @@ const PROVIDERS = [
   { Icon: LinearIcon, opacity: 0.1 },
   { Icon: GmailIcon, opacity: 0.09 },
   { Icon: GoogleCalendarIcon, opacity: 0.09 },
-  { Icon: StripeIcon, opacity: 0.1 },
   { Icon: VercelIcon, opacity: 0.11 },
   { Icon: ResendIcon, opacity: 0.08 },
   { Icon: NeonIcon, opacity: 0.09 },
+  { Icon: GitLabIcon, opacity: 0.09 },
+  { Icon: JiraIcon, opacity: 0.08 },
+  { Icon: MicrosoftIcon, opacity: 0.09 },
+  { Icon: SentryIcon, opacity: 0.08 },
+  { Icon: CloudflareIcon, opacity: 0.09 },
+  { Icon: DiscordIcon, opacity: 0.1 },
 ]
 
 // Pre-generate positions so they don't change on re-render

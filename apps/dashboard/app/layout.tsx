@@ -52,7 +52,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'OpenTool — Open Source MCP Server for AI Agents',
     description:
-      'One MCP server. All your tools. 10 providers, 26 tools. Self-hosted, MIT licensed. The open-source alternative to Arcade.dev.',
+      'One MCP server. All your tools. 24 providers, 120 tools. Self-hosted, MIT licensed. The open-source alternative to Arcade.dev.',
     type: 'website',
     siteName: 'OpenTool',
     url: 'https://opentool.dev',
@@ -62,7 +62,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'OpenTool — Open Source MCP Server for AI Agents',
     description:
-      'Self-hosted MCP server with 10 providers & 26 tools. Free, open-source alternative to Arcade.dev.',
+      'Self-hosted MCP server with 24 providers & 120 tools. Free, open-source alternative to Arcade.dev.',
   },
   robots: { index: true, follow: true },
   other: {

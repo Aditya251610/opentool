@@ -21,7 +21,7 @@ const TERMINAL_LINES = [
   { text: '✓ slack         (2 tools)', color: 'rgba(255,255,255,0.55)', delay: 1.9 },
   { text: '✓ neon          (4 tools)', color: 'rgba(255,255,255,0.55)', delay: 2.2 },
   { text: '✓ gmail         (3 tools)', color: 'rgba(255,255,255,0.55)', delay: 2.5 },
-  { text: '→ 26 tools loaded across 10 providers', color: 'rgba(255,255,255,0.3)', delay: 3.0 },
+  { text: '→ 120 tools loaded across 24 providers', color: 'rgba(255,255,255,0.3)', delay: 3.0 },
   { text: '✓ OpenTool MCP server running', color: '#00d4ff', delay: 3.4 },
   { text: '→ Listening at http://localhost:3001/mcp', color: 'rgba(255,255,255,0.4)', delay: 3.8 },
 ]

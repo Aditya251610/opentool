@@ -358,7 +358,7 @@ SLACK_CLIENT_SECRET=""
 GOOGLE_CLIENT_ID=""
 GOOGLE_CLIENT_SECRET=""
 
-# Linear, Stripe, Vercel — same pattern
+# Linear, Vercel — same pattern
 # Resend and PostgreSQL use API keys (no OAuth needed)`}</Code>
             </section>
 
@@ -516,7 +516,7 @@ claude mcp add opentool \\
               </h2>
               <div className="mt-4 text-sm text-[rgba(255,255,255,0.55)] leading-[1.8] space-y-4">
                 <p>
-                  26 tools. 10 providers. These aren&apos;t wrappers around wrappers — they&apos;re
+                  120 tools. 24 providers. These aren&apos;t wrappers around wrappers — they&apos;re
                   direct API calls with proper auth. You can read every line of execution code.
                   Nothing is abstracted away into some plugin system you can&apos;t debug.
                 </p>
@@ -551,11 +551,6 @@ claude mcp add opentool \\
                     provider: 'Google Calendar',
                     auth: 'OAuth2',
                     tools: ['create_event', 'list_events'],
-                  },
-                  {
-                    provider: 'Stripe',
-                    auth: 'API Key',
-                    tools: ['create_payment_link', 'list_customers'],
                   },
                   {
                     provider: 'Vercel',
@@ -722,7 +717,7 @@ export const myTool = defineTool({
                     title: 'First public release',
                     changes: [
                       { type: '+', text: 'Core MCP server with Streamable HTTP transport' },
-                      { type: '+', text: '10 tool providers (26 tools total)' },
+                      { type: '+', text: '24 tool providers (120 tools total)' },
                       { type: '+', text: 'OAuth2 auth broker with AES-256-GCM token encryption' },
                       { type: '+', text: 'Next.js dashboard with auth, tools, keys, settings' },
                       { type: '+', text: 'Interactive Ink-based CLI with login, connect, execute' },

@@ -198,8 +198,8 @@ export default function TermsPage() {
               <Section id="third-party" title="5. Third-Party Integrations">
                 <p className="text-sm text-[rgba(255,255,255,0.55)] leading-[1.8]">
                   The Service allows you to connect third-party services (GitHub, Google, Slack,
-                  Notion, Linear, Stripe, Vercel, Resend) through OAuth authorization. By connecting
-                  a third-party service:
+                  Notion, Linear, Vercel, Resend) through OAuth authorization. By connecting a
+                  third-party service:
                 </p>
                 <ul className="list-none space-y-3 mt-4">
                   {[

@@ -195,11 +195,10 @@ export default function PrivacyPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-4">
                   {[
                     'GitHub',
-                    'Google (Gmail, Calendar)',
+                    'Google (Gmail, Calendar, Drive, Meet)',
                     'Notion',
                     'Slack',
                     'Linear',
-                    'Stripe',
                     'Vercel',
                     'Resend',
                   ].map((p) => (
