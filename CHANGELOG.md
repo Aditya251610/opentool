@@ -5,6 +5,24 @@ All notable changes to the OpenTool project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.12](https://github.com/Aditya251610/opentool/compare/opentool-v0.1.11...opentool-v0.1.12) (2026-04-26)
+
+
+### Documentation
+
+* production-ready changelogs — clean up root, fix SDK TS noise, add Python SDK ([86f9209](https://github.com/Aditya251610/opentool/commit/86f92096b3060009b136b4a444555669c43771a0))
+
+
+### Miscellaneous
+
+* release main ([9d8873e](https://github.com/Aditya251610/opentool/commit/9d8873ed262454461bd7de867b4a902badf084cb))
+* release main ([5f0c18a](https://github.com/Aditya251610/opentool/commit/5f0c18a6d97c56d070d1732615a2987dbaa39cef))
+
+
+### CI/CD
+
+* fix duplicate publishing, add dedup guards, add Python SDK to release-please ([1d4cd18](https://github.com/Aditya251610/opentool/commit/1d4cd181777ab8d1f20dda028ece2e7e2dd054ab))
+
 ## [0.1.11](https://github.com/Aditya251610/opentool/compare/opentool-v0.1.10...opentool-v0.1.11) (2026-04-26)
 
 ### Features

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/Aditya251610/opentool/compare/sdk-py-v0.1.1...sdk-py-v0.1.2) (2026-04-26)
+
+
+### Documentation
+
+* production-ready changelogs — clean up root, fix SDK TS noise, add Python SDK ([86f9209](https://github.com/Aditya251610/opentool/commit/86f92096b3060009b136b4a444555669c43771a0))
+
 ## [0.1.1](https://github.com/Aditya251610/opentool/compare/sdk-py-v0.1.0...sdk-py-v0.1.1) (2026-04-26)
 
 ### Features
