@@ -144,7 +144,7 @@ try {
 ### Installation
 
 ```bash
-pip install opentool
+pip install opentool-sdk
 ```
 
 ### Quick Start

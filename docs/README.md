@@ -24,17 +24,17 @@ No 47-page onboarding guide. No "enterprise readiness assessment." Just the stuf
 | --------------------------------------- | -------------------------------------------------- |
 | [Architecture](./architecture.md)       | How the pieces fit together                        |
 | [Authentication](./authentication.md)   | OAuth flows, API keys, token management            |
-| [Tools](./tools.md)                     | All 10 providers, 26 actions                       |
+| [Tools](./tools.md)                     | All 26 providers, 133 tools                        |
 | [MCP Integration](./mcp-integration.md) | Connect Claude, Cursor, VS Code, or any MCP client |
 
 ## Building & Extending
 
-| Doc                                             | What it covers                                                                                                             |
-| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| [SDK Reference](./sdk-reference.md)             | TypeScript ([npm](https://www.npmjs.com/package/@opentool-ts/sdk)) and Python ([PyPI](https://pypi.org/project/opentool/)) |
-| [CLI Reference](./cli-reference.md)             | Interactive REPL, subcommands, shell completions                                                                           |
-| [Contributing a Tool](./contributing-a-tool.md) | Add your own provider in ~100 lines                                                                                        |
-| [API Reference](./api-reference.md)             | Every REST endpoint documented                                                                                             |
+| Doc                                             | What it covers                                                                                                                 |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| [SDK Reference](./sdk-reference.md)             | TypeScript ([npm](https://www.npmjs.com/package/@opentool-ts/sdk)) and Python ([PyPI](https://pypi.org/project/opentool-sdk/)) |
+| [CLI Reference](./cli-reference.md)             | Interactive REPL, subcommands, shell completions                                                                               |
+| [Contributing a Tool](./contributing-a-tool.md) | Add your own provider in ~100 lines                                                                                            |
+| [API Reference](./api-reference.md)             | Every REST endpoint documented                                                                                                 |
 
 ## Operations
 

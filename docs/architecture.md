@@ -11,7 +11,7 @@ OpenTool is a monorepo with a clean separation of concerns. Here's the full pict
 ```
 ┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
 │   AI Agent       │     │   Dashboard       │     │   CLI            │
-│ (Claude, Cursor, │     │ (Next.js :3000)   │     │ (@opentool-ts/cli)  │
+│ (Claude, Cursor, │     │ (Next.js :3000)   │     │ (opentool-cli)      │
 │  any MCP client) │     │                   │     │                  │
 └────────┬─────────┘     └────────┬──────────┘     └────────┬─────────┘
          │ MCP (JSON-RPC)         │ REST API                │ REST API
@@ -66,11 +66,17 @@ opentool/
 │   │   │   │   └── index.ts     # Tool registry (maps ID → definition)
 │   │   │   └── db/
 │   │   │       └── client.ts    # Prisma client singleton
-│   │   ├── tools/               # Tool implementations by provider
+│   │   ├── tools/               # Tool implementations (26 providers)
 │   │   │   ├── github/
+│   │   │   ├── gitlab/
 │   │   │   ├── notion/
 │   │   │   ├── slack/
-│   │   │   └── ...
+│   │   │   ├── jira/
+│   │   │   ├── confluence/
+│   │   │   ├── aws/
+│   │   │   ├── gcp/
+│   │   │   ├── azure/
+│   │   │   └── ...             # 17 more providers
 │   │   └── prisma/
 │   │       ├── schema.prisma    # Data model
 │   │       └── seed.ts          # Provider + tool seeding
@@ -83,7 +89,7 @@ opentool/
 ├── packages/
 │   ├── sdk/
 │   │   ├── ts/                  # TypeScript SDK (@opentool-ts/sdk)
-│   │   └── python/              # Python SDK (opentool)
+│   │   └── python/              # Python SDK (opentool-sdk)
 │   ├── tool-schema/             # Shared tool definition types
 │   └── cli/                     # Interactive terminal UI (Ink)
 │
@@ -95,7 +101,7 @@ opentool/
 
 ## Data Model
 
-Six tables. That's it.
+Seven tables. That's it.
 
 ### Users & Auth
 
@@ -114,7 +120,7 @@ Six tables. That's it.
 
 ### Audit
 
-- **`audit_logs`** — Immutable log of every tool execution and auth event. Tracks duration, sanitized input, errors.
+- **`audit_logs`** — Immutable log of every tool execution and auth event. Tracks duration, sanitized input, errors, token usage analytics (prompt/completion/total tokens, estimated cost, model used).
 
 ---
 

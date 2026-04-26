@@ -2,7 +2,7 @@
 
 > One connection. All your tools. That's the pitch, and it actually works.
 
-MCP (Model Context Protocol) is how AI agents discover and use tools. Instead of wiring up 10 different tool servers, you point your agent at OpenTool and it gets everything.
+MCP (Model Context Protocol) is how AI agents discover and use tools. Instead of wiring up dozens of different tool servers, you point your agent at OpenTool and it gets everything.
 
 ---
 
@@ -27,7 +27,7 @@ Add this to your Claude Desktop config:
   "mcpServers": {
     "opentool": {
       "command": "npx",
-      "args": ["@opentool-ts/cli", "mcp", "start"],
+      "args": ["opentool-cli", "mcp", "start"],
       "env": {
         "OPENTOOL_API_KEY": "ot_your_api_key_here"
       }
@@ -40,7 +40,7 @@ Restart Claude Desktop. Your connected tools appear automatically.
 
 ### How it works
 
-1. Claude Desktop spawns `@opentool-ts/cli mcp start` as a subprocess
+1. Claude Desktop spawns `opentool-cli mcp start` as a subprocess
 2. The CLI connects to your OpenTool server via stdio transport
 3. Claude discovers all your connected tools (GitHub, Slack, etc.)
 4. When Claude wants to use a tool, it sends a JSON-RPC request through the CLI
@@ -52,10 +52,10 @@ Restart Claude Desktop. Your connected tools appear automatically.
 
 ```bash
 # One-time setup
-npx @opentool-ts/cli init
+npx opentool-cli init
 
 # Add as MCP server
-claude mcp add opentool -- npx @opentool-ts/cli mcp start
+claude mcp add opentool -- npx opentool-cli mcp start
 ```
 
 ---
@@ -67,12 +67,14 @@ If your MCP client supports HTTP transport, you can connect directly:
 **Endpoint:** `POST http://localhost:3001/mcp`
 
 **Headers:**
+
 ```
 Authorization: Bearer ot_your_api_key_here
 Content-Type: application/json
 ```
 
 **Request (list tools):**
+
 ```json
 {
   "jsonrpc": "2.0",
@@ -83,6 +85,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "jsonrpc": "2.0",
@@ -109,6 +112,7 @@ Content-Type: application/json
 ```
 
 **Request (call a tool):**
+
 ```json
 {
   "jsonrpc": "2.0",
@@ -127,6 +131,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "jsonrpc": "2.0",
@@ -153,7 +158,7 @@ Cursor supports MCP servers. Add to your Cursor settings:
   "mcpServers": {
     "opentool": {
       "command": "npx",
-      "args": ["@opentool-ts/cli", "mcp", "start"],
+      "args": ["opentool-cli", "mcp", "start"],
       "env": {
         "OPENTOOL_API_KEY": "ot_your_api_key_here"
       }
@@ -168,7 +173,7 @@ Cursor supports MCP servers. Add to your Cursor settings:
 
 Any client that supports the MCP protocol can connect. The pattern is the same:
 
-1. **Stdio transport:** Run `npx @opentool-ts/cli mcp start` with `OPENTOOL_API_KEY` env var
+1. **Stdio transport:** Run `npx opentool-cli mcp start` with `OPENTOOL_API_KEY` env var
 2. **HTTP transport:** POST to `/mcp` with Bearer auth
 
 ---
@@ -178,6 +183,7 @@ Any client that supports the MCP protocol can connect. The pattern is the same:
 When an MCP client connects, it calls `tools/list`. OpenTool returns only the tools for providers the user has connected. If you've connected GitHub and Slack but not Notion, the agent only sees GitHub and Slack tools.
 
 This means:
+
 - No "permission denied" errors for tools you haven't set up
 - The agent's tool list is always clean and relevant
 - Connect a new provider → agent immediately sees the new tools (on next `tools/list`)

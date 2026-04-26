@@ -10,7 +10,7 @@ OpenTool's tool system is designed to be dead simple. Each tool is a self-contai
 
 Every tool has four parts:
 
-1. **ID** — Unique identifier like `github.create_issue`
+1. **ID** — Unique identifier like `github_create_issue`
 2. **Schema** — Zod schema defining the input parameters
 3. **Execute** — Async function that does the actual work
 4. **Metadata** — Name, description, auth type, required scopes
@@ -22,7 +22,7 @@ import { defineTool } from '@opentool/tool-schema'
 import { z } from 'zod'
 
 export const createIssue = defineTool({
-  id: 'github.create_issue',
+  id: 'github_create_issue',
   name: 'Create GitHub Issue',
   description: 'Create a new issue in a GitHub repository',
   provider: 'github',
@@ -51,7 +51,7 @@ export const createIssue = defineTool({
           body: input.body,
           labels: input.labels,
         }),
-      }
+      },
     )
 
     if (!response.ok) {
@@ -64,6 +64,7 @@ export const createIssue = defineTool({
 ```
 
 That's it. The `defineTool` function handles:
+
 - Converting the Zod schema to JSON Schema (for MCP)
 - Type-safe input validation
 - Passing the auth context with the decrypted access token
@@ -87,7 +88,7 @@ import { defineTool } from '@opentool/tool-schema'
 import { z } from 'zod'
 
 export const createJiraIssue = defineTool({
-  id: 'jira.create_issue',
+  id: 'jira_create_issue',
   name: 'Create Jira Issue',
   description: 'Create a new issue in Jira',
   provider: 'jira',
@@ -102,24 +103,21 @@ export const createJiraIssue = defineTool({
   }),
 
   execute: async ({ input, auth }) => {
-    const response = await fetch(
-      'https://your-domain.atlassian.net/rest/api/3/issue',
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${auth.accessToken}`,
-          'Content-Type': 'application/json',
+    const response = await fetch('https://your-domain.atlassian.net/rest/api/3/issue', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${auth.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        fields: {
+          project: { key: input.projectKey },
+          summary: input.summary,
+          description: input.description,
+          issuetype: { name: input.issueType },
         },
-        body: JSON.stringify({
-          fields: {
-            project: { key: input.projectKey },
-            summary: input.summary,
-            description: input.description,
-            issuetype: { name: input.issueType },
-          },
-        }),
-      }
-    )
+      }),
+    })
 
     if (!response.ok) throw new Error(`Jira API error: ${response.status}`)
     return await response.json()
@@ -141,7 +139,7 @@ const allTools = [
   ...githubTools,
   ...notionTools,
   // ... existing tools
-  ...jiraTools,  // ← add this
+  ...jiraTools, // ← add this
 ]
 ```
 
@@ -211,7 +209,7 @@ pnpm dev
 ```typescript
 defineTool({
   // Required
-  id: string,              // Unique ID: "provider.action_name"
+  id: string,              // Unique ID: "provider_action_name"
   name: string,            // Human-readable name
   description: string,     // What this tool does (shown to AI agents)
   provider: string,        // Provider key (matches seed provider)

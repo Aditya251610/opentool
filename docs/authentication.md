@@ -93,15 +93,21 @@ Done. Your agent can now use that provider's tools.
 
 Not every OAuth provider follows the spec the same way. OpenTool handles the differences:
 
-| Provider | Token Exchange Method | Notes |
-|----------|----------------------|-------|
-| GitHub | `client_secret` in POST body | Standard |
-| Vercel | `client_secret` in POST body | Standard |
-| Slack | `client_secret` in POST body | Requires bot scopes to be set first |
-| Linear | `client_secret` in POST body | Comma-separated scopes (not space-separated) |
-| Google | `client_secret` in POST body | Needs `access_type=offline` for refresh tokens |
-| Notion | `Authorization: Basic` header | Base64-encoded `client_id:client_secret` |
-| Stripe | `Authorization: Basic` header | Secret key as username, empty password |
+| Provider        | Token Exchange Method         | Notes                                               |
+| --------------- | ----------------------------- | --------------------------------------------------- |
+| GitHub          | `client_secret` in POST body  | Standard                                            |
+| GitLab          | `client_secret` in POST body  | Standard                                            |
+| Vercel          | `client_secret` in POST body  | Standard                                            |
+| Slack           | `client_secret` in POST body  | Requires bot scopes to be set first                 |
+| Linear          | `client_secret` in POST body  | Comma-separated scopes (not space-separated)        |
+| Google          | `client_secret` in POST body  | Needs `access_type=offline` for refresh tokens      |
+| Notion          | `Authorization: Basic` header | Base64-encoded `client_id:client_secret`            |
+| Stripe          | `Authorization: Basic` header | Secret key as username, empty password              |
+| Jira/Confluence | `client_secret` in POST body  | Uses Atlassian 3LO OAuth; requires `audience` param |
+| Microsoft       | `client_secret` in POST body  | Uses Azure AD v2.0 endpoints                        |
+| Azure           | `client_secret` in POST body  | Shares Azure AD app with Microsoft 365              |
+| Sentry          | `client_secret` in POST body  | Standard                                            |
+| PayPal          | `Authorization: Basic` header | Base64-encoded `client_id:client_secret`            |
 
 ### Token Refresh
 
@@ -126,9 +132,9 @@ The encryption key is separate from the database credentials. Compromising the d
 
 ---
 
-## API Key Authentication (Resend, PostgreSQL)
+## API Key Authentication (Resend, PostgreSQL, Telegram, Discord, Twilio, Docker Hub, Cloudflare, AWS, GCP, Neon)
 
-Some providers don't use OAuth — they use static API keys or connection strings. For these:
+Some providers don't use OAuth — they use static API keys, tokens, or connection strings. For these:
 
 1. You set the API key in `.env` (e.g., `RESEND_API_KEY`)
 2. The seed script stores it encrypted in the provider record
@@ -141,13 +147,13 @@ No browser flow, no callbacks, no state management. Just works.
 
 ## Security Summary
 
-| What | How |
-|------|-----|
-| User passwords | bcrypt (cost 12) |
-| API keys | SHA-256 hash (raw shown once) |
-| OAuth tokens | AES-256-GCM encrypted at rest |
-| Token cache | Redis with TTL (expires when token expires) |
+| What            | How                                            |
+| --------------- | ---------------------------------------------- |
+| User passwords  | bcrypt (cost 12)                               |
+| API keys        | SHA-256 hash (raw shown once)                  |
+| OAuth tokens    | AES-256-GCM encrypted at rest                  |
+| Token cache     | Redis with TTL (expires when token expires)    |
 | State parameter | Base64 JSON with timestamp (expires in 10 min) |
-| CORS | Configured for dashboard origin only |
+| CORS            | Configured for dashboard origin only           |
 
 For more details, see [Security](./security.md).

@@ -192,8 +192,8 @@ If it works, congratulations — you just killed a bunch of glue code.
 
 ## What's Next
 
-- [Connect more tools](./tools.md) — Notion, Slack, Linear, Gmail, Google Calendar, Vercel, Resend, PostgreSQL
+- [Connect more tools](./tools.md) — 26 providers including GitHub, Slack, Jira, AWS, GCP, Azure, Telegram, Discord, PayPal, and more
 - [Self-host with Docker](./self-hosting.md) — Production-ready deployment
 - [Use the CLI](./cli-reference.md) — Interactive REPL, tab completion, ghost-text, shell completions
-- [Use the SDK](./sdk-reference.md) — TypeScript (`@opentool-ts/sdk`) and Python (`opentool`)
+- [Use the SDK](./sdk-reference.md) — TypeScript (`@opentool-ts/sdk`) and Python (`opentool-sdk`)
 - [API Reference](./api-reference.md) — Every REST endpoint documented
