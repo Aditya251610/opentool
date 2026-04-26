@@ -27,6 +27,14 @@ No 47-page onboarding guide. No "enterprise readiness assessment." Just the stuf
 | [Tools](./tools.md)                     | All 26 providers, 133 tools                        |
 | [MCP Integration](./mcp-integration.md) | Connect Claude, Cursor, VS Code, or any MCP client |
 
+## Teams & Organizations
+
+| Doc                                                    | What it covers                       |
+| ------------------------------------------------------ | ------------------------------------ |
+| [Architecture](./architecture.md#organizations--teams) | Org data model, RBAC, team structure |
+
+OpenTool has full org/team support: create organizations, invite members with roles (Owner/Admin/Member), create teams, org-scoped API keys with granular permissions, org-level tool connections, SSO, invite system, data retention policies, and dedicated org audit logs. 32 API endpoints across the `/api/orgs` namespace.
+
 ## Building & Extending
 
 | Doc                                             | What it covers                                                                                                                 |

@@ -64,8 +64,15 @@ opentool/
 │   │   │   │   └── tools.ts     # Tool loading + execution
 │   │   │   ├── registry/
 │   │   │   │   └── index.ts     # Tool registry (maps ID → definition)
-│   │   │   └── db/
+│   │   │   ├── db/
 │   │   │       └── client.ts    # Prisma client singleton
+│   │   │   └── rbac/
+│   │   │       ├── index.ts     # RBAC exports
+│   │   │       ├── middleware.ts # Org context + permission middleware
+│   │   │       ├── permissions.ts # Permission definitions
+│   │   │       ├── data-isolation.ts # Org-scoped data queries
+│   │   │       ├── rate-limit.ts # Org rate limiter
+│   │   │       └── validators.ts # Zod schemas for org operations
 │   │   ├── tools/               # Tool implementations (26 providers)
 │   │   │   ├── github/
 │   │   │   ├── gitlab/
@@ -101,7 +108,7 @@ opentool/
 
 ## Data Model
 
-Seven tables. That's it.
+Nineteen tables covering users, providers, organizations, and audit trails.
 
 ### Users & Auth
 
@@ -121,6 +128,21 @@ Seven tables. That's it.
 ### Audit
 
 - **`audit_logs`** — Immutable log of every tool execution and auth event. Tracks duration, sanitized input, errors, token usage analytics (prompt/completion/total tokens, estimated cost, model used).
+
+### Organizations & Teams
+
+- **`organizations`** — Org name, slug, plan tier, billing email. Orgs own shared tool connections.
+- **`org_memberships`** — Maps users to orgs with roles (`OWNER`, `ADMIN`, `MEMBER`).
+- **`teams`** — Named groups within an org for granular access control.
+- **`team_memberships`** — Maps users to teams with roles (`ADMIN`, `MEMBER`).
+- **`org_api_keys`** — Org-scoped API keys with granular permission scopes. Hashed like user keys.
+- **`org_tool_connections`** — Org-level provider connections shared across members.
+- **`org_token_stores`** — Encrypted tokens for org-level connections.
+- **`org_invites`** — Email-based invite system with token, role, and expiry.
+- **`org_policies`** — Configurable org policies (e.g., allowed providers, require 2FA).
+- **`org_audit_logs`** — Org-scoped audit trail separate from user audit logs.
+- **`org_sso_sessions`** — SSO session tracking for org-level authentication.
+- **`data_retention_policies`** — Configurable data retention rules per org.
 
 ---
 

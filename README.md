@@ -306,7 +306,7 @@ Full docs at [`docs/`](docs/README.md):
 - [x] Messaging providers (Telegram, Discord, Twilio)
 - [x] PayPal payments integration
 - [x] Token analytics and usage tracking
-- [ ] Team/org support
+- [x] Team/org support (RBAC, invites, SSO, org-scoped keys and connections)
 - [ ] Tool marketplace
 - [ ] Webhook support
 - [ ] Plugin system for custom tools
